@@ -1,0 +1,387 @@
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>منصّتي — نسخة الجمال v6</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ======= الشريط العلوي ======= -->
+ <header class="topbar">
+    <nav class="nav">
+      <div class="nav-left">
+        <img class="brand-logo" src="https://home.moe.gov.om/templates/moe/assets/images/sliders/others/MOE.png" alt="logo">
+        <span class="brand-title">منصّة أحب لغتي للقراءة المتدرجة</span>
+      </div>
+      <div class="nav-center" id="navLinks"></div>
+      <div class="nav-right">
+<button id="logoutBtn" class="chip ghost" onclick="confirmLogout()">خروج</button>
+      </div>
+    </nav>
+  </header>
+
+       
+  <!-- ======= شاشة الدخول / التسجيل ======= -->
+<section id="authView" class="center-stage">
+  <div class="auth-card glass">
+
+    <div class="hero">
+      <h1>أهلًا بك 👋</h1>
+      <p class="muted">سجّل دخولك أو أنشئ حسابًا جديدًا</p>
+    </div>
+
+    <div class="tabs-inline center">
+      <button class="pill active" data-auth="login">تسجيل الدخول</button>
+      <button class="pill" data-auth="register">إنشاء حساب</button>
+    </div>
+
+    <!-- 🔹 تسجيل الدخول -->
+    <form id="loginForm" class="form">
+      <div class="form-row">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="loginEmail" required placeholder="name@example.com">
+      </div>
+      <div class="form-row">
+        <label>كلمة المرور</label>
+        <input type="password" id="loginPass" required placeholder="••••••••">
+      </div>
+
+      <button id="loginBtn" class="btn primary full" type="submit">دخول</button>
+
+      <!-- ⚠️ هنا الرسالة التي يبحث عنها loginUser -->
+      <p id="loginMsg" class="msg"></p>
+    </form>
+
+    <!-- 🔹 إنشاء حساب -->
+    <form id="regForm" class="form hidden">
+      <div class="row2">
+        <div class="form-row">
+          <label>الاسم الكامل</label>
+          <input type="text" id="regName" required>
+        </div>
+        <div class="form-row">
+          <label>الدور</label>
+          <select id="regRole" required>
+            <option value="student">طالب</option>
+            <option value="teacher">معلم</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="form-row">
+          <label>البريد الإلكتروني</label>
+          <input type="email" id="regEmail" required>
+        </div>
+        <div class="form-row">
+          <label>كلمة المرور</label>
+          <input type="password" id="regPass" minlength="6" required>
+        </div>
+      </div>
+
+      <button id="registerBtn" class="btn full" type="submit">إنشاء الحساب</button>
+      <p id="regMsg" class="msg"></p>
+    </form>
+
+  </div>
+</section>
+
+  <!-- ======= هيكل التطبيق ======= -->
+  <div id="appShell" class="app hidden">
+    <!-- المحتوى الرئيسي يسارًا -->
+    <main class="stage">
+      <!-- تبويبات الطالب -->
+      <section class="view tab hidden" id="tab-home">
+        <div class="welcome">
+          <h2><span id="helloName">مرحبًا!</span></h2>
+          <p class="muted">ابدأ من هنا: تعلّم — اقرأ — أنجز.</p>
+          <div class="cards-4">
+            <div class="card action">
+              <div class="icon">📚</div>
+              <h4>الدروس</h4>
+              <button class="btn sky small go" data-go="#tab-levels">فتح</button>
+            </div>
+            <div class="card action">
+              <div class="icon">📝</div>
+              <h4>واجباتي</h4>
+              <button class="btn vio small go" data-go="#tab-assign">فتح</button>
+            </div>
+            <div class="card action">
+              <div class="icon">🎧</div>
+              <h4>تسجيل القراءة</h4>
+              <button class="btn em small go" data-go="#tab-library">فتح</button>
+            </div>
+            <div class="card action">
+              <div class="icon">📊</div>
+              <h4>تقاريري</h4>
+              <button class="btn primary small go" data-go="#tab-reports">فتح</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view tab hidden" id="tab-levels">
+        <div class="section-header">
+          <h3>المستويات</h3>
+        </div>
+        <div id="levelsGrid" class="grid levels"></div>
+      </section>
+
+<section class="view tab hidden" id="tab-assign">
+        <div class="section-header">
+          <h3>واجباتي</h3>
+          <div class="tabs-inline">
+            <button class="pill active" data-filter="required">المطلوبة</button>
+            <button class="pill" data-filter="overdue">متأخرة</button>
+            <button class="pill" data-filter="done">المنجزة</button>
+          </div>
+        </div>
+        <div id="assignList" class="assign-list"></div>
+      </section>
+
+      <section class="view tab hidden" id="tab-reports">
+        <div class="section-header"><h3>تقاريري</h3></div>
+        <div class="cards-3">
+          <div class="card stat"><h4>نسبة الإنجاز</h4><div class="big" id="repPercent">0%</div></div>
+          <div class="card stat"><h4>عدد القراءات</h4><div class="big" id="repReads">0</div></div>
+          <div class="card stat"><h4>وقت القراءة</h4><div class="big" id="repTime">0 دقيقة</div></div>
+        </div>
+        <div class="card"><canvas id="chartReads" height="140"></canvas></div>
+      </section>
+
+<!-- لوحة المعلم -->
+<section class="view tab hidden" id="tab-teacher">
+  <div class="section-header">
+    <h3>لوحة المعلم</h3>
+  </div>
+
+  <div class="cards-3">
+    <div class="card stat"><h4>الطلاب</h4><div class="big" id="tc-stu">0</div></div>
+    <div class="card stat"><h4>الواجبات</h4><div class="big" id="tc-asg">0</div></div>
+    <div class="card stat"><h4>المنجزة</h4><div class="big" id="tc-done">0</div></div>
+  </div>
+
+  <div class="card"><canvas id="chartTeacher" height="120"></canvas></div>
+
+  <div class="table">
+    <div class="thead">
+      <div>الطالب</div>
+      <div>عنوان الواجب</div>
+      <div>الحالة</div>
+      <div>التقدّم</div>
+      <div>ملاحظات</div>
+      <div>إجراءات</div>
+    </div>
+    <div id="teacherRows" class="tbody"></div>
+  </div>
+</section>
+
+
+<!-- إدارة الطلاب -->
+<section class="view tab hidden" id="tab-teacher-students">
+  <div class="section-header">
+    <h3>إدارة الطلاب</h3>
+    <button class="btn sky small" id="addStudentBtn">إضافة طالب</button>
+  </div>
+
+  <div class="table">
+    <div class="thead">
+      <div>الاسم</div>
+      <div>البريد</div>
+      <div>الفصل</div>
+      <div>إجراءات</div>
+    </div>
+    <div id="studentsRows" class="tbody"></div>
+  </div>
+</section>
+
+
+<!-- إدارة الواجبات -->
+<section class="view tab hidden" id="tab-teacher-assignments">
+  <div class="section-header">
+    <h3>إدارة الواجبات</h3>
+    <button class="btn primary small" id="newAssignBtn">إضافة واجب</button>
+  </div>
+
+  <div id="teacherAssignList" class="assign-list"></div>
+</section>
+
+
+<!-- المكتبة -->
+<section class="view tab hidden" id="tab-library">
+  <div class="section-header">
+    <h3>المكتبة</h3>
+
+    <!-- 🔍 البحث -->
+    <input type="search" id="searchBooks" class="search" placeholder="ابحث عن قصة…">
+
+    <!-- 🔵 تظهر للمعلم فقط -->
+    <button class="btn vio small only-teacher" id="addBookBtn">إضافة قصة</button>
+    <button class="btn em small only-teacher" id="addQuizBtn">إضافة أنشطة</button>
+  </div>
+
+  <div id="booksGrid" class="grid books"></div>
+</section>
+
+       
+        
+    </main>
+
+    <!-- السكة اليمنى الثابتة: بيانات الطالب -->
+    <aside class="rail">
+      <div class="profile-card glass">
+        <div class="avatar">😊</div>
+        <div class="pname">
+          <strong id="userName">—</strong>
+          <small id="userRoleLabel">—</small>
+        </div>
+      </div>
+      <div class="score-card glass">
+        <div class="score-row"><span>الكتب</span><b id="railBooks">0</b></div>
+        <div class="score-row"><span>الوقت</span><b id="railTime">0د</b></div>
+        <div class="score-row"><span>الأوسمة</span><b id="railBadges">0</b></div>
+      </div>
+    </aside>
+  </div>
+  
+    
+  <!-- قارئ النص -->
+  <section id="readerView" class="reader hidden">
+    <header class="reader-top">
+      <button id="backToApp" class="btn ghost small">🏠 العودة</button>
+      <h2 id="storyTitle">عنوان القصة</h2>
+      <span class="level-chip" id="storyLevel">المستوى 1</span>
+    </header>
+    <div class="story-meta">
+      <img id="storyCover" src="https://picsum.photos/160/210" alt="غلاف" class="story-cover">
+      <div class="hints"><div>👆 اضغط الكلمات لتظليلها</div><div>🎤 سجّل قراءتك ثم استمع</div></div>
+    </div>
+    <article id="storyContent" class="story-content"></article>
+    <div class="story-actions">
+      <button id="startRec" class="btn small">🎤 ابدأ التسجيل</button>
+      <button id="stopRec" class="btn small hidden">⏹️ إيقاف</button>
+      <button id="playRec" class="btn small hidden">▶️ تشغيل</button>
+      <span id="recordTime">⏱️ 00:00</span>
+         <button id="openActivitiesBtn" class="btn sky" style="margin:20px 0">
+  الأنشطة 📘
+</button>
+      
+    </div>
+    
+   
+    
+  </section>
+
+  <!-- مودال: إنشاء واجب -->
+  <div class="modal hidden" id="modalAssign">
+    <div class="modal-card">
+      <button class="modal-close" data-close="modalAssign">✖</button>
+      <h3>إنشاء واجب قراءة</h3>
+      <div class="form-row"><label>العنوان</label><input type="text" id="aTitle" placeholder="اقرأ قصة من المستوى 2 واستخرج الفكرة"></div>
+      <div class="form-row"><label>المستوى</label><select id="aLevel"></select></div>
+      <div class="form-row"><label>تاريخ التسليم</label><input type="date" id="aDue"></div>
+      <div class="form-row"><label>التعليمات</label><textarea id="aDesc" placeholder="سجّل صوتك وأجب عن الأسئلة"></textarea></div>
+      <div class="form-row"><label>إرسال إلى الطلاب</label><div id="studentsChecklist" class="checklist"></div></div>
+      <div class="row"><button class="btn primary small" id="saveAssign">حفظ</button></div>
+    </div>
+  </div>
+
+  <!-- مودال: إضافة طالب -->
+  <div class="modal hidden" id="modalStudent">
+    <div class="modal-card">
+      <button class="modal-close" data-close="modalStudent">✖</button>
+      <h3>إضافة طالب</h3>
+      <div class="form-row"><label>الاسم الكامل</label><input type="text" id="sName" placeholder="الاسم"></div>
+      <div class="form-row"><label>البريد الإلكتروني</label><input type="email" id="sEmail" placeholder="student@example.com"></div>
+      <div class="form-row"><label>الصف</label>
+  <input id="sClass" type="text" placeholder="مثلاً: الصف السادس">
+</div>
+
+      <div class="form-row"><label>كلمة المرور</label><input type="password" id="sPass" placeholder="١٢٣٤٥٦"></div>
+      <div class="row"><button class="btn small" id="saveStudent">إضافة</button></div>
+      <p class="muted" style="margin-top:.4rem">* إضافة محلية للتجربة — يمكن ربطها بـ API لاحقًا.</p>
+    </div>
+  </div>
+  
+  
+  
+<div id="modalQuiz" class="modal hidden">
+  <div class="modal-card" style="max-width:600px">
+    <button class="modal-close" id="closeQuiz">✖</button>
+    <h3>اختبار القصة</h3>
+
+    <div id="quizContent"></div>
+
+    <button class="btn primary full" id="submitQuiz">
+      إنهاء الاختبار
+    </button>
+  </div>
+</div>
+  
+  
+  
+  <!-- مودال إضافة قصة -->
+<div class="modal hidden" id="modalBook">
+  <div class="modal-card" style="max-width:600px">
+    <button class="modal-close" data-close="modalBook">✖</button>
+    <h3>إضافة قصة جديدة</h3>
+
+    <div class="form-row"><label>العنوان</label>
+      <input type="text" id="bTitle" placeholder="عنوان القصة">
+    </div>
+
+    <div class="form-row"><label>المستوى</label>
+      <select id="bLevel">
+        <option value="L1">المستوى 1</option>
+        <option value="L2">المستوى 2</option>
+        <option value="L3">المستوى 3</option>
+        <option value="L4">المستوى 4</option>
+      </select>
+    </div>
+
+    <div class="form-row"><label>رابط الصورة</label>
+      <input type="text" id="bCover" placeholder="https://…">
+    </div>
+
+    <div class="form-row"><label>النص (سطر لكل فقرة)</label>
+      <textarea id="bText" rows="5" placeholder="الفقرة الأولى…"></textarea>
+    </div>
+
+    <button id="saveBook" class="btn primary full">حفظ القصة</button>
+  </div>
+</div>
+
+  
+  <!-- مودال إضافة أنشطة للقصة -->
+<div class="modal hidden" id="modalQuizEditor">
+  <div class="modal-card" style="max-width:600px">
+    <button class="modal-close" data-close="modalQuizEditor">✖</button>
+    <h3>إضافة أسئلة للقصة</h3>
+
+    <div class="form-row"><label>اختر القصة</label>
+      <select id="qBookSelect"></select>
+    </div>
+
+    <div class="form-row"><label>السؤال</label>
+      <input type="text" id="qText" placeholder="نص السؤال">
+    </div>
+
+    <div class="form-row"><label>الخيارات (سطر لكل خيار)</label>
+      <textarea id="qOptions" rows="4" placeholder="الخيار 1…"></textarea>
+    </div>
+
+    <div class="form-row"><label>رقم الإجابة الصحيحة (0–3)</label>
+      <input type="number" id="qCorrect" min="0" max="3">
+    </div>
+
+    <button id="saveQuiz" class="btn primary full">إضافة السؤال</button>
+  </div>
+</div>
+
+
+  <script src="app.js"></script>
+</body>
+</html>
