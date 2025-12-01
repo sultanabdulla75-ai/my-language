@@ -39,7 +39,31 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
 /* ===== App ===== */
 .app{max-width:1200px;margin:1rem auto;display:grid;grid-template-columns:1fr 320px;gap:1rem;min-height:calc(100vh - 80px)}
 .stage{display:block}
-.rail{position:sticky;top:86px;height:max-content}
+
+/* توزيع الأعمدة: الريل يمين + المحتوى يسار */
+#appShell {
+  display: grid;
+  grid-template-columns: 280px 1fr;  /* ← عرض الريل ثابت، والمحتوى يأخذ الباقي */
+  gap: 1.2rem;
+}
+
+/* السكة اليمنى */
+.rail {
+  order: 1;
+  position: sticky;
+  top: 86px;
+  height: max-content;
+}
+
+/* منطقة المحتوى */
+.stage {
+  order: 2;
+  width: 100%;
+}
+
+
+
+
 .profile-card,.score-card{border:1px solid var(--border);border-radius:18px;padding:12px;box-shadow:0 10px 26px rgba(0,0,0,.06)}
 .profile-card{display:flex;align-items:center;gap:.7rem}
 .avatar{font-size:36px}
@@ -109,6 +133,40 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
 .checklist{display:flex;flex-wrap:wrap;gap:.5rem}
 .checklist label{border:1px solid var(--border);padding:.35rem .6rem;border-radius:10px;display:flex;align-items:center;gap:.4rem}
 
+
+.donut-card {
+  max-width: 360px;
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+
+
+.google-btn {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+
+.google-btn:hover {
+  background: #f5f5f5;
+}
+
+
+
+
 /* Responsive */
 @media (max-width:900px){ 
   .app{grid-template-columns:1fr} 
@@ -120,5 +178,3 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
 .only-teacher {
   display: none;
 }
-
-
