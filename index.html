@@ -2,7 +2,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>منصّتي — نسخة الجمال v6</title>
+  <title>منصة لغتي-الإصدار الأول</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="styles.css">
@@ -14,9 +14,10 @@
     <nav class="nav">
       <div class="nav-left">
         <img class="brand-logo" src="https://home.moe.gov.om/templates/moe/assets/images/sliders/others/MOE.png" alt="logo">
-        <span class="brand-title">منصّة أحب لغتي للقراءة المتدرجة</span>
+        <span class="brand-title">منصة لغتي-الإصدار الأول</span>
       </div>
       <div class="nav-center" id="navLinks"></div>
+
       <div class="nav-right">
 <button id="logoutBtn" class="chip ghost" onclick="confirmLogout()">خروج</button>
       </div>
@@ -88,9 +89,22 @@
 
   </div>
 </section>
+  
+  
+  <button id="googleLogin" class="google-btn">
+  <img src="https://developers.google.com/identity/images/g-logo.png" width="20">
+  الدخول باستخدام Google
+</button>
 
+  
+  
   <!-- ======= هيكل التطبيق ======= -->
   <div id="appShell" class="app hidden">
+    
+   
+   
+    
+    
     <!-- المحتوى الرئيسي يسارًا -->
     <main class="stage">
       <!-- تبويبات الطالب -->
@@ -164,19 +178,13 @@
     <div class="card stat"><h4>المنجزة</h4><div class="big" id="tc-done">0</div></div>
   </div>
 
-  <div class="card"><canvas id="chartTeacher" height="120"></canvas></div>
-
-  <div class="table">
-    <div class="thead">
-      <div>الطالب</div>
-      <div>عنوان الواجب</div>
-      <div>الحالة</div>
-      <div>التقدّم</div>
-      <div>ملاحظات</div>
-      <div>إجراءات</div>
-    </div>
-    <div id="teacherRows" class="tbody"></div>
+  <!-- ✨ هنا نضيف مخطط الدائرة ✨ -->
+  <div class="card donut-card">
+    <h4 style="text-align:center;margin-bottom:10px">متوسط إنجاز الطلبة</h4>
+    <canvas id="chartAvgProgress" height="180"></canvas>
   </div>
+  
+  
 </section>
 
 
@@ -186,8 +194,7 @@
     <h3>إدارة الطلاب</h3>
     <button class="btn sky small" id="addStudentBtn">إضافة طالب</button>
   </div>
-
-  <div class="table">
+ <div class="table">
     <div class="thead">
       <div>الاسم</div>
       <div>البريد</div>
@@ -196,6 +203,7 @@
     </div>
     <div id="studentsRows" class="tbody"></div>
   </div>
+ 
 </section>
 
 
@@ -207,6 +215,26 @@
   </div>
 
   <div id="teacherAssignList" class="assign-list"></div>
+  
+  
+  <!-- ✨ الرسم البياني + جدول الطلاب (فقط هنا) ✨ -->
+  <div class="card">
+    <canvas id="chartTeacher" height="120"></canvas>
+  </div>
+
+  <div class="table">
+    <div class="thead">
+      <div>الطالب</div>
+      <div>عنوان الواجب</div>
+      <div>الحالة</div>
+      <div>التقدّم</div>
+      <div>ملاحظات</div>
+      <div>إجراءات</div>
+    </div>
+
+    <div id="teacherRows" class="tbody"></div>
+  </div>
+  
 </section>
 
 
@@ -230,23 +258,12 @@
         
     </main>
 
-    <!-- السكة اليمنى الثابتة: بيانات الطالب -->
-    <aside class="rail">
-      <div class="profile-card glass">
-        <div class="avatar">😊</div>
-        <div class="pname">
-          <strong id="userName">—</strong>
-          <small id="userRoleLabel">—</small>
-        </div>
-      </div>
-      <div class="score-card glass">
-        <div class="score-row"><span>الكتب</span><b id="railBooks">0</b></div>
-        <div class="score-row"><span>الوقت</span><b id="railTime">0د</b></div>
-        <div class="score-row"><span>الأوسمة</span><b id="railBadges">0</b></div>
-      </div>
-    </aside>
-  </div>
-  
+    
+      <!-- السكة اليمنى الثابتة: بيانات الطالب --> <aside class="rail"> <div class="profile-card glass"> <div class="avatar">😊</div> <div class="pname"> <strong id="userName">—</strong> <small id="userRoleLabel">—</small> </div> </div> <div class="score-card glass"> <div class="score-row"><span>الكتب</span><b id="railBooks">0</b></div> <div class="score-row"><span>الوقت</span><b id="railTime">0د</b></div> <div class="score-row"><span>الأوسمة</span><b id="railBadges">0</b></div> </div> </aside> </div> 
+
+   
+   
+
     
   <!-- قارئ النص -->
   <section id="readerView" class="reader hidden">
@@ -381,6 +398,69 @@
   </div>
 </div>
 
+  
+<script type="module">
+  // ---------------------------------------------------------
+  // 1) Import Firebase
+  // ---------------------------------------------------------
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { 
+    getAuth, 
+    GoogleAuthProvider, 
+    signInWithPopup 
+  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+
+  // ---------------------------------------------------------
+  // 2) Firebase Config (منصتك)
+  // ---------------------------------------------------------
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcgfkdGNTZhqPxoY765hf53jh9KqOQPxU",
+    authDomain: "my-language2025.firebaseapp.com",
+    projectId: "my-language2025",
+    storageBucket: "my-language2025.firebasestorage.app",
+    messagingSenderId: "531458626572",
+    appId: "1:531458626572:web:711af89cd9019f0ee64a29",
+    measurementId: "G-EBEN4JWHM8"
+  };
+
+  // ---------------------------------------------------------
+  // 3) Initialize Firebase
+  // ---------------------------------------------------------
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+
+  // ---------------------------------------------------------
+  // 4) زر تسجيل الدخول عبر Google
+  // ---------------------------------------------------------
+  document.getElementById("googleLogin").addEventListener("click", async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // -----------------------------------------------------
+      // 5) تخزين بيانات المستخدم في localStorage
+      // -----------------------------------------------------
+      const userData = {
+        name: user.displayName,
+        email: user.email,
+        role: user.email.endsWith("@moe.gov.om") ? "teacher" : "student",
+        photo: user.photoURL
+      };
+
+      localStorage.setItem("arp.current", JSON.stringify(userData));
+
+      // -----------------------------------------------------
+      // 6) الانتقال إلى المنصة
+      // -----------------------------------------------------
+      window.location.href = "index.html"; // عدّل حسب صفحتك
+
+    } catch (e) {
+      alert("فشل تسجيل الدخول: " + e.message);
+      console.error(e);
+    }
+  });
+</script>
 
   <script src="app.js"></script>
 </body>
