@@ -1,7 +1,6 @@
 
 let currentBook = null;
 
-
 // ===== Storage keys =====
 const LS = {
   USERS: 'arp.users',
@@ -9,7 +8,7 @@ const LS = {
   ROLE: 'arp.role',
   CLASSES: 'arp.classes',
   ASSIGN: 'arp.assignments',
-  STATS: 'arp.stats'
+STATS: uid => `arp.stats.${uid}`
 };
 
 // ===== Data =====
@@ -107,6 +106,13 @@ function showOnly(selector){
     if(p.dataset.target===selector) p.classList.add('active');
     else p.classList.remove('active');
   });
+  
+   
+  // ⭐⭐ تشغيل المخطط عند فتح لوحة المعلم ⭐⭐
+  if(selector === '#tab-teacher'){
+      renderAvgProgressChart();
+  } 
+  
 }
 
 function toast(msg){ alert(msg); }
@@ -145,62 +151,151 @@ nav.innerHTML = '';
   showOnly(items[0][0]);
 }
 
-function updateRail(){
-  const s = readJSON(LS.STATS, {reads:0, minutes:0, lastBook:'—', activities:0});
+function updateRail() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return;
 
-  // عدد الكتب المقروءة
+  // 🧑‍🏫 المعلم لا يملك إحصائيات قراءة
+  if (current.role === 'teacher') {
+    $('#railBooks').textContent = 0;
+    $('#railTime').textContent = '0 د';
+    $('#railBadges').textContent = 0;
+
+    // إخفاء العناصر غير الضرورية أو تصفيرها
+    let avgBox = document.getElementById('railAvg');
+    if (avgBox) avgBox.textContent = '0 د';
+
+    let lastBox = document.getElementById('railLastBook');
+    if (lastBox) lastBox.textContent = '—';
+
+    let actBox = document.getElementById('railActs');
+    if (actBox) actBox.textContent = 0;
+
+    return;
+  }
+
+  // 🧒 الطالب → له ملف إحصائيات
+  const key = `arp.stats.${current.id}`;
+  const s = readJSON(key, { reads:0, minutes:0, lastBook:'—', activities:0 });
+
   $('#railBooks').textContent = s.reads;
-
-  // الوقت بالدقائق
-  $('#railTime').textContent = s.minutes + 'د';
-
-  // عدد الأوسمة (وسام لكل 5 قراءات)
+  $('#railTime').textContent = s.minutes + ' د';
   $('#railBadges').textContent = Math.floor(s.reads / 5);
 
-  // 🔵 معدل القراءة = مجموع الدقائق / عدد القراءات
+  // متوسط القراءة
   let avg = s.reads > 0 ? (s.minutes / s.reads).toFixed(1) : 0;
-
-  // 🔵 إضافة معدل القراءة للسكة
   let avgBox = document.getElementById('railAvg');
-  if(!avgBox){
-    const row = document.createElement('div');
-    row.className = 'score-row';
-    row.innerHTML = `<span>متوسط القراءة</span><b id="railAvg">${avg} د</b>`;
-    document.querySelector('.score-card').appendChild(row);
-  } else {
-    avgBox.textContent = avg + ' د';
-  }
+  if (avgBox) avgBox.textContent = avg + ' د';
 
-  // 🔵 آخر قصة
+  // آخر قصة
   let lastBox = document.getElementById('railLastBook');
-  if(!lastBox){
-    const row2 = document.createElement('div');
-    row2.className = 'score-row';
-    row2.innerHTML = `<span>آخر قصة</span><b id="railLastBook">${s.lastBook}</b>`;
-    document.querySelector('.score-card').appendChild(row2);
-  } else {
-    lastBox.textContent = s.lastBook;
-  }
+  if (lastBox) lastBox.textContent = s.lastBook;
 
-  // 🔵 الأنشطة
+  // الأنشطة
   let actBox = document.getElementById('railActs');
-  if(!actBox){
-    const row3 = document.createElement('div');
-    row3.className = 'score-row';
-    row3.innerHTML = `<span>الأنشطة</span><b id="railActs">${s.activities}</b>`;
-    document.querySelector('.score-card').appendChild(row3);
-  } else {
-    actBox.textContent = s.activities;
-  }
+  if (actBox) actBox.textContent = s.activities;
 }
+
 
 
 function addActivity(){
-  const s = readJSON(LS.STATS, {reads:0, minutes:0, lastBook:'—', activities:0});
+  const current = readJSON(LS.CURRENT,null);
+  const key = LS.STATS(current.id);
+  const s = readJSON(key, {reads:0, minutes:0, lastBook:'—', activities:0});
   s.activities += 1;
-  writeJSON(LS.STATS, s);
+  writeJSON(key, s);
   updateRail();
 }
+
+
+function computeAverageProgress() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || current.role !== 'teacher') return 0;
+
+  const c = getTeacherClass(current.id);       // يحصل على فصل المعلم
+  const users = getUsers();
+
+  let totalRead = 0;
+  let totalQuiz = 0;
+  let totalAssign = 0;
+  let count = 0;
+
+  c.students.forEach(sid => {
+    const key = `arp.stats.${sid}`;
+    const stats = readJSON(key, {reads:0, minutes:0, lastBook:'—', activities:0});
+
+    // نسبة القراءة لهذا الطالب
+    const readPercent = Math.min(100, Math.round((stats.reads / BOOKS.length) * 100));
+
+    // نسبة الأنشطة (اختبارات القصص)
+    const quizPercent = Math.min(100, Math.round((stats.activities / BOOKS.length) * 100));
+
+    // نسبة الواجبات لهذا الطالب
+    let assignSum = 0, assignCount = 0;
+    getAssignments().forEach(a => {
+      const ps = a.perStudent?.[sid];
+      if (ps && ps.progress != null) {
+        assignSum += ps.progress;
+        assignCount++;
+      }
+    });
+
+    const assignPercent = assignCount ? Math.round(assignSum / assignCount) : 0;
+
+    // نضيف المجموع
+    totalRead += readPercent;
+    totalQuiz += quizPercent;
+    totalAssign += assignPercent;
+    count++;
+  });
+
+  if (count === 0) return 0;
+
+  // متوسط إنجاز الفصل
+  return Math.round((totalRead + totalQuiz + totalAssign) / (count * 3));
+}
+
+
+
+  // 🔵 مخطط متوسط الإنجاز
+let avgChart = null;
+
+function renderAvgProgressChart(){
+  const avg = computeAverageProgress();
+  const ctx = document.getElementById('chartAvgProgress');
+
+  if(!ctx) return;
+
+  if(avgChart){ avgChart.destroy(); }
+
+  avgChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['الإنجاز', 'متبقّي'],
+      datasets: [{
+        data: [avg, 100-avg],
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      cutout: '60%',
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context){
+              return context.label + ': ' + context.raw + '%';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
 
 
 
@@ -325,55 +420,117 @@ function getStudentAssignments(uid){
 }
 
 function renderStudentAssignments(filter='required'){
-  const current=readJSON(LS.CURRENT,null); if(!current) return;
-  const host=$('#assignList'); if(!host) return; host.innerHTML='';
-  const arr=getStudentAssignments(current.id);
-  let list = arr.map(a=>{
-    const ps=a.perStudent?.[current.id] || {status:'required',progress:0,notes:'-',answer:'',file:''};
-    return {...a, statusLabel: ps.status==='done'?'تم الحل ✅':(ps.status==='overdue'?'متأخر ⏰':'مطلوب 📘'),
-            statusClass: ps.status==='done'?'ok':(ps.status==='overdue'?'err':'warn'),
-            progress: ps.progress||0, filter: ps.status==='done'?'done':(ps.status==='overdue'?'overdue':'required'),
-            answer: ps.answer||'', file: ps.file||'', notes: ps.notes||''};
-  }).filter(x=>x.filter===filter);
+  const current = readJSON(LS.CURRENT, null); 
+  if (!current) return;
 
-  if(!list.length){ host.innerHTML=`<div class="assign-card">لا توجد واجبات في هذه الفئة.</div>`; return; }
+  const host = $('#assignList'); 
+  if (!host) return; 
+  host.innerHTML = '';
 
-  list.forEach(a=>{
-    const el=document.createElement('div');
-    el.className='assign-card';
+  const arr = getStudentAssignments(current.id);
 
-    // ✅ تعديل الأزرار حسب الحالة
-    const buttons = a.statusLabel.includes('تم الحل')
-      ? `<button class="btn small primary" data-view="${a.id}">عرض الحل ✅</button>`
-      : `<button class="btn small" data-open="${a.id}">فتح</button>
-         <button class="btn ghost small" data-submit="${a.id}">إرسال الحل</button>`;
+  // 🧠 تجهيز البيانات مع حالة "قيد المراجعة"
+  let list = arr.map(a => {
+    const ps = a.perStudent?.[current.id] || {status:'required',progress:0,notes:'-',answer:'',file:''};
 
-    el.innerHTML=`
+    let statusLabel, statusClass, filterTag;
+
+    if (ps.status === 'done') {
+      statusLabel = 'تم الحل ✅';
+      statusClass = 'ok';
+      filterTag   = 'done';
+    } else if (ps.status === 'overdue') {
+      statusLabel = 'متأخر ⏰';
+      statusClass = 'err';
+      filterTag   = 'overdue';
+    } else if (ps.status === 'submitted') {
+      statusLabel = 'الإجابة قيد المراجعة ⏳';
+      statusClass = 'warn';
+      filterTag   = 'required';  // تبقى تحت تبويب "المطلوبة"
+    } else {
+      statusLabel = 'مطلوب 📘';
+      statusClass = 'warn';
+      filterTag   = 'required';
+    }
+
+    return {
+      ...a,
+      ps,                 // ← نخزن حالة الطالب كاملة
+      statusLabel,
+      statusClass,
+      progress: ps.progress || 0,
+      filter: filterTag,
+      answer: ps.answer || '',
+      file:   ps.file   || '',
+      notes:  ps.notes  || ''
+    };
+  }).filter(x => x.filter === filter);
+
+  if (!list.length){
+    host.innerHTML = `<div class="assign-card">لا توجد واجبات في هذه الفئة.</div>`;
+    return;
+  }
+
+  list.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'assign-card';
+
+    // 🎛 الأزرار حسب حالة الطالب في هذا الواجب
+    let buttons = '';
+    if (a.ps.status === 'done') {
+      // الحل مقبول → عرض الحل فقط
+      buttons = `<button class="btn small primary" data-view="${a.id}">عرض الحل ✅</button>`;
+    } else if (a.ps.status === 'submitted') {
+      // الحل مرسل وينتظر المراجعة
+      buttons = `<div class="badge warn">📌 الإجابة قيد المراجعة</div>`;
+    } else {
+      // لم يُرسل الحل بعد
+      buttons = `
+        <button class="btn small" data-open="${a.id}">فتح</button>
+        <button class="btn ghost small" data-submit="${a.id}">إرسال الحل</button>
+      `;
+    }
+
+    el.innerHTML = `
       <h4>${a.title}</h4>
-      <div class="meta"><span>${LEVELS.find(l=>l.id===a.level)?.name || '—'}</span><span>${a.due||'-'}</span></div>
+      <div class="meta">
+        <span>${LEVELS.find(l=>l.id===a.level)?.name || '—'}</span>
+        <span>${a.due || '-'}</span>
+      </div>
       <p class="muted" style="margin:.3rem 0">${a.desc || ''}</p>
       <div class="meta"><span class="badge ${a.statusClass}">${a.statusLabel}</span></div>
-      <div class="progress" aria-label="progress"><i style="width:${a.progress||0}%"></i></div>
-      <div class="row" style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">${buttons}</div>`;
+      <div class="progress" aria-label="progress"><i style="width:${a.progress || 0}%"></i></div>
+      <div class="row" style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
+        ${buttons}
+      </div>
+    `;
 
     // === فتح القصة حسب مستوى الواجب ===
-    el.querySelector('[data-open]')?.addEventListener('click', ()=>{
+    el.querySelector('[data-open]')?.addEventListener('click', () => {
       const levelId = a.level.startsWith('L') ? a.level : LEVELS.find(l => a.level.includes(l.name))?.id || 'L1';
       const book = BOOKS.find(b => b.level === levelId);
-      if(book) openReader(book);
+      if (book) openReader(book);
       else toast('🚫 لا توجد قصة متاحة لهذا المستوى حالياً');
     });
 
     // === نافذة إرسال الحل ===
-    el.querySelector('[data-submit]')?.addEventListener('click', ()=>{
-      const modal=document.createElement('div');
-      modal.className='modal';
-      modal.innerHTML=`
+    el.querySelector('[data-submit]')?.addEventListener('click', () => {
+
+      // أمان إضافي: لو الحالة صارت submitted لا نكمل
+      if (a.ps.status === 'submitted' || a.ps.status === 'done') {
+        toast('📌 لا يمكنك تعديل الإجابة بعد إرسالها.');
+        return;
+      }
+
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      modal.innerHTML = `
         <div class="modal-card">
           <button class="modal-close" id="closeAns">✖</button>
           <h3>إرسال حل الواجب: ${a.title}</h3>
           <div class="form-row"><label>إجابتك</label>
-            <textarea id="ansText" rows="4" placeholder="اكتب إجابتك هنا..." style="width:100%;border:1px solid #ddd;border-radius:8px;padding:.6rem;">${a.answer||''}</textarea>
+            <textarea id="ansText" rows="4" placeholder="اكتب إجابتك هنا..."
+              style="width:100%;border:1px solid #ddd;border-radius:8px;padding:.6rem;">${a.answer || ''}</textarea>
           </div>
           <div class="form-row"><label>أرفق ملفًا (اختياري)</label>
             <input type="file" id="ansFile" accept=".pdf,.doc,.mp3,.wav,.m4a,.jpg,.png"/>
@@ -382,21 +539,32 @@ function renderStudentAssignments(filter='required'){
         </div>`;
       document.body.appendChild(modal);
 
-      $('#closeAns').onclick=()=> modal.remove();
+      $('#closeAns').onclick = () => modal.remove();
 
-      $('#sendAnsBtn').onclick=()=>{
-        const text=$('#ansText').value.trim();
-        const fileInput=$('#ansFile');
-        const file=fileInput.files[0]?.name||'';
-        const all=getAssignments();
-        const idx=all.findIndex(x=>x.id===a.id);
-        if(idx>-1){
-          all[idx].perStudent=all[idx].perStudent||{};
-          all[idx].perStudent[current.id]={...a.perStudent?.[current.id],
-            answer:text, file:file, status:'submitted', progress:50};
+      $('#sendAnsBtn').onclick = () => {
+        // ✅ تأكيد قبل الإرسال
+        const ok = confirm('هل أنت متأكد من إرسال الحل؟ لن تتمكن من تعديله حتى يراجعه المعلم.');
+        if (!ok) return;
+
+        const text = $('#ansText').value.trim();
+        const fileInput = $('#ansFile');
+        const file = fileInput.files[0]?.name || '';
+
+        const all = getAssignments();
+        const idx = all.findIndex(x => x.id === a.id);
+
+        if (idx > -1) {
+          all[idx].perStudent = all[idx].perStudent || {};
+          all[idx].perStudent[current.id] = {
+            ...a.ps,
+            answer: text,
+            file: file,
+            status: 'submitted',   // 🔁 الآن "قيد المراجعة"
+            progress: 50
+          };
           setAssignments(all);
           modal.remove();
-          toast('✅ تم إرسال الحل بنجاح');
+          toast('✅ تم إرسال الحل، والإجابة الآن قيد المراجعة');
           renderStudentAssignments(filter);
           renderTeacherView();
         }
@@ -404,16 +572,18 @@ function renderStudentAssignments(filter='required'){
     });
 
     // === نافذة عرض الحل ===
-    el.querySelector('[data-view]')?.addEventListener('click', ()=>{
-      const modal=document.createElement('div');
-      modal.className='modal';
-      modal.innerHTML=`
+    el.querySelector('[data-view]')?.addEventListener('click', () => {
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      modal.innerHTML = `
         <div class="modal-card" style="max-width:600px">
           <button class="modal-close" id="closeView">✖</button>
           <h3>عرض الحل والملاحظات</h3>
           <p><b>عنوان الواجب:</b> ${a.title}</p>
           <p><b>إجابتك:</b></p>
-          <div style="background:#f8fafc;padding:.7rem;border-radius:10px">${a.answer || '— لا توجد إجابة نصية —'}</div>
+          <div style="background:#f8fafc;padding:.7rem;border-radius:10px">
+            ${a.answer || '— لا توجد إجابة نصية —'}
+          </div>
           ${a.file ? `<p><b>الملف المرفق:</b> ${a.file}</p>` : ''}
           ${a.correctAnswer ? `
             <p><b>الإجابة الصحيحة:</b></p>
@@ -426,7 +596,7 @@ function renderStudentAssignments(filter='required'){
           </div>
         </div>`;
       document.body.appendChild(modal);
-      $('#closeView').onclick = () => modal.remove();
+      $('#closeView').onclick  = () => modal.remove();
       $('#closeViewBtn').onclick = () => modal.remove();
     });
 
@@ -434,7 +604,7 @@ function renderStudentAssignments(filter='required'){
   });
 }
 
-// ===== Teacher =====
+    // ===== Teacher =====
 function getTeacherClass(teacherId){
   const classes=getClasses();
   let c=classes.find(c=>c.teacherId===teacherId);
@@ -872,9 +1042,6 @@ $('#openActivitiesBtn')?.addEventListener('click', ()=>{
 
 
 
-
-
-
 function backToApp(){
   $('#readerView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
@@ -913,13 +1080,21 @@ function playRecording(){
  }
 
 
-
-// تحديث بيانات القراءة
+/ ///تحديث بيانات القراء
 function updateReadStats(bookId){
-  const s = readJSON(LS.STATS, {reads:0, minutes:0, lastBook:'—', activities:0});
+  const current = readJSON(LS.CURRENT, null);
+  if(!current) return;
+
+  const key = LS.STATS(current.id); // ← مفتاح خاص لكل طالب
+
+  const s = readJSON(key, {reads:0, minutes:0, lastBook:'—', activities:0});
+
   s.reads += 1;
   s.lastBook = BOOKS.find(b => b.id === bookId)?.title || '—';
-  writeJSON(LS.STATS, s);
+
+  writeJSON(key, s);
+
+  updateRail(); // ← تحديث السكة مباشرة
 }
 
 
@@ -1019,6 +1194,27 @@ function saveQuiz() {
 }
 
 
+function confirmSubmitModal(callback) {
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div class="modal-card" style="max-width:400px;text-align:center">
+      <h3>📤 تأكيد إرسال الحل</h3>
+      <p style="margin:10px 0;color:#555">بعد الإرسال لن تتمكن من تعديل إجابتك.</p>
+      <div style="display:flex;justify-content:center;gap:.5rem;margin-top:1rem">
+        <button id="confirmSendBtn" class="btn primary small">إرسال</button>
+        <button id="cancelSendBtn" class="btn ghost small">إلغاء</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  $('#cancelSendBtn').onclick = () => modal.remove();
+  $('#confirmSendBtn').onclick = () => {
+    modal.remove();
+    callback(); // ← ينفذ الإرسال فعليًا
+  };
+}
 
 
 // ===== Boot =====
@@ -1158,7 +1354,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 
   // إنهاء الاختبار
-  $('#submitQuiz')?.addEventListener('click', ()=>{
+ $('#submitQuiz')?.addEventListener('click', ()=>{
 
     let score = 0;
     currentBook.quiz.forEach((q,i)=>{
@@ -1168,12 +1364,17 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
     });
 
+    // ⭐ زيادة عدد الأنشطة
     addActivity();
+
+    // ⭐ تحديث دائرة متوسط الإنجاز مباشرة
+    renderAvgProgressChart();
+
     $('#modalQuiz').classList.add('hidden');
     toast("✓ تم إنهاء النشاط. نتيجتك: " + score + "/" + currentBook.quiz.length);
-  });
-  
-    // تشغيل النظام
-  startApp();
+});
 
-}); // ← آخر قوس صحيح للدالة
+     // تشغيل النظام
+  startApp();
+});    // ← آخر قوس صحيح للدالة
+    
