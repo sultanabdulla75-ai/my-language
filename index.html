@@ -410,6 +410,11 @@
     signInWithPopup 
   } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
+  import {
+    getFirestore,
+    doc, setDoc, getDoc, getDocs, collection
+  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
   // ---------------------------------------------------------
   // 2) Firebase Config (منصتك)
   // ---------------------------------------------------------
@@ -429,38 +434,78 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
+  const db = getFirestore(app);
+  window.db = db;
+
 
   // ---------------------------------------------------------
   // 4) زر تسجيل الدخول عبر Google
   // ---------------------------------------------------------
-  document.getElementById("googleLogin").addEventListener("click", async () => {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+document.getElementById("googleLogin").addEventListener("click", async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
 
-      // -----------------------------------------------------
-      // 5) تخزين بيانات المستخدم في localStorage
-      // -----------------------------------------------------
-      const userData = {
-        name: user.displayName,
-        email: user.email,
-        role: user.email.endsWith("@moe.gov.om") ? "teacher" : "student",
-        photo: user.photoURL
-      };
+    // بحث عن الفصل
+    const classesSnap = await getDocs(collection(db, "classes"));
 
-      localStorage.setItem("arp.current", JSON.stringify(userData));
+    let found = false;
+    let classId = null;
 
-      // -----------------------------------------------------
-      // 6) الانتقال إلى المنصة
-      // -----------------------------------------------------
-      window.location.href = "index.html"; // عدّل حسب صفحتك
-
-    } catch (e) {
-      alert("فشل تسجيل الدخول: " + e.message);
-      console.error(e);
+    for (const c of classesSnap.docs) {
+      const stu = await getDoc(doc(db, "classes", c.id, "students", user.email));
+      if (stu.exists()) {
+        found = true;
+        classId = c.id;
+        break;
+      }
     }
-  });
+
+    if (!found) {
+      alert("⚠ أنت غير مسجّل في أي صف. اطلب من المعلم إضافتك.");
+      return;
+    }
+
+    // حفظ جلسة المستخدم
+    localStorage.setItem("arp.current", JSON.stringify({
+      id: user.uid || user.email,
+      name: user.displayName,
+      email: user.email,
+      role: "student",
+      classId,
+      photo: user.photoURL
+    }));
+
+    // ⭐ تشغيل المهام المتسلسلة باستخدام دالة async مغلّفة
+    (async () => {
+      try {
+
+        // 1) 🔄 تحميل إجابات الواجبات من Firestore
+        await loadStudentAnswersFromFirestore(classId, user.uid || user.email);
+
+        // 2) 🔄 مزامنة القصص من السحابة
+        await syncBooks(classId);
+
+        // 3) ▶ الانتقال للمنصة
+        window.location.href = "index.html";
+
+      } catch (err) {
+        alert("حدث خطأ أثناء المزامنة: " + err.message);
+      }
+    })();
+
+  } catch (e) {
+    alert("فشل تسجيل الدخول: " + e.message);
+  }
+});
+
+
 </script>
+
+  
+  
+ 
+
 
   <script src="app.js"></script>
 </body>
