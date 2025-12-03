@@ -445,6 +445,9 @@ document.getElementById("googleLogin").addEventListener("click", async () => {
   try {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
+    
+     // 🔍 للتأكد هل تم تسجيل الدخول فعلاً
+    console.log("✔ Logged in Google:", user.email);
 
     // بحث عن الفصل
     const classesSnap = await getDocs(collection(db, "classes"));
@@ -503,9 +506,6 @@ document.getElementById("googleLogin").addEventListener("click", async () => {
 </script>
 
   
-  
- 
-
 
   <script src="app.js"></script>
 </body>
