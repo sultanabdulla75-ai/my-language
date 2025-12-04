@@ -25,7 +25,9 @@ export async function syncBooks(classId) {
 
   let snap;
   try {
-    snap = await getDocs(collection(db, "classes", classId, "books"));
+const snap = await getDocs(
+  collection(doc(db, "classes", classId), "books")
+);
   } catch (err) {
     console.error("🔥 خطأ أثناء جلب القصص:", err);
     return;
@@ -579,12 +581,10 @@ function getStudentAssignments(uid){
   return getAssignments().filter(a => a.studentIds.includes(uid));
 }
 
-
-
 // ===== تحميل إجابات الطالب من Firestore =====
 export async function loadStudentAnswersFromFirestore(classId, studentId) {
 
-  const snap = await getDocs(collection(db, "classes", classId, "assignments"));
+  const snap = await getDocs(collection(doc(db, "classes", classId), "assignments"));
 
   const localAssignments = getAssignments();
 
