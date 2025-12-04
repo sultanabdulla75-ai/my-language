@@ -79,17 +79,18 @@ async function saveQuizToFirestore(classId, bookId, quiz) {
 // ===== حفظ حل الطالب في Firestore =====
 async function saveAssignmentAnswerToFirestore(classId, assignId, studentId, data) {
   await setDoc(
-    doc(db, "classes", classId, "assignments", assignId, "answers", studentId),
-    {
+doc(
+  doc(db, "classes", classId),
+  "assignments", assignId,
+  "answers", studentId
+),
+{
       ...data,
       updatedAt: Date.now()
     },
     { merge: true }
   );
 }
-
-
-
 
 // ===== Storage keys =====
 const LS = {
@@ -591,11 +592,12 @@ export async function loadStudentAnswersFromFirestore(classId, studentId) {
   for (const docA of snap.docs) {
     const assignId = docA.id;
 
-    const ansRef = doc(db,
-      "classes", classId,
-      "assignments", assignId,
-      "answers", studentId
-    );
+  const ansRef = doc(
+  doc(db, "classes", classId),
+  "assignments", assignId,
+  "answers", studentId
+);
+
 
     const ansSnap = await getDoc(ansRef);
 
