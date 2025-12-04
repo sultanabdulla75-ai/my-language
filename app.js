@@ -25,8 +25,8 @@ export async function syncBooks(classId) {
 
   let snap;
   try {
-const snap = await getDocs(
-  collection(doc(db, "classes", classId), "books")
+snap = await getDocs(
+collection(doc(db, "classes", classId), "books")
 );
   } catch (err) {
     console.error("🔥 خطأ أثناء جلب القصص:", err);
