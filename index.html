@@ -95,10 +95,16 @@
   <img src="https://developers.google.com/identity/images/g-logo.png" width="20">
   الدخول باستخدام Google
 </button>
-    
+
+  
+  
   <!-- ======= هيكل التطبيق ======= -->
   <div id="appShell" class="app hidden">
-          
+    
+   
+   
+    
+    
     <!-- المحتوى الرئيسي يسارًا -->
     <main class="stage">
       <!-- تبويبات الطالب -->
@@ -247,12 +253,18 @@
 
   <div id="booksGrid" class="grid books"></div>
 </section>
-      
+
+       
         
     </main>
 
-          <!-- السكة اليمنى الثابتة: بيانات الطالب --> <aside class="rail"> <div class="profile-card glass"> <div class="avatar">😊</div> <div class="pname"> <strong id="userName">—</strong> <small id="userRoleLabel">—</small> </div> </div> <div class="score-card glass"> <div class="score-row"><span>الكتب</span><b id="railBooks">0</b></div> <div class="score-row"><span>الوقت</span><b id="railTime">0د</b></div> <div class="score-row"><span>الأوسمة</span><b id="railBadges">0</b></div> </div> </aside> </div> 
+    
+      <!-- السكة اليمنى الثابتة: بيانات الطالب --> <aside class="rail"> <div class="profile-card glass"> <div class="avatar">😊</div> <div class="pname"> <strong id="userName">—</strong> <small id="userRoleLabel">—</small> </div> </div> <div class="score-card glass"> <div class="score-row"><span>الكتب</span><b id="railBooks">0</b></div> <div class="score-row"><span>الوقت</span><b id="railTime">0د</b></div> <div class="score-row"><span>الأوسمة</span><b id="railBadges">0</b></div> </div> </aside> </div> 
 
+   
+   
+
+    
   <!-- قارئ النص -->
   <section id="readerView" class="reader hidden">
     <header class="reader-top">
@@ -276,7 +288,8 @@
       
     </div>
     
-      
+   
+    
   </section>
 
   <!-- مودال: إنشاء واجب -->
@@ -311,6 +324,7 @@
   </div>
   
   
+  
 <div id="modalQuiz" class="modal hidden">
   <div class="modal-card" style="max-width:600px">
     <button class="modal-close" id="closeQuiz">✖</button>
@@ -323,8 +337,10 @@
     </button>
   </div>
 </div>
-    
-    <!-- مودال إضافة قصة -->
+  
+  
+  
+  <!-- مودال إضافة قصة -->
 <div class="modal hidden" id="modalBook">
   <div class="modal-card" style="max-width:600px">
     <button class="modal-close" data-close="modalBook">✖</button>
@@ -354,6 +370,7 @@
     <button id="saveBook" class="btn primary full">حفظ القصة</button>
   </div>
 </div>
+
   
   <!-- مودال إضافة أنشطة للقصة -->
 <div class="modal hidden" id="modalQuizEditor">
@@ -380,6 +397,7 @@
     <button id="saveQuiz" class="btn primary full">إضافة السؤال</button>
   </div>
 </div>
+
   
 <script type="module">
   // ---------------------------------------------------------
@@ -498,6 +516,10 @@ if (classObj) {
     // ⭐ تشغيل المهام المتسلسلة باستخدام دالة async مغلّفة
     (async () => {
       try {
+        
+  // ✨✨ أضــف هـــذا الســـطـــر ✨✨
+    console.log("➡️ classId عند تسجيل الدخول:", classId);
+       
 
         // 1) 🔄 تحميل إجابات الواجبات من Firestore
         await loadStudentAnswersFromFirestore(classId, user.uid || user.email);
@@ -518,8 +540,11 @@ if (classObj) {
   }
 });
 
+
 </script>
 
- <script type="module" src="app.js"></script>
+
+ 
+<script type="module" src="app.js"></script>
 </body>
 </html>
