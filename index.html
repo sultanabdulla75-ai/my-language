@@ -414,6 +414,9 @@
     getFirestore,
     doc, setDoc, getDoc, getDocs, collection
   } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+  
+  // ⬅⬅⬅⬅⬅ أهم خطوة
+import { loadStudentAnswersFromFirestore, syncBooks } from "./app.js";
 
   // ---------------------------------------------------------
   // 2) Firebase Config (منصتك)
@@ -478,6 +481,37 @@ document.getElementById("googleLogin").addEventListener("click", async () => {
       classId,
       photo: user.photoURL
     }));
+    
+    
+    // ------------------------------
+// إضافة الطالب محليًا (مهم لعمل المنصة بدون إنترنت)
+// ------------------------------
+let users = JSON.parse(localStorage.getItem("arp.users") || "[]");
+
+if (!users.some(u => u.email === user.email)) {
+  users.push({
+    id: user.uid || user.email,
+    name: user.displayName,
+    email: user.email,
+    pass: null,
+    role: "student"
+  });
+  localStorage.setItem("arp.users", JSON.stringify(users));
+}
+
+// ------------------------------
+// إضافة الطالب إلى الفصل محليًا (حتى لا تظهر رسالة لا يوجد فصل)
+// ------------------------------
+let classes = JSON.parse(localStorage.getItem("arp.classes") || "[]");
+let classObj = classes.find(c => c.id === classId);
+
+if (classObj) {
+  if (!classObj.students.includes(user.uid || user.email)) {
+    classObj.students.push(user.uid || user.email);
+    localStorage.setItem("arp.classes", JSON.stringify(classes));
+  }
+}
+
 
     // ⭐ تشغيل المهام المتسلسلة باستخدام دالة async مغلّفة
     (async () => {
@@ -505,24 +539,7 @@ document.getElementById("googleLogin").addEventListener("click", async () => {
 
 </script>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCcgfkdGNTZhqPxoY765hf53jh9KqOQPxU",
-    authDomain: "my-language2025.firebaseapp.com",
-    projectId: "my-language2025",
-    storageBucket: "my-language2025.appspot.com",
-    messagingSenderId: "60168021260",
-    appId: "1:60168021260:web:0daa954a87c14383268f9e"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  window.db = getFirestore(app);   // أهم سطر يسمح لـ app.js باستخدام Firestore
-</script>
-
+ 
 <script type="module" src="app.js"></script>
 </body>
 </html>
-
