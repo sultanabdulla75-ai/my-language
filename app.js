@@ -1217,8 +1217,6 @@ function openReader(book){
   
 }
 
-
-
 // ===== فتح الاختبار =====
 $('#openActivitiesBtn')?.addEventListener('click', ()=>{
   if(!currentBook || !currentBook.quiz){
@@ -1248,8 +1246,6 @@ $('#openActivitiesBtn')?.addEventListener('click', ()=>{
 
   modal.classList.remove('hidden');
 });
-
-
 
 function backToApp(){
   $('#readerView').classList.add('hidden');
@@ -1288,7 +1284,6 @@ function playRecording(){
   new Audio(URL.createObjectURL(audioBlob)).play();
  }
 
-
 / ///تحديث بيانات القراء
 function updateReadStats(bookId){
   const current = readJSON(LS.CURRENT, null);
@@ -1305,8 +1300,6 @@ function updateReadStats(bookId){
 
   updateRail(); // ← تحديث السكة مباشرة
 }
-
-
 
 async function saveBook() {
   const title = $('#bTitle').value.trim();
@@ -1420,7 +1413,6 @@ async function saveQuiz() {
   toast("✓ تمت إضافة السؤال بنجاح");
 }
 
-
 function confirmSubmitModal(callback) {
   const modal = document.createElement('div');
   modal.className = 'modal';
@@ -1442,7 +1434,6 @@ function confirmSubmitModal(callback) {
     callback(); // ← ينفذ الإرسال فعليًا
   };
 }
-
 
 // ===== Boot =====
 function startApp(){
@@ -1478,7 +1469,6 @@ function startApp(){
     loadStudentAnswersFromFirestore(classObj.id, current.id);
   }
 }
-
 
   buildNav(current.role);
   renderLevels();
@@ -1566,8 +1556,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
       $('#modalQuizEditor').classList.remove('hidden');
     }
-    
-    
+        
       // ⭐ وهنا زر حفظ السؤال
   if(e.target.id === "saveQuiz"){
       saveQuiz();
@@ -1575,10 +1564,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   }); // ← هذا القوس مهم
  
-
-  
-  
-  // قارئ
+      // قارئ
   $('#backToApp').addEventListener('click', backToApp);
   $('#startRec').addEventListener('click', startRecording);
   $('#stopRec').addEventListener('click', stopRecording);
