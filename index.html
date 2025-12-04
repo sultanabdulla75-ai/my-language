@@ -505,8 +505,24 @@ document.getElementById("googleLogin").addEventListener("click", async () => {
 
 </script>
 
-  
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcgfkdGNTZhqPxoY765hf53jh9KqOQPxU",
+    authDomain: "my-language2025.firebaseapp.com",
+    projectId: "my-language2025",
+    storageBucket: "my-language2025.appspot.com",
+    messagingSenderId: "60168021260",
+    appId: "1:60168021260:web:0daa954a87c14383268f9e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  window.db = getFirestore(app);   // أهم سطر يسمح لـ app.js باستخدام Firestore
+</script>
 
 <script type="module" src="app.js"></script>
 </body>
 </html>
+
