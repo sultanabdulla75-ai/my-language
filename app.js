@@ -14,45 +14,53 @@ const db = window.db;
 
 // ===== مزامنة القصص من BOOKS (محلياً) إلى Firestore =====
 export async function syncBooks(classId) {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current) return;
 
-  const snap = await getDocs(collection(db, "classes", classId, "books"));
-
-  const cloudBooks = [];
-  snap.forEach(doc => cloudBooks.push(doc.data()));
-
-  // ـــــــــــــــــــــــــــ
-  // 1) الطالب → تحميل فقط (Pull)
-  // ـــــــــــــــــــــــــــ
-  if (current.role === "student") {
-    BOOKS.length = 0;
-    cloudBooks.forEach(b => BOOKS.push(b));
-    console.log("📥 الطالب حمّل القصص من Firestore:", BOOKS.length);
+  if (!classId) {
+    console.error("❌ syncBooks: classId مفقود — تم إيقاف المزامنة.");
     return;
   }
 
-  // ـــــــــــــــــــــــــــ
-  // 2) المعلم → مزامنة ثنائية
-  // ـــــــــــــــــــــــــــ
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return;
 
-  // (أ) دمج القصص القادمة من Firestore محليًا
+  let snap;
+  try {
+    snap = await getDocs(collection(db, "classes", classId, "books"));
+  } catch (err) {
+    console.error("🔥 خطأ أثناء جلب القصص:", err);
+    return;
+  }
+
+  const cloudBooks = [];
+  snap.forEach(d => cloudBooks.push(d.data()));
+
+  // ----- 1) الطالب: تحميل فقط -----
+  if (current.role === "student") {
+    BOOKS.length = 0;
+    cloudBooks.forEach(b => BOOKS.push(b));
+    console.log("📥 الطالب حمّل القصص:", BOOKS.length);
+    return;
+  }
+
+  // ----- 2) المعلم: مزامنة -----
+
+  // دمج القصص القادمة من Firestore
   cloudBooks.forEach(b => {
     if (!BOOKS.some(x => x.id === b.id)) {
-      BOOKS.push(b); // أضف أي قصة غير موجودة
+      BOOKS.push(b);
     }
   });
 
-  // (ب) رفع القصص المحلية الجديدة إلى Firestore
+  // رفع القصص الجديدة إلى Firestore
   for (const b of BOOKS) {
     const exists = cloudBooks.some(x => x.id === b.id);
     if (!exists) {
       await setDoc(doc(db, "classes", classId, "books", b.id), b);
-      console.log("⬆️ رفع قصة جديدة إلى Firestore:", b.title);
+      console.log("⬆️ رفع قصة جديدة:", b.title);
     }
   }
 
-  console.log("🔄 تمّت مزامنة المعلم بنجاح");
+  console.log("🔄 تمت المزامنة بنجاح");
 }
 
 
@@ -1217,6 +1225,8 @@ function openReader(book){
   
 }
 
+
+
 // ===== فتح الاختبار =====
 $('#openActivitiesBtn')?.addEventListener('click', ()=>{
   if(!currentBook || !currentBook.quiz){
@@ -1246,6 +1256,8 @@ $('#openActivitiesBtn')?.addEventListener('click', ()=>{
 
   modal.classList.remove('hidden');
 });
+
+
 
 function backToApp(){
   $('#readerView').classList.add('hidden');
@@ -1284,6 +1296,7 @@ function playRecording(){
   new Audio(URL.createObjectURL(audioBlob)).play();
  }
 
+
 / ///تحديث بيانات القراء
 function updateReadStats(bookId){
   const current = readJSON(LS.CURRENT, null);
@@ -1300,6 +1313,8 @@ function updateReadStats(bookId){
 
   updateRail(); // ← تحديث السكة مباشرة
 }
+
+
 
 async function saveBook() {
   const title = $('#bTitle').value.trim();
@@ -1413,6 +1428,7 @@ async function saveQuiz() {
   toast("✓ تمت إضافة السؤال بنجاح");
 }
 
+
 function confirmSubmitModal(callback) {
   const modal = document.createElement('div');
   modal.className = 'modal';
@@ -1434,6 +1450,7 @@ function confirmSubmitModal(callback) {
     callback(); // ← ينفذ الإرسال فعليًا
   };
 }
+
 
 // ===== Boot =====
 function startApp(){
@@ -1469,6 +1486,7 @@ function startApp(){
     loadStudentAnswersFromFirestore(classObj.id, current.id);
   }
 }
+
 
   buildNav(current.role);
   renderLevels();
@@ -1556,7 +1574,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
       $('#modalQuizEditor').classList.remove('hidden');
     }
-        
+    
+    
       // ⭐ وهنا زر حفظ السؤال
   if(e.target.id === "saveQuiz"){
       saveQuiz();
@@ -1564,7 +1583,10 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   }); // ← هذا القوس مهم
  
-      // قارئ
+
+  
+  
+  // قارئ
   $('#backToApp').addEventListener('click', backToApp);
   $('#startRec').addEventListener('click', startRecording);
   $('#stopRec').addEventListener('click', stopRecording);
