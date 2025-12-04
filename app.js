@@ -13,7 +13,7 @@ const db = window.db;
 
 
 // ===== مزامنة القصص من BOOKS (محلياً) إلى Firestore =====
-async function syncBooks(classId) {
+export async function syncBooks(classId) {
   const current = readJSON(LS.CURRENT, null);
   if (!current) return;
 
@@ -171,6 +171,13 @@ async function loadBooksFromFirestore(classId) {
   const snap = await getDocs(collection(db, "classes", classId, "books"));
   const arr = [];
   snap.forEach(doc => arr.push(doc.data()));
+
+  // 🔹 لو ما في قصص في Firestore → استخدم المحلية
+  if (arr.length === 0) {
+    console.warn("⚠ لا توجد قصص في السحابة. سيتم استخدام القصص المحلية.");
+    return BOOKS;
+  }
+
   return arr;
 }
 
@@ -567,7 +574,8 @@ function getStudentAssignments(uid){
 
 
 // ===== تحميل إجابات الطالب من Firestore =====
-async function loadStudentAnswersFromFirestore(classId, studentId) {
+export async function loadStudentAnswersFromFirestore(classId, studentId) {
+
   const snap = await getDocs(collection(db, "classes", classId, "assignments"));
 
   const localAssignments = getAssignments();
