@@ -906,24 +906,59 @@ async function saveStudent() {
   const name = $('#sName').value.trim();
   const email = $('#sEmail').value.trim().toLowerCase();
   const className = $('#sClass').value.trim();
+  const pass = $('#sPass').value.trim() || "123456";
 
   if (!name || !email || !className) {
     toast("❗ يرجى تعبئة الاسم والبريد والصف");
     return;
   }
 
-  const classId = className.replace(/\s+/g, "_");
+  // 1) الحصول على الفصل الخاص بالمعلم
+  const current = readJSON(LS.CURRENT, null);
+  const classObj = getTeacherClass(current.id);
+  const classId = classObj.id;
 
-  if (window.db) {
+  // 2) إضافة الطالب إلى users (محليًا)
+  let users = getUsers();
+  if (!users.some(u => u.email === email)) {
+    users.push({
+      id: email,
+      name,
+      email,
+      pass,
+      role: "student",
+      className
+    });
+    setUsers(users);
+  }
+
+  // 3) إضافة الطالب إلى الفصل محليًا
+  let classes = getClasses();
+  let c = classes.find(x => x.id === classId);
+
+  if (!c.students.includes(email)) {
+    c.students.push(email);
+    setClasses(classes);
+  }
+
+  // 4) حفظ في Firestore (إنترنت فقط)
+  try {
     await setDoc(
-      doc(window.db, "classes", classId, "students", email),
-      { name, email, uid: null }
+      doc(db, "classes", classId, "students", email),
+      { name, email, className, uid: email }
     );
+  } catch (e) {
+    console.warn("⚠ لم يتم الحفظ في Firestore (لا يوجد إنترنت)");
   }
 
   $('#modalStudent').classList.add('hidden');
-  toast("✔ تم حفظ الطالب في Firestore (إن وجد اتصال)");
+  toast("✔ تم إضافة الطالب بنجاح");
+
+  // 5) تحديث الواجهة فورًا
+  renderTeacherStudents();
+  renderTeacherView();
 }
+
 
 function openCreateAssignment() {
   const current = readJSON(LS.CURRENT, null); if (!current) return;
