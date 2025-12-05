@@ -358,127 +358,136 @@
     </div>
   </div>
 
-  <!-- ============= Firebase + Google Login ============= -->
   <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-  import { loadStudentAnswersFromFirestore, syncBooks } from "./app.js";
+import { loadStudentAnswersFromFirestore, syncBooks } from "./app.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCcgfkdGNTZhqPxoY765hf53jh9KqOQPxU",
-    authDomain: "my-language2025.firebaseapp.com",
-    projectId: "my-language2025",
-    storageBucket: "my-language2025.firebasestorage.app",
-    messagingSenderId: "531458626572",
-    appId: "1:531458626572:web:711af89cd9019f0ee64a29",
-    measurementId: "G-EBEN4JWHM8"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyCcgfkdGNTZhqPxoY765hf53jh9KqOQPxU",
+  authDomain: "my-language2025.firebaseapp.com",
+  projectId: "my-language2025",
+  storageBucket: "my-language2025.firebasestorage.app",
+  messagingSenderId: "531458626572",
+  appId: "1:531458626572:web:711af89cd9019f0ee64a29",
+  measurementId: "G-EBEN4JWHM8"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const provider = new GoogleAuthProvider();
-  const db = getFirestore(app);
-  window.db = db;
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+const db = getFirestore(app);
+window.db = db;
 
-  document.getElementById("googleLogin")?.addEventListener("click", async () => {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+// ===============================================
+//  تسجيل الدخول باستخدام Google  (الإصدار المصحّح)
+// ===============================================
 
-      console.log("✔ Logged in with Google:", user.email);
+document.getElementById("googleLogin")?.addEventListener("click", async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
 
-      // 🔍 البحث عن الصف في Firestore
-      const classesSnap = await getDocs(collection(db, "classes"));
-      let classId = null;
+    console.log("✔ Logged in with Google:", user.email);
 
-      for (const c of classesSnap.docs) {
-        const stu = await getDoc(doc(db, "classes", c.id, "students", user.email));
-        if (stu.exists()) {
-          classId = c.id;
-          break;
-        }
+    // 📌 تعريف معرف الطالب = البريد دائمًا
+    const studentId = user.email;
+
+    // ------------------------------------------------
+    // 🔍 1) البحث عن صف الطالب داخل Firestore
+    // ------------------------------------------------
+    const classesSnap = await getDocs(collection(db, "classes"));
+    let classId = null;
+
+    for (const c of classesSnap.docs) {
+      const stu = await getDoc(doc(db, "classes", c.id, "students", studentId));
+      if (stu.exists()) {
+        classId = c.id;
+        break;
       }
-
-      if (!classId) {
-        alert("⚠ أنت غير مسجّل في أي صف. اطلب من المعلم إضافتك.");
-        return;
-      }
-
-      const uid = user.uid || user.email;
-
-      // ------------------------------------------------
-      // 1️⃣ حفظ الطالب في arp.users إذا لم يكن موجودًا
-      // ------------------------------------------------
-      let users = JSON.parse(localStorage.getItem("arp.users") || "[]");
-
-      if (!users.some(u => u.email === user.email)) {
-        users.push({
-          id: uid,
-          name: user.displayName,
-          email: user.email,
-          pass: null,
-          role: "student"
-        });
-
-        localStorage.setItem("arp.users", JSON.stringify(users));
-      }
-
-      // ------------------------------------------------
-      // 2️⃣ حفظ الطالب داخل الفصل arp.classes
-      // ------------------------------------------------
-      let classes = JSON.parse(localStorage.getItem("arp.classes") || "[]");
-
-      let classObj = classes.find(c => c.id === classId);
-      if (!classObj) {
-        classObj = {
-          id: classId,
-          teacherId: "T1",
-          name: "فصلي",
-          students: []
-        };
-        classes.push(classObj);
-      }
-
-      if (!classObj.students.includes(uid)) {
-        classObj.students.push(uid);
-      }
-
-      localStorage.setItem("arp.classes", JSON.stringify(classes));
-
-      // ------------------------------------------------
-      // 3️⃣ حفظ الجلسة المحلية
-      // ------------------------------------------------
-      localStorage.setItem("arp.current", JSON.stringify({
-        id: uid,
-        name: user.displayName,
-        email: user.email,
-        role: "student",
-        classId
-      }));
-
-      // ------------------------------------------------
-      // 4️⃣ تحميل إجابات الواجبات من Firestore
-      // ------------------------------------------------
-      await loadStudentAnswersFromFirestore(classId, uid);
-
-      // ------------------------------------------------
-      // 5️⃣ مزامنة القصص
-      // ------------------------------------------------
-      await syncBooks(classId);
-
-      // ------------------------------------------------
-      // 6️⃣ الدخول للمنصة
-      // ------------------------------------------------
-      window.location.href = "index.html";
-
-    } catch (e) {
-      console.error(e);
-      alert("فشل تسجيل الدخول: " + e.message);
     }
-  });
+
+    if (!classId) {
+      alert("⚠ أنت غير مسجّل في أي صف. اطلب من المعلم إضافتك.");
+      return;
+    }
+
+    // ------------------------------------------------
+    // 2️⃣ إضافة الطالب في arp.users محليًا
+    // ------------------------------------------------
+    let users = JSON.parse(localStorage.getItem("arp.users") || "[]");
+
+    if (!users.some(u => u.email === studentId)) {
+      users.push({
+        id: studentId,        // ← لاحظ: المعرف هو البريد
+        name: user.displayName,
+        email: studentId,
+        pass: null,
+        role: "student",
+        className: "فصلي"
+      });
+
+      localStorage.setItem("arp.users", JSON.stringify(users));
+    }
+
+    // ------------------------------------------------
+    // 3️⃣ إضافة الطالب إلى الفصل محليًا
+    // ------------------------------------------------
+    let classes = JSON.parse(localStorage.getItem("arp.classes") || "[]");
+
+    let classObj = classes.find(c => c.id === classId);
+
+    if (!classObj) {
+      classObj = {
+        id: classId,
+        teacherId: "T1",
+        name: "فصلي",
+        students: []
+      };
+      classes.push(classObj);
+    }
+
+    if (!classObj.students.includes(studentId)) {
+      classObj.students.push(studentId);
+    }
+
+    localStorage.setItem("arp.classes", JSON.stringify(classes));
+
+    // ------------------------------------------------
+    // 4️⃣ حفظ الجلسة الحالية
+    // ------------------------------------------------
+    localStorage.setItem("arp.current", JSON.stringify({
+      id: studentId,
+      name: user.displayName,
+      email: studentId,
+      role: "student",
+      classId
+    }));
+
+    // ------------------------------------------------
+    // 5️⃣ تحميل إجابات الواجبات له
+    // ------------------------------------------------
+    await loadStudentAnswersFromFirestore(classId, studentId);
+
+    // ------------------------------------------------
+    // 6️⃣ مزامنة القصص
+    // ------------------------------------------------
+    await syncBooks(classId);
+
+    // ------------------------------------------------
+    // 7️⃣ الدخول للمنصة
+    // ------------------------------------------------
+    window.location.href = "index.html";
+
+  } catch (e) {
+    console.error(e);
+    alert("فشل تسجيل الدخول: " + e.message);
+  }
+});
 </script>
+
 
 
   <!-- تطبيق المنصة (يُستورد مرة واحدة فقط) -->
