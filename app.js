@@ -615,61 +615,71 @@ function getTeacherClass(teacherId){
   return c;
 }
 
-function renderTeacherStudents() {
+export function renderTeacherStudents() {
   const current = readJSON(LS.CURRENT, null);
   if (!current) return;
 
-  const c = getTeacherClass(current.id);
-  const users = getUsers();
+  const classes = readJSON(LS.CLASSES, []);
+  const users = readJSON(LS.USERS, []);
+
+  const classObj = classes.find(c => c.id === current.classId);
+  if (!classObj) return;
+
   const rows = $('#studentsRows');
   if (!rows) return;
-  rows.innerHTML = '';
 
-  // 🧑‍🏫 جلب جميع طلاب المعلم
-  const students = c.students.map(id => users.find(u => u.id === id)).filter(Boolean);
+  rows.innerHTML = "";
 
-  // 🟡 في حال عدم وجود طلاب
+  // 🟦 الطلاب محفوظون كأيميلات.. نبحث عنهم داخل users
+  const students = classObj.students
+    .map(email => users.find(u => u.email === email))
+    .filter(Boolean);
+
   if (!students.length) {
     rows.innerHTML = `
       <div class="row">
         <div>لا يوجد طلاب بعد.</div>
         <div>—</div>
-        <div>${c.name}</div>
+        <div>${classObj.name || "—"}</div>
         <div>—</div>
-      </div>`;
+      </div>
+    `;
     return;
   }
 
-  // 🧾 إنشاء صفوف الطلاب
+  // 🟩 نمثل كل طالب في صف واحد
   students.forEach(student => {
-    const r = document.createElement('div');
-    r.className = 'row';
+    const r = document.createElement("div");
+    r.className = "row";
+
     r.innerHTML = `
       <div>${student.name}</div>
       <div>${student.email}</div>
-      <div>${student.className || c.name || '—'}</div>
+      <div>${student.className || classObj.name || "—"}</div>
       <div class="actions">
-        <button class="btn mini" data-edit="${student.id}">تعديل</button>
-        <button class="btn mini ghost" data-del="${student.id}">حذف</button>
+        <button class="btn mini" data-edit="${student.email}">تعديل</button>
+        <button class="btn mini ghost" data-del="${student.email}">حذف</button>
       </div>
     `;
 
-    // 🗑️ حذف الطالب
-    r.querySelector('[data-del]').onclick = () => {
+    // 🗑 حذف طالب
+    r.querySelector("[data-del]").onclick = () => {
       if (confirm(`هل تريد حذف الطالب ${student.name}؟`)) {
-        c.students = c.students.filter(x => x !== student.id);
-        setClasses([...getClasses().filter(x => x.id !== c.id), c]);
-        setUsers(users.filter(u => u.id !== student.id));
+        classObj.students = classObj.students.filter(x => x !== student.email);
+        setClasses([...classes.filter(x => x.id !== classObj.id), classObj]);
+
+        setUsers(users.filter(u => u.email !== student.email));
+
         renderTeacherStudents();
         renderTeacherView();
-        toast('❌ تم حذف الطالب بنجاح');
+        toast("❌ تم حذف الطالب بنجاح");
       }
     };
 
-    // ✏️ تعديل بيانات الطالب
-    r.querySelector('[data-edit]').onclick = () => {
-      const modal = document.createElement('div');
-      modal.className = 'modal';
+    // ✏️ تعديل طالب
+    r.querySelector("[data-edit]").onclick = () => {
+      const modal = document.createElement("div");
+      modal.className = "modal";
       modal.innerHTML = `
         <div class="modal-card" style="max-width:500px">
           <button class="modal-close" id="closeEdit">✖</button>
@@ -684,48 +694,52 @@ function renderTeacherStudents() {
           </div>
 
           <div class="form-row"><label>الصف</label>
-            <input type="text" id="editClass" value="${student.className || c.name || ''}" placeholder="مثلاً: الصف السادس">
-          </div>
-
-          <div class="form-row"><label>كلمة المرور</label>
-            <input type="text" id="editPass" value="${student.pass || '123456'}">
+            <input type="text" id="editClass" value="${student.className || classObj.name || ''}">
           </div>
 
           <button class="btn primary full" id="saveEdit">حفظ التعديلات ✅</button>
-        </div>`;
-
+        </div>
+      `;
+      
       document.body.appendChild(modal);
 
-      // إغلاق النافذة
       $('#closeEdit').onclick = () => modal.remove();
 
-      // 💾 حفظ التعديلات
       $('#saveEdit').onclick = () => {
         const newName = $('#editName').value.trim();
-        const newEmail = $('#editEmail').value.trim().toLowerCase();
+        const newEmail = $('#editEmail').value.trim();
         const newClass = $('#editClass').value.trim();
-        const newPass = $('#editPass').value.trim();
 
-        if (!newName || !newEmail) return toast('يرجى إدخال البيانات كاملة');
+        if (!newName || !newEmail) {
+          toast("يرجى إدخال البيانات كاملة");
+          return;
+        }
 
-        const idx = users.findIndex(u => u.id === student.id);
+        // تحديث بيانات المستخدم
+        const idx = users.findIndex(u => u.email === student.email);
         if (idx > -1) {
-          users[idx] = { 
-            ...users[idx], 
-            name: newName, 
-            email: newEmail, 
-            pass: newPass, 
-            className: newClass 
+          users[idx] = {
+            ...users[idx],
+            name: newName,
+            email: newEmail,
+            className: newClass
           };
+
           setUsers(users);
+
+          // تحديث class.students
+          classObj.students = classObj.students.map(x =>
+            x === student.email ? newEmail : x
+          );
+          setClasses(classes);
+
           modal.remove();
-          toast('✅ تم حفظ التعديلات بنجاح');
+          toast("✅ تم حفظ التعديلات بنجاح");
           renderTeacherStudents();
         }
       };
     };
 
-    // ✅ إضافة الصف للجدول بعد إتمام إعداد الأحداث
     rows.appendChild(r);
   });
 }
