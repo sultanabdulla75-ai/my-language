@@ -107,68 +107,59 @@ function toast(msg) { alert(msg); }
 // Firestore Helpers (كتب + واجبات)
 // ------------------------------------------------------
 
-// ------------------------------------------------------
-// 🛠️ 3/3: دالة مزامنة شاملة جديدة (استبدال syncBooks القديمة)
-// ------------------------------------------------------
-// هذه الدالة الآن مسؤولة عن مزامنة بيانات الفصل الرئيسية والواجبات المضمنة
-export async function syncClassData(classId) {
-  if (!classId || !window.db) {
-      console.error("❌ syncClassData: classId أو window.db مفقود — تم إيقاف المزامنة.");
-      return;
+// 🔹 مزامنة القصص (محلي ↔ سحابة)
+export async function syncBooks(classId) {
+  if (!classId) {
+    console.error("❌ syncBooks: classId مفقود — تم إيقاف المزامنة.");
+    return;
   }
-  const classDocRef = doc(window.db, "classes", classId);
-  let classes = getClasses();
-  let localClass = classes.find(c => c.id === classId);
 
-  // 1. جلب البيانات من السحابة وتحديث المحلي (الأولوية للسحابة)
-  try {
-    const docSnap = await getDoc(classDocRef);
-    if (docSnap.exists()) {
-      const cloudData = docSnap.data();
-      
-      if (localClass) {
-        // تحديث البيانات المحلية ببيانات السحابة
-        localClass.name = cloudData.name || localClass.name;
-        localClass.students = cloudData.students || localClass.students;
-        // ⚠️ الواجبات يتم حفظها بشكل منفصل في LocalStorage، لكن سنستخدم بيانات السحابة هنا
-        
-      } else {
-        // إذا لم يكن الفصل موجودًا محليًا، أضفه من السحابة
-        localClass = { id: classId, ...cloudData };
-        classes.push(localClass);
-      }
-      setClasses(classes);
-      
-      // تحديث الواجبات المحلية من بيانات الفصل السحابية
-      const assignments = getAssignments().filter(a => a.classId !== classId);
-      if (cloudData.assignments) {
-          assignments.push(...cloudData.assignments);
-      }
-      setAssignments(assignments);
-      
-      console.log(`✅ تم تحميل وتحديث بيانات الفصل (${classId}) من السحابة.`);
-      
-    } else if (localClass) {
-        // إذا كان موجوداً محلياً فقط، ننشئه في السحابة
-        // 2. تحديث السحابة ببيانات الفصل المحلي
-        await setDoc(classDocRef, { 
-            id: localClass.id, 
-            teacherId: localClass.teacherId, 
-            name: localClass.name, 
-            students: localClass.students,
-            assignments: getAssignments().filter(a => a.classId === classId) // نرفع الواجبات المرتبطة بهذا الفصل
-        });
-        console.log(`✅ تم إنشاء/تحديث بيانات الفصل (${classId}) في السحابة.`);
-    }
-    
-    // 3. مزامنة القصص (مطلوب لملء مصفوفة BOOKS العالمية)
-    await syncBooksWithFirestore(classId); 
-    
-  } catch (error) {
-    console.error("❌ خطأ في مزامنة بيانات الفصل:", error);
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return;
+
+  if (!window.db) {
+    console.error("❌ syncBooks: window.db غير مهيأ.");
+    return;
   }
+
+  let snap;
+  try {
+    snap = await getDocs(
+      collection(window.db, "classes", classId, "books")
+    );
+  } catch (err) {
+    console.error("🔥 خطأ أثناء جلب القصص:", err);
+    return;
+  }
+
+  const cloudBooks = [];
+  snap.forEach(d => cloudBooks.push(d.data()));
+
+  // الطالب: تحميل فقط
+  if (current.role === "student") {
+    BOOKS.length = 0;
+    cloudBooks.forEach(b => BOOKS.push(b));
+    console.log("📥 الطالب حمّل القصص:", BOOKS.length);
+    return;
+  }
+
+  // المعلم: مزامنة
+  cloudBooks.forEach(b => {
+    if (!BOOKS.some(x => x.id === b.id)) {
+      BOOKS.push(b);
+    }
+  });
+
+  for (const b of BOOKS) {
+    const exists = cloudBooks.some(x => x.id === b.id);
+    if (!exists) {
+      await setDoc(doc(window.db, "classes", classId, "books", b.id), b);
+      console.log("⬆️ رفع قصة جديدة:", b.title);
+    }
+  }
+
+  console.log("🔄 تمت المزامنة بنجاح");
 }
-// ⚠️ ملاحظة: استبدلت هذه الدالة دالة syncBooks القديمة.
 
 // 🔹 حفظ سؤال اختبار في Firestore
 async function saveQuizToFirestore(classId, bookId, quiz) {
@@ -471,50 +462,17 @@ function registerUser(e) {
   $('#loginForm').classList.remove('hidden');
 }
 
-// ------------------------------------------------------
-// تسجيل الدخول (اسم المستخدم/كلمة المرور)
-// ------------------------------------------------------
-async function loginUser() { // 👈 يجب إضافة async هنا
+function loginUser(e) {
+  e.preventDefault();
   const email = $('#loginEmail').value.trim().toLowerCase();
-  const pass = $('#loginPass').value.value.trim(); // ⚠️ قد تحتاج لتصحيح هذه القيمة
-  const current = readJSON(LS.CURRENT, null);
-
-  if (!email || !pass) {
-    toast("❗ يرجى إدخال البريد وكلمة المرور");
-    return;
-  }
-
-  // 1. محاولة الدخول عبر Firebase Auth
-  let authSuccess = false;
-  if (window.auth && window.signInWithEmailAndPassword) {
-      try {
-          // ⚠️ يجب التأكد من أن دالة signInWithEmailAndPassword تم استيرادها بشكل صحيح
-          await signInWithEmailAndPassword(window.auth, email, pass);
-          authSuccess = true;
-          console.log("✅ تم الدخول عبر Firebase Auth");
-      } catch (error) {
-          console.error("Firebase Auth فشل:", error.message);
-          // نواصل البحث المحلي حتى لو فشل الدخول في السحابة
-      }
-  }
-
-  // 2. التحقق محليًا
-  const users = getUsers();
+  const pass = $('#loginPass').value;
+  const users = readJSON(LS.USERS, []);
   const user = users.find(u => u.email === email && u.pass === pass);
-
-  if (user) {
-    // 3. تحديث الجلسة
-    writeJSON(LS.CURRENT, user);
-    toast("✓ مرحباً بك، " + user.name);
-
-    // 4. إعادة تحميل التطبيق لبدء الجلسة الجديدة
-    window.location.href = 'index.html'; 
-
-  } else if (!authSuccess) {
-    // ⚠️ إذا فشل الدخول في كلتا الحالتين
-    toast("❌ البريد أو كلمة المرور غير صحيحة");
-  }
+  if (!user) { $('#loginMsg').textContent = 'بيانات الدخول غير صحيحة.'; return; }
+  writeJSON(LS.CURRENT, { id: user.id, name: user.name, email: user.email, role: user.role });
+  startApp();
 }
+
 function logoutUser() {
   localStorage.removeItem(LS.CURRENT);
   $('#authView').classList.remove('hidden');
@@ -811,7 +769,6 @@ function renderStudentAssignments(filter = 'required') {
           <div style="text-align:center;margin-top:1rem">
             <button class="btn primary" id="closeViewBtn">إغلاق</button>
           </div>
-
         </div>`;
       document.body.appendChild(modal);
       $('#closeView').onclick = () => modal.remove();
@@ -826,29 +783,13 @@ function renderStudentAssignments(filter = 'required') {
 // Teacher: إدارة الطلاب والواجبات
 // ------------------------------------------------------
 
-// ------------------------------------------------------
-// 🛠️ دالة مُحسّنة: ضمان استرجاع الفصل الصحيح للمعلم من الذاكرة المحلية
-// ------------------------------------------------------
 function getTeacherClass(teacherId) {
-  let classes = getClasses();
+  const classes = getClasses();
   let c = classes.find(c => c.teacherId === teacherId);
-  
-  // إذا لم يتم العثور عليه، يجب أن يكون قد تم جلبه مسبقًا من السحابة بواسطة startApp.
-  // إذا وصلنا إلى هنا ولم يكن موجوداً، هذا يعني أن هناك مشكلة في البيانات المحلية أو
-  // أن المعلم يقوم بالدخول لأول مرة.
   if (!c) {
-      // 💡 إذا لم يكن موجوداً، ننشئه محلياً فقط في حال كانت القائمة فارغة
-      // ونعتمد على startApp لجلب الفصل الصحيح من السحابة
-      const classId = 'C' + Date.now();
-      c = {
-          id: classId, // هذا ID مؤقت لحين المزامنة
-          teacherId: teacherId,
-          name: 'فصلي',
-          students: [],
-          books: []
-      };
-      classes.push(c);
-      setClasses(classes);
+    c = { id: uid('C'), teacherId, name: 'فصلي', students: [] };
+    classes.push(c);
+    setClasses(classes);
   }
   return c;
 }
@@ -865,10 +806,10 @@ function renderTeacherStudents() {
 
   rows.innerHTML = '';
 
- // 🟦 يحول IDs (أو الإيميلات) إلى مستخدمين فعليين
-const students = c.students
-  .map(identifier => users.find(u => u.id === identifier || u.email === identifier))
-  .filter(Boolean);
+  // 🟦 يحول IDs المخزنة إلى مستخدمين فعليين
+  const students = c.students
+    .map(id => users.find(u => u.id === id))
+    .filter(Boolean);
 
   // 🟥 لا يوجد طلاب
   if (!students.length) {
@@ -1066,7 +1007,7 @@ function openCreateAssignment() {
   });
   const box = $('#studentsChecklist'); box.innerHTML = '';
   const users = getUsers();
-  c.students.map(identifier => users.find(u => u.id === identifier || u.email === identifier)).filter(Boolean).forEach(st => {
+  c.students.map(id => users.find(u => u.id === id)).filter(Boolean).forEach(st => {
     const idc = uid('CHK');
     const label = document.createElement('label');
     label.innerHTML = `<input type="checkbox" id="${idc}" value="${st.id}"> ${st.name}`;
@@ -1078,47 +1019,21 @@ function openCreateAssignment() {
   $('#modalAssign').classList.remove('hidden');
 }
 
-// حفظ واجب جديد
-async function saveAssignment() { // 👈 يجب إضافة async هنا
-  const current = readJSON(LS.CURRENT, null); 
-  if (!current) return;
-  
+function saveAssignment() {
+  const current = readJSON(LS.CURRENT, null); if (!current) return;
   const title = $('#aTitle').value.trim() || 'واجب جديد';
   const level = $('#aLevel').value;
   const due = $('#aDue').value;
   const desc = $('#aDesc').value.trim();
-  
   const students = [...document.querySelectorAll('#studentsChecklist input[type=checkbox]:checked')].map(i => i.value);
-  
-  if (!students.length) { 
-    toast('اختر طالبًا واحدًا على الأقل'); 
-    return; 
-  }
-  
-  const classId = getTeacherClass(current.id).id; // 🔑 نأخذ الـ Class ID الموثوق
-  
+  if (!students.length) { toast('اختر طالبًا واحدًا على الأقل'); return; }
   const a = {
-    id: uid('A'), 
-    title, 
-    level, 
-    due, 
-    desc,
-    teacherId: current.id, 
-    classId: classId, // استخدام الـ ID الموثوق
+    id: uid('A'), title, level, due, desc,
+    teacherId: current.id, classId: getTeacherClass(current.id).id,
     studentIds: students,
     perStudent: students.reduce((acc, id) => (acc[id] = { status: 'required', progress: 0, notes: '' }, acc), {})
   };
-  
-  const all = getAssignments(); 
-  all.push(a); 
-  setAssignments(all);
-  
-  // ⬇️ المكان الصحيح لإضافة الاستدعاء 
-  if (window.db) {
-    // 💡 الآن syncClassData ستقوم برفع الواجبات الجديدة (المخزنة في LocalStorage) إلى السحابة
-    await syncClassData(classId); 
-  }
-  
+  const all = getAssignments(); all.push(a); setAssignments(all);
   $('#modalAssign').classList.add('hidden');
   renderTeacherView();
   toast('تم إنشاء الواجب وإرساله للطلاب المحددين');
@@ -1391,58 +1306,55 @@ function updateReadStats(bookId) {
 
 // حفظ قصة جديدة
 async function saveBook() {
-  const title = $('#bTitle').value.trim();
-  const level = $('#bLevel').value;
-  let cover = $('#bCover').value.trim();
-  const textRaw = $('#bText').value.trim();
+  const title = $('#bTitle').value.trim();
+  const level = $('#bLevel').value;
+  let cover = $('#bCover').value.trim();
+  const textRaw = $('#bText').value.trim();
 
-  if (!title || !level || !textRaw) {
-    toast("❗ يرجى تعبئة العنوان والمستوى والنص");
-    return;
-  }
+  if (!title || !level || !textRaw) {
+    toast("❗ يرجى تعبئة العنوان والمستوى والنص");
+    return;
+  }
 
-  const text = textRaw.split('\n').map(t => t.trim()).filter(t => t);
-  const upload = $('#bFile')?.files?.[0];
-  if (upload) cover = URL.createObjectURL(upload);
+  const text = textRaw.split('\n').map(t => t.trim()).filter(t => t);
+  const upload = $('#bFile')?.files?.[0];
+  if (upload) cover = URL.createObjectURL(upload);
 
-  if (!cover) {
-    cover = `https://picsum.photos/seed/${encodeURIComponent(title)}/400/550`;
-  }
+  if (!cover) {
+    cover = `https://picsum.photos/seed/${encodeURIComponent(title)}/400/550`;
+  }
 
-  if (!cover.startsWith("http") && !cover.startsWith("blob:")) {
-    toast("⚠ رابط الصورة غير صالح");
-    return;
-  }
+  if (!cover.startsWith("http") && !cover.startsWith("blob:")) {
+    toast("⚠ رابط الصورة غير صالح");
+    return;
+  }
 
-  const current = readJSON(LS.CURRENT, null);
-  // 🔑 ملاحظة: هنا يجب أن يكون classObj.id هو الـ ID الصحيح الذي تم تثبيته في startApp
-  const classObj = getTeacherClass(current.id); 
-  const classId = classObj.id;
+  const current = readJSON(LS.CURRENT, null);
+  const classObj = getTeacherClass(current.id);
+  const classId = classObj.id;
 
-  const id = uid("B");
+  const id = uid("B");
 
-  const bookData = {
-    id,
-    title,
-    level,
-    cover,
-    text,
-    quiz: []
-  };
+  const bookData = {
+    id,
+    title,
+    level,
+    cover,
+    text,
+    quiz: []
+  };
 
-  if (window.db) {
-    await setDoc(
-      doc(window.db, "classes", classId, "books", id),
-      bookData
-    );
-    // ⬇️ المكان الصحيح لإضافة الاستدعاء 
-    await syncClassData(classId); // 👈 (الاستدعاء هنا)
-  }
+  if (window.db) {
+    await setDoc(
+      doc(window.db, "classes", classId, "books", id),
+      bookData
+    );
+  }
 
-  BOOKS.push(bookData);
-  $('#modalBook').classList.add('hidden');
-  renderBooks("ALL");
-  toast("✓ تمت إضافة القصة (سحابة + محلي) 🎉");
+  BOOKS.push(bookData);
+  $('#modalBook').classList.add('hidden');
+  renderBooks("ALL");
+  toast("✓ تمت إضافة القصة (سحابة + محلي) 🎉");
 }
 
 async function saveQuiz() {
@@ -1506,177 +1418,39 @@ function confirmSubmitModal(callback) {
   };
 }
 
-
-
-// ------------------------------------------------------
-// 🛠️ 1/3: دالة جديدة لتحديد هوية الفصل الصحيحة للمعلم
-// ------------------------------------------------------
-async function restoreTeacherClassFromCloud(teacherId, teacherEmail) {
-  if (!window.db) {
-    console.warn("⚠ Firestore غير مهيأ. لا يمكن استعادة الفصل من السحابة.");
-    return null;
-  }
-
-  try {
-    const classesSnap = await getDocs(collection(window.db, "classes"));
-    let foundClassId = null;
-    let cloudClass = null;
-    
-    // 1. البحث في كل الفصول عن فصل يملكه هذا البريد (وهو ID المعلم)
-    for (const docSnap of classesSnap.docs) {
-        const c = docSnap.data();
-        // نفترض أن حقل teacherId في Firestore هو بريد المعلم
-        if (c.teacherId === teacherEmail) {
-            foundClassId = docSnap.id;
-            cloudClass = c;
-            break;
-        }
-    }
-
-    if (foundClassId) {
-      // 2. تحديث الذاكرة المحلية بالمعرف الصحيح
-      let localClasses = getClasses();
-      const tempClass = localClasses.find(c => c.teacherId === teacherId);
-      
-      if (tempClass) {
-          // تحديث الـ ID المحلي ليطابق ID السحابة الموثوق به
-          tempClass.id = foundClassId;
-          // دمج بيانات الفصل من السحابة
-          tempClass.name = cloudClass.name || tempClass.name;
-          tempClass.students = cloudClass.students || tempClass.students;
-          // إلخ...
-      } else {
-          // إذا لم يكن هناك فصل مؤقت، أضف الفصل السحابي محلياً
-          localClasses.push({ id: foundClassId, teacherId: teacherId, ...cloudClass });
-      }
-      setClasses(localClasses);
-      console.log(`✅ المعلم: تم استعادة الفصل الصحيح: ${foundClassId}`);
-      return foundClassId;
-
-    } else {
-      // 3. إذا لم يجد فصلاً، نعتبر الفصل المحلي هو المرجع وننشئه في السحابة
-      const localClass = getTeacherClass(teacherId); // يجلب الفصل المحلي المؤقت
-      await setDoc(doc(window.db, "classes", localClass.id), { 
-          ...localClass, 
-          teacherId: teacherEmail, // ⚠️ حفظ البريد الإلكتروني كـ ID في السحابة
-          assignments: getAssignments().filter(a => a.classId === localClass.id)
-      });
-      console.log(`🆕 المعلم: تم إنشاء فصل جديد في السحابة: ${localClass.id}`);
-      return localClass.id;
-    }
-  } catch (error) {
-    console.error("❌ خطأ في استعادة الفصل للمعلم:", error);
-    return null;
-  }
-}
-
-// ------------------------------------------------------
-// 🛠️ 2/3: تعديل دالة startApp لاستخدام الدالة الجديدة
-// ------------------------------------------------------
-// استبدل الدالة startApp القديمة بالكامل بهذا الكود:
-export async function startApp() {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current) {
-    $('#authView').classList.remove('hidden');
-    return;
-  }
-
-  $('#helloName').textContent = 'مرحبًا، ' + current.name;
-  $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
-  $('#authView').classList.add('hidden');
-  $('#appShell').classList.remove('hidden');
-  $('#readerView').classList.add('hidden');
-
-  let classIdToSync = null;
-
-  if (current.role === "teacher") {
-    // 🔑 الخطوة الأولى: استرجاع الـ ID الصحيح للفصل من السحابة
-    classIdToSync = await restoreTeacherClassFromCloud(current.id, current.email);
-    // إذا فشلت الاستعادة، نستخدم الـ ID المؤقت
-    if (!classIdToSync) {
-        classIdToSync = getTeacherClass(current.id).id;
-    }
-    
-  } else if (current.role === "student") {
-    // الطالب
-    const classes = getClasses();
-    const classObj = classes.find(c => c.students.includes(current.id)) || { id: current.classId };
-    
-    if (classObj && classObj.id) {
-        classIdToSync = classObj.id;
-        loadStudentAnswersFromFirestore(classIdToSync, current.id);
-    }
-  }
-
-  // 🔄 الخطوة الثانية: مزامنة جميع بيانات الفصل (القصص والواجبات) باستخدام الـ ID الصحيح
-  if (classIdToSync) {
-    await syncClassData(classIdToSync);
-  }
-  
-  buildNav(current.role);
-  renderLevels();
-  renderBooks('ALL');
-  renderStudentAssignments('required');
-  renderTeacherView();
-  updateReports();
-  updateRail();
-}
-
-
 // ------------------------------------------------------
 // Boot
 // ------------------------------------------------------
 
-// ------------------------------------------------------
-// 🛠️ 2/3: دالة startApp الجديدة والمُحدَّثة
-// ------------------------------------------------------
-// ⚠️ يجب استخدام هذه الدالة بدلاً من دالة startApp القديمة
-export async function startApp() { // 👈 ملاحظة: أصبحت async
+function startApp() {
   const current = readJSON(LS.CURRENT, null);
+
+  if (current && current.role === 'teacher') {
+    $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
+  } else {
+    $$('.only-teacher').forEach(btn => btn.style.display = 'none');
+  }
+
   if (!current) {
     $('#authView').classList.remove('hidden');
+    $('#appShell').classList.add('hidden');
+    $('#readerView').classList.add('hidden');
     return;
   }
 
-  $('#helloName').textContent = 'مرحبًا، ' + current.name;
-  $('#userName').textContent = current.name; // إضافة هذا السطر من النسخة القديمة
+  $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
+  $('#userName').textContent = current.name;
   $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
   $('#authView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
   $('#readerView').classList.add('hidden');
 
-  let classIdToSync = null;
-
-  if (current.role === "teacher") {
-    // 🔑 الخطوة الأولى: استرجاع الـ ID الصحيح للفصل من السحابة
-    classIdToSync = await restoreTeacherClassFromCloud(current.id, current.email);
-    // إذا فشلت الاستعادة، نستخدم الـ ID المؤقت
-    if (!classIdToSync) {
-        classIdToSync = getTeacherClass(current.id).id;
-    }
-    
-  } else if (current.role === "student") {
-    // الطالب
+  if (current.role === "student") {
     const classes = getClasses();
-    // 💡 نستخدم current.id (الذي هو البريد الإلكتروني للطالب)
-    const classObj = classes.find(c => c.students.includes(current.id)) || { id: current.classId }; 
-    
+    const classObj = classes.find(c => c.students.includes(current.id)) || { id: current.classId };
     if (classObj && classObj.id) {
-        classIdToSync = classObj.id;
-        loadStudentAnswersFromFirestore(classIdToSync, current.id);
+      loadStudentAnswersFromFirestore(classObj.id, current.id);
     }
-  }
-
-  // 🔄 الخطوة الثانية: مزامنة جميع بيانات الفصل (القصص والواجبات) باستخدام الـ ID الصحيح
-  if (classIdToSync) {
-    await syncClassData(classIdToSync);
-  }
-  
-  // عرض الأزرار للمعلم فقط
-  if (current.role === 'teacher') {
-    $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
-  } else {
-    $$('.only-teacher').forEach(btn => btn.style.display = 'none');
   }
 
   buildNav(current.role);
@@ -1786,16 +1560,8 @@ document.addEventListener('DOMContentLoaded', () => {
     toast("✓ تم إنهاء النشاط. نتيجتك: " + score + "/" + currentBook.quiz.length);
   });
 
- // ربط زر الخروج بنافذة التأكيد
-  $('#logoutBtn')?.addEventListener('click', confirmLogout);
-  
-  // 🔗 إضافة ربط زر الدخول بجوجل هنا لحل مشكلة عدم عمل الزر
-  const googleLoginBtn = document.getElementById("googleLogin");
-  if (googleLoginBtn) {
-      // نستخدم window.googleLogin لأن الدالة معرّفة في index.html.txt
-      googleLoginBtn.addEventListener("click", window.googleLogin); 
-      console.log("✅ تم ربط زر الدخول بجوجل.");
-  }
+  // ربط زر الخروج بنافذة التأكيد
+  $('#logoutBtn')?.addEventListener('click', confirmLogout);
 
   // تشغيل التطبيق
   startApp();
