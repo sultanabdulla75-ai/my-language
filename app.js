@@ -806,10 +806,10 @@ function renderTeacherStudents() {
 
   rows.innerHTML = '';
 
-  // 🟦 يحول IDs المخزنة إلى مستخدمين فعليين
-  const students = c.students
-    .map(id => users.find(u => u.id === id))
-    .filter(Boolean);
+ // 🟦 يحول IDs (أو الإيميلات) إلى مستخدمين فعليين
+const students = c.students
+  .map(identifier => users.find(u => u.id === identifier || u.email === identifier))
+  .filter(Boolean);
 
   // 🟥 لا يوجد طلاب
   if (!students.length) {
@@ -1007,7 +1007,7 @@ function openCreateAssignment() {
   });
   const box = $('#studentsChecklist'); box.innerHTML = '';
   const users = getUsers();
-  c.students.map(id => users.find(u => u.id === id)).filter(Boolean).forEach(st => {
+  c.students.map(identifier => users.find(u => u.id === identifier || u.email === identifier)).filter(Boolean).forEach(st => {
     const idc = uid('CHK');
     const label = document.createElement('label');
     label.innerHTML = `<input type="checkbox" id="${idc}" value="${st.id}"> ${st.name}`;
