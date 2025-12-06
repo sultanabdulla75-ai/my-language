@@ -471,17 +471,50 @@ function registerUser(e) {
   $('#loginForm').classList.remove('hidden');
 }
 
-function loginUser(e) {
-  e.preventDefault();
+// ------------------------------------------------------
+// تسجيل الدخول (اسم المستخدم/كلمة المرور)
+// ------------------------------------------------------
+async function loginUser() { // 👈 يجب إضافة async هنا
   const email = $('#loginEmail').value.trim().toLowerCase();
-  const pass = $('#loginPass').value;
-  const users = readJSON(LS.USERS, []);
-  const user = users.find(u => u.email === email && u.pass === pass);
-  if (!user) { $('#loginMsg').textContent = 'بيانات الدخول غير صحيحة.'; return; }
-  writeJSON(LS.CURRENT, { id: user.id, name: user.name, email: user.email, role: user.role });
-  startApp();
-}
+  const pass = $('#loginPass').value.value.trim(); // ⚠️ قد تحتاج لتصحيح هذه القيمة
+  const current = readJSON(LS.CURRENT, null);
 
+  if (!email || !pass) {
+    toast("❗ يرجى إدخال البريد وكلمة المرور");
+    return;
+  }
+
+  // 1. محاولة الدخول عبر Firebase Auth
+  let authSuccess = false;
+  if (window.auth && window.signInWithEmailAndPassword) {
+      try {
+          // ⚠️ يجب التأكد من أن دالة signInWithEmailAndPassword تم استيرادها بشكل صحيح
+          await signInWithEmailAndPassword(window.auth, email, pass);
+          authSuccess = true;
+          console.log("✅ تم الدخول عبر Firebase Auth");
+      } catch (error) {
+          console.error("Firebase Auth فشل:", error.message);
+          // نواصل البحث المحلي حتى لو فشل الدخول في السحابة
+      }
+  }
+
+  // 2. التحقق محليًا
+  const users = getUsers();
+  const user = users.find(u => u.email === email && u.pass === pass);
+
+  if (user) {
+    // 3. تحديث الجلسة
+    writeJSON(LS.CURRENT, user);
+    toast("✓ مرحباً بك، " + user.name);
+
+    // 4. إعادة تحميل التطبيق لبدء الجلسة الجديدة
+    window.location.href = 'index.html'; 
+
+  } else if (!authSuccess) {
+    // ⚠️ إذا فشل الدخول في كلتا الحالتين
+    toast("❌ البريد أو كلمة المرور غير صحيحة");
+  }
+}
 function logoutUser() {
   localStorage.removeItem(LS.CURRENT);
   $('#authView').classList.remove('hidden');
@@ -1594,35 +1627,56 @@ export async function startApp() {
 // Boot
 // ------------------------------------------------------
 
-function startApp() {
+// ------------------------------------------------------
+// 🛠️ 2/3: دالة startApp الجديدة والمُحدَّثة
+// ------------------------------------------------------
+// ⚠️ يجب استخدام هذه الدالة بدلاً من دالة startApp القديمة
+export async function startApp() { // 👈 ملاحظة: أصبحت async
   const current = readJSON(LS.CURRENT, null);
-
-  if (current && current.role === 'teacher') {
-    $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
-  } else {
-    $$('.only-teacher').forEach(btn => btn.style.display = 'none');
-  }
-
   if (!current) {
     $('#authView').classList.remove('hidden');
-    $('#appShell').classList.add('hidden');
-    $('#readerView').classList.add('hidden');
     return;
   }
 
-  $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
-  $('#userName').textContent = current.name;
+  $('#helloName').textContent = 'مرحبًا، ' + current.name;
+  $('#userName').textContent = current.name; // إضافة هذا السطر من النسخة القديمة
   $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
   $('#authView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
   $('#readerView').classList.add('hidden');
 
-  if (current.role === "student") {
-    const classes = getClasses();
-    const classObj = classes.find(c => c.students.includes(current.id)) || { id: current.classId };
-    if (classObj && classObj.id) {
-      loadStudentAnswersFromFirestore(classObj.id, current.id);
+  let classIdToSync = null;
+
+  if (current.role === "teacher") {
+    // 🔑 الخطوة الأولى: استرجاع الـ ID الصحيح للفصل من السحابة
+    classIdToSync = await restoreTeacherClassFromCloud(current.id, current.email);
+    // إذا فشلت الاستعادة، نستخدم الـ ID المؤقت
+    if (!classIdToSync) {
+        classIdToSync = getTeacherClass(current.id).id;
     }
+    
+  } else if (current.role === "student") {
+    // الطالب
+    const classes = getClasses();
+    // 💡 نستخدم current.id (الذي هو البريد الإلكتروني للطالب)
+    const classObj = classes.find(c => c.students.includes(current.id)) || { id: current.classId }; 
+    
+    if (classObj && classObj.id) {
+        classIdToSync = classObj.id;
+        loadStudentAnswersFromFirestore(classIdToSync, current.id);
+    }
+  }
+
+  // 🔄 الخطوة الثانية: مزامنة جميع بيانات الفصل (القصص والواجبات) باستخدام الـ ID الصحيح
+  if (classIdToSync) {
+    await syncClassData(classIdToSync);
+  }
+  
+  // عرض الأزرار للمعلم فقط
+  if (current.role === 'teacher') {
+    $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
+  } else {
+    $$('.only-teacher').forEach(btn => btn.style.display = 'none');
   }
 
   buildNav(current.role);
@@ -1732,8 +1786,16 @@ document.addEventListener('DOMContentLoaded', () => {
     toast("✓ تم إنهاء النشاط. نتيجتك: " + score + "/" + currentBook.quiz.length);
   });
 
-  // ربط زر الخروج بنافذة التأكيد
-  $('#logoutBtn')?.addEventListener('click', confirmLogout);
+ // ربط زر الخروج بنافذة التأكيد
+  $('#logoutBtn')?.addEventListener('click', confirmLogout);
+  
+  // 🔗 إضافة ربط زر الدخول بجوجل هنا لحل مشكلة عدم عمل الزر
+  const googleLoginBtn = document.getElementById("googleLogin");
+  if (googleLoginBtn) {
+      // نستخدم window.googleLogin لأن الدالة معرّفة في index.html.txt
+      googleLoginBtn.addEventListener("click", window.googleLogin); 
+      console.log("✅ تم ربط زر الدخول بجوجل.");
+  }
 
   // تشغيل التطبيق
   startApp();
