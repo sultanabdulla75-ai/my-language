@@ -382,22 +382,18 @@ const db = getFirestore(app);
 window.db = db;
 
 // ===============================================
-//  تسجيل الدخول باستخدام Google  (الإصدار المصحّح)
-// ===============================================
-
 document.getElementById("googleLogin")?.addEventListener("click", async () => {
   try {
+
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
     console.log("✔ Logged in with Google:", user.email);
 
-    // 📌 تعريف معرف الطالب = البريد دائمًا
+    // معرّف الطالب = البريد
     const studentId = user.email;
 
-    // ------------------------------------------------
-    // 🔍 1) البحث عن صف الطالب داخل Firestore
-    // ------------------------------------------------
+    // 1️⃣ البحث عن صف الطالب من Firestore
     const classesSnap = await getDocs(collection(db, "classes"));
     let classId = null;
 
@@ -414,30 +410,23 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
       return;
     }
 
-    // ------------------------------------------------
-    // 2️⃣ إضافة الطالب في arp.users محليًا
-    // ------------------------------------------------
+    // 2️⃣ حفظ الطالب في arp.users
     let users = JSON.parse(localStorage.getItem("arp.users") || "[]");
-
     if (!users.some(u => u.email === studentId)) {
       users.push({
-        id: studentId,        // ← لاحظ: المعرف هو البريد
+        id: studentId,
         name: user.displayName,
         email: studentId,
         pass: null,
         role: "student",
         className: "فصلي"
       });
-
       localStorage.setItem("arp.users", JSON.stringify(users));
     }
 
-    // ------------------------------------------------
-    // 3️⃣ إضافة الطالب إلى الفصل محليًا
-    // ------------------------------------------------
-    let classes = JSON.parse(localStorage.getItem("arp.classes") || "[]");
-
-    let classObj = classes.find(c => c.id === classId);
+    // 3️⃣ حفظ الفصل محليًا
+    let classesLocal = JSON.parse(localStorage.getItem("arp.classes") || "[]");
+    let classObj = classesLocal.find(c => c.id === classId);
 
     if (!classObj) {
       classObj = {
@@ -446,18 +435,16 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
         name: "فصلي",
         students: []
       };
-      classes.push(classObj);
+      classesLocal.push(classObj);
     }
 
     if (!classObj.students.includes(studentId)) {
       classObj.students.push(studentId);
     }
 
-    localStorage.setItem("arp.classes", JSON.stringify(classes));
+    localStorage.setItem("arp.classes", JSON.stringify(classesLocal));
 
-    // ------------------------------------------------
-    // 4️⃣ حفظ الجلسة الحالية
-    // ------------------------------------------------
+    // 4️⃣ حفظ الجلسة
     localStorage.setItem("arp.current", JSON.stringify({
       id: studentId,
       name: user.displayName,
@@ -466,27 +453,20 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
       classId
     }));
 
-    // ------------------------------------------------
-    // 5️⃣ تحميل إجابات الواجبات له
-    // ------------------------------------------------
+    // 5️⃣ تحميل الواجبات
     await loadStudentAnswersFromFirestore(classId, studentId);
 
-    // ------------------------------------------------
     // 6️⃣ مزامنة القصص
-    // ------------------------------------------------
     await syncBooks(classId);
 
-    // ------------------------------------------------
-    // 7️⃣ الدخول للمنصة
-    // ------------------------------------------------
-    window.location.href = "index.html";
+    // 7️⃣ دخول المنصة
+    startApp();
 
   } catch (e) {
     console.error(e);
     alert("فشل تسجيل الدخول: " + e.message);
   }
 });
-</script>
 
   <!-- تطبيق المنصة (يُستورد مرة واحدة فقط) -->
   <script type="module" src="app.js"></script>
