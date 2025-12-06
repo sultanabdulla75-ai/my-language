@@ -470,6 +470,13 @@ function loginUser(e) {
   const user = users.find(u => u.email === email && u.pass === pass);
   if (!user) { $('#loginMsg').textContent = 'بيانات الدخول غير صحيحة.'; return; }
   writeJSON(LS.CURRENT, { id: user.id, name: user.name, email: user.email, role: user.role });
+  // ⭐⭐ إضافة الطالب إلى فصل المعلم تلقائيًا ⭐⭐
+const classes = readJSON(LS.CLASSES, []);
+let classObj = classes[0]; // نفترض معلم واحد = فصل واحد
+if (classObj && !classObj.students.includes(user.id)) {
+    classObj.students.push(user.id);
+    writeJSON(LS.CLASSES, classes);
+}
   startApp();
 }
 
