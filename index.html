@@ -390,100 +390,67 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    console.log("✔ Logged in with Google:", user.email);
+    // 🔹 1) تعريف الطالب
+    const studentId = user.email.toLowerCase();
+    const studentName = user.displayName || user.email.split("@")[0];
 
-    // 📌 تعريف معرف الطالب = البريد دائمًا
-    const studentId = user.email;
-
-    // ------------------------------------------------
-    // 🔍 1) البحث عن صف الطالب داخل Firestore
-    // ------------------------------------------------
-    const classesSnap = await getDocs(collection(db, "classes"));
-    let classId = null;
-
-    for (const c of classesSnap.docs) {
-      const stu = await getDoc(doc(db, "classes", c.id, "students", studentId));
-      if (stu.exists()) {
-        classId = c.id;
-        break;
-      }
-    }
-
-    if (!classId) {
-      alert("⚠ أنت غير مسجّل في أي صف. اطلب من المعلم إضافتك.");
-      return;
-    }
-
-    // ------------------------------------------------
-    // 2️⃣ إضافة الطالب في arp.users محليًا
-    // ------------------------------------------------
-    let users = JSON.parse(localStorage.getItem("arp.users") || "[]");
-
-    if (!users.some(u => u.email === studentId)) {
+    // 🔹 2) إضافة الطالب إلى USERS في localStorage
+    let users = readJSON(LS.USERS, []);
+    if (!users.some(u => u.id === studentId)) {
       users.push({
-        id: studentId,        // ← لاحظ: المعرف هو البريد
-        name: user.displayName,
+        id: studentId,
+        name: studentName,
         email: studentId,
-        pass: null,
         role: "student",
-        className: "فصلي"
+        pass: null,
+        created: Date.now()
       });
-
-      localStorage.setItem("arp.users", JSON.stringify(users));
+      writeJSON(LS.USERS, users);
     }
 
-    // ------------------------------------------------
-    // 3️⃣ إضافة الطالب إلى الفصل محليًا
-    // ------------------------------------------------
-    let classes = JSON.parse(localStorage.getItem("arp.classes") || "[]");
+    // 🔹 3) إضافة الطالب إلى فصل المعلم
+    let classes = readJSON(LS.CLASSES, []);
+    let teacherClass = classes.find(c => c.teacherId);
 
-    let classObj = classes.find(c => c.id === classId);
-
-    if (!classObj) {
-      classObj = {
-        id: classId,
-        teacherId: "T1",
-        name: "فصلي",
-        students: []
-      };
-      classes.push(classObj);
+    // إذا ما فيه فصل، ننشئ واحد
+    if (!teacherClass) {
+      teacherClass = { id: uid("C"), teacherId: "teacher1", name: "فصل المعلم", students: [] };
+      classes.push(teacherClass);
     }
 
-    if (!classObj.students.includes(studentId)) {
-      classObj.students.push(studentId);
+    // إضافة الطالب إن لم يكن موجودًا
+    if (!teacherClass.students.includes(studentId)) {
+      teacherClass.students.push(studentId);
+      writeJSON(LS.CLASSES, classes);
     }
 
-    localStorage.setItem("arp.classes", JSON.stringify(classes));
-
-    // ------------------------------------------------
-    // 4️⃣ حفظ الجلسة الحالية
-    // ------------------------------------------------
-    localStorage.setItem("arp.current", JSON.stringify({
+    // 🔹 4) حفظ الطالب في Firestore
+    try {
+      await setDoc(
+        doc(db, "classes", teacherClass.id, "students", studentId),
+        {
+          name: studentName,
+          email: studentId,
+          uid: studentId,
+          createdAt: Date.now()
+        }
+      );
+    } catch (e) {
+      console.warn("⚠ لم يتم الحفظ في Firestore");
+    }
+    // 🔹 5) تسجيل الدخول فعليًا
+    writeJSON(LS.CURRENT, {
       id: studentId,
-      name: user.displayName,
+      name: studentName,
       email: studentId,
-      role: "student",
-      classId
-    }));
+      role: "student"
+    });
 
-    // ------------------------------------------------
-    // 5️⃣ تحميل إجابات الواجبات له
-    // ------------------------------------------------
-    await loadStudentAnswersFromFirestore(classId, studentId);
-
-    // ------------------------------------------------
-    // 6️⃣ مزامنة القصص
-    // ------------------------------------------------
-    await syncBooks(classId);
-
-    // ------------------------------------------------
-    // 7️⃣ الدخول للمنصة
-    // ------------------------------------------------
-    window.location.href = "index.html";
-
-  } catch (e) {
-    console.error(e);
-    alert("فشل تسجيل الدخول: " + e.message);
+    startApp();
+    console.log("✔ Google login completed:", studentId);
+  }
+  catch (e) {
+    console.error("❌ Google login error:", e);
   }
 });
 </script>
