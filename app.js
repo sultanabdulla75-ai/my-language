@@ -1425,6 +1425,50 @@ function confirmSubmitModal(callback) {
   };
 }
 
+
+
+// ===============================================
+//  🛠 إصلاح تلقائي للواجبات لتعمل في كل المتصفحات
+//  يقوم بتحويل معرّفات الطلاب القديمة إلى البريد
+// ===============================================
+
+function autoFixAssignments() {
+  let assigns = JSON.parse(localStorage.getItem("arp.assignments") || "[]");
+  const current = JSON.parse(localStorage.getItem("arp.current") || "{}");
+
+  if (!current || !current.email) return;  // لا يوجد مستخدم مسجل
+
+  const studentEmail = current.email;
+
+  let changed = false;
+
+  assigns = assigns.map(a => {
+    // 1) إذا الواجب ليس موجّهًا للطالب، لا نلمسه
+    if (!a.studentIds) return a;
+
+    // 2) إذا الواجب يحتوي على معرّف قديم غير البريد
+    if (a.studentIds.includes(studentEmail)) return a;
+
+    // 3) تحويل إلى البريد الصحيح
+    const newPer = {};
+    for (const oldId in a.perStudent || {}) {
+      newPer[studentEmail] = a.perStudent[oldId];
+      changed = true;
+    }
+
+    return {
+      ...a,
+      studentIds: [studentEmail],
+      perStudent: newPer
+    };
+  });
+
+  if (changed) {
+    localStorage.setItem("arp.assignments", JSON.stringify(assigns));
+    console.log("✔ تم إصلاح الواجبات تلقائيًا باستخدام البريد");
+  }
+}
+
 // ------------------------------------------------------
 // Boot
 // ------------------------------------------------------
@@ -1432,6 +1476,9 @@ function confirmSubmitModal(callback) {
 function startApp() {
   const current = readJSON(LS.CURRENT, null);
 
+ // ⬅️⬅️ هنا بالضبط نضعه
+  autoFixAssignments();
+ 
   if (current && current.role === 'teacher') {
     $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
   } else {
