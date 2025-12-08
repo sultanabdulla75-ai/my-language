@@ -481,8 +481,18 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
     // ------------------------------------------------
     // 7️⃣ الدخول للمنصة
     // ------------------------------------------------
-startApp();   // ← تشغيل المنصة فور تسجيل الدخول
-
+// نتأكد أولًا أن startApp موجودة من app.js
+if (typeof window.startApp === "function") {
+  window.startApp();
+} else {
+  // إذا لم تكن جاهزة، ننتظر حتى يتم تحميل app.js
+  const wait = setInterval(() => {
+    if (typeof window.startApp === "function") {
+      clearInterval(wait);
+      window.startApp();
+    }
+  }, 100);
+}
   } catch (e) {
     console.error(e);
     alert("فشل تسجيل الدخول: " + e.message);
