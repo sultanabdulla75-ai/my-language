@@ -1509,15 +1509,17 @@ function autoFixAssignments() {
 function startApp() {
   const current = readJSON(LS.CURRENT, null);
 
-  // ⬅️ هنا توضع autoFixAssignments() ولا مشكلة
+  // ⬅️ إصلاح الواجبات القديمة
   autoFixAssignments();
 
+  // التحكم في أزرار المعلم
   if (current && current.role === 'teacher') {
     $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
   } else {
     $$('.only-teacher').forEach(btn => btn.style.display = 'none');
   }
 
+  // لم يتم تسجيل الدخول
   if (!current) {
     $('#authView').classList.remove('hidden');
     $('#appShell').classList.add('hidden');
@@ -1525,22 +1527,41 @@ function startApp() {
     return;
   }
 
+  // تعبئة بيانات المستخدم
   $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
   $('#userName').textContent = current.name;
   $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
+
   $('#authView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
   $('#readerView').classList.add('hidden');
 
-  // 🔥 تحميل الواجبات + إجابات الطالب من Firestore
+  // ================================
+  // 🔥 إصلاح جذري لظهور الواجبات (مهم جداً)
+  // ================================
   if (current.role === "student") {
-    const classId = current.classId;
+    const classes = getClasses();
 
-    await syncAssignmentsFromFirestore(classId);
-    await loadStudentAnswersFromFirestore(classId, current.id);
+    // البحث عن الفصل الذي يحتوي ID الطالب
+    const classObj = classes.find(c => c.students.includes(current.id));
+
+    if (classObj) {
+      const classId = classObj.id;
+
+      // تحميل الواجبات من السحابة
+      syncAssignmentsFromFirestore(classId);
+
+      // تحميل إجابات الطالب من Firestore
+      loadStudentAnswersFromFirestore(classId, current.id);
+    } else {
+      console.warn("⚠️ لم يتم العثور على فصل مرتبط بهذا الطالب.");
+    }
   }
 
+  // بناء التنقل
   buildNav(current.role);
+
+  // بناء محتوى الصفحة
   renderLevels();
   renderBooks('ALL');
   renderStudentAssignments('required');
@@ -1549,19 +1570,26 @@ function startApp() {
   updateRail();
 }
 
+
+// =============================
 // أحداث عامة
+// =============================
 document.addEventListener('click', (e) => {
   const go = e.target.closest('.go');
-  if (go) { showOnly(go.dataset.go); }
+  if (go) showOnly(go.dataset.go);
+
   const closeId = e.target.dataset?.close;
-  if (closeId) { document.getElementById(closeId).classList.add('hidden'); }
+  if (closeId) document.getElementById(closeId).classList.add('hidden');
 });
 
+
 document.addEventListener('DOMContentLoaded', () => {
+
   // تبويب auth
   $$('[data-auth]').forEach(btn => btn.onclick = () => {
     $$('[data-auth]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+
     if (btn.dataset.auth === 'login') {
       $('#loginForm').classList.remove('hidden');
       $('#regForm').classList.add('hidden');
@@ -1576,18 +1604,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('#searchBooks')?.addEventListener('input', () => renderBooks('ALL'));
 
+
+  // تبديل تبويبات الواجبات للطالب
   $$('#tab-assign .pill').forEach(p => p.onclick = () => {
     $$('#tab-assign .pill').forEach(x => x.classList.remove('active'));
     p.classList.add('active');
     renderStudentAssignments(p.dataset.filter);
   });
 
+
+  // أزرار إدارة المنصة
   document.addEventListener('click', (e) => {
-    if (e.target.id === 'addStudentBtn') { openAddStudentModal(); }
-    if (e.target.id === 'saveStudent') { saveStudent(); }
-    if (e.target.id === 'newAssignBtn') { openCreateAssignment(); }
-    if (e.target.id === 'saveAssign') { saveAssignment(); }
-    if (e.target.id === 'saveBook') { saveBook(); }
+
+    if (e.target.id === 'addStudentBtn') openAddStudentModal();
+    if (e.target.id === 'saveStudent') saveStudent();
+
+    if (e.target.id === 'newAssignBtn') openCreateAssignment();
+    if (e.target.id === 'saveAssign') saveAssignment();
+
+    if (e.target.id === 'saveBook') saveBook();
 
     if (e.target.id === "addBookBtn") {
       $('#bTitle').value = '';
@@ -1616,7 +1651,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // قارئ
+
+  // قارئ القصص
   $('#backToApp').addEventListener('click', backToApp);
   $('#startRec').addEventListener('click', startRecording);
   $('#stopRec').addEventListener('click', stopRecording);
@@ -1626,13 +1662,17 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#modalQuiz').classList.add('hidden');
   });
 
+
+  // إصلاح خطأ اختيار الجواب في الاختبار
   $('#submitQuiz')?.addEventListener('click', () => {
+
     if (!currentBook || !currentBook.quiz) {
       toast("لا توجد أنشطة لهذه القصة");
       return;
     }
 
     let score = 0;
+
     currentBook.quiz.forEach((q, i) => {
       const selected = document.querySelector(`input[name="q${i}"]:checked`);
       if (selected && Number(selected.value) === q.correct) {
@@ -1647,7 +1687,8 @@ document.addEventListener('DOMContentLoaded', () => {
     toast("✓ تم إنهاء النشاط. نتيجتك: " + score + "/" + currentBook.quiz.length);
   });
 
-  // ربط زر الخروج بنافذة التأكيد
+
+  // زر الخروج
   $('#logoutBtn')?.addEventListener('click', confirmLogout);
 
   // تشغيل التطبيق
