@@ -253,6 +253,39 @@ export async function loadStudentAnswersFromFirestore(classId, studentId) {
   setAssignments(localAssignments);
 }
 
+// ===============================
+//  🔥 مزامنة الواجبات من Firestore
+// ===============================
+export async function syncAssignmentsFromFirestore(classId) {
+  if (!window.db) return;
+
+  const snap = await getDocs(
+    collection(window.db, "classes", classId, "assignments")
+  );
+
+  const list = [];
+
+  snap.forEach(docA => {
+    const data = docA.data();
+    list.push({
+      id: docA.id,
+      title: data.title || "",
+      desc: data.desc || "",
+      level: data.level || "",
+      due: data.due || "",
+      teacherId: data.teacherId || "",
+      classId: classId,
+      studentIds: data.studentIds || [],
+      perStudent: data.perStudent || {}
+    });
+  });
+
+  setAssignments(list);
+  console.log("✔ تمت مزامنة الواجبات من Firestore");
+}
+
+
+
 // ------------------------------------------------------
 // التنقل والتبويبات + لوحة الجانب الأيمن
 // ------------------------------------------------------
@@ -1476,9 +1509,9 @@ function autoFixAssignments() {
 function startApp() {
   const current = readJSON(LS.CURRENT, null);
 
- // ⬅️⬅️ هنا بالضبط نضعه
+  // ⬅️ هنا توضع autoFixAssignments() ولا مشكلة
   autoFixAssignments();
- 
+
   if (current && current.role === 'teacher') {
     $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
   } else {
@@ -1499,12 +1532,12 @@ function startApp() {
   $('#appShell').classList.remove('hidden');
   $('#readerView').classList.add('hidden');
 
+  // 🔥 تحميل الواجبات + إجابات الطالب من Firestore
   if (current.role === "student") {
-    const classes = getClasses();
-    const classObj = classes.find(c => c.students.includes(current.id)) || { id: current.classId };
-    if (classObj && classObj.id) {
-      loadStudentAnswersFromFirestore(classObj.id, current.id);
-    }
+    const classId = current.classId;
+
+    await syncAssignmentsFromFirestore(classId);
+    await loadStudentAnswersFromFirestore(classId, current.id);
   }
 
   buildNav(current.role);
