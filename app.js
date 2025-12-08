@@ -1507,61 +1507,58 @@ function autoFixAssignments() {
 // ------------------------------------------------------
 
 function startApp() {
+  // 1) قراءة المستخدم الحالي
   const current = readJSON(LS.CURRENT, null);
 
-  // ⬅️ إصلاح الواجبات القديمة
-  autoFixAssignments();
-
-  // التحكم في أزرار المعلم
-  if (current && current.role === 'teacher') {
-    $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
-  } else {
-    $$('.only-teacher').forEach(btn => btn.style.display = 'none');
-  }
-
-  // لم يتم تسجيل الدخول
+  // 2) إذا لم يوجد مستخدم → نظهر شاشة الدخول فقط
   if (!current) {
+    console.warn("⚠ لا يوجد مستخدم مسجّل — عرض شاشة الدخول فقط");
     $('#authView').classList.remove('hidden');
     $('#appShell').classList.add('hidden');
     $('#readerView').classList.add('hidden');
     return;
   }
 
-  // تعبئة بيانات المستخدم
+  // 3) إصلاح الواجبات القديمة (يعمل فقط عند وجود مستخدم)
+  autoFixAssignments();
+
+  // 4) التحكم في أزرار المعلم
+  if (current.role === 'teacher') {
+    $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
+  } else {
+    $$('.only-teacher').forEach(btn => btn.style.display = 'none');
+  }
+
+  // 5) تعبئة بيانات المستخدم في الواجهة
   $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
   $('#userName').textContent = current.name;
   $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
 
+  // 6) إخفاء شاشة الدخول وإظهار التطبيق
   $('#authView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
   $('#readerView').classList.add('hidden');
 
-  // ================================
-  // 🔥 إصلاح جذري لظهور الواجبات (مهم جداً)
-  // ================================
-  if (current.role === "student") {
+  // 7) تحميل بيانات الواجبات من Firestore (للطلاب فقط)
+  if (current.role === 'student') {
     const classes = getClasses();
-
-    // البحث عن الفصل الذي يحتوي ID الطالب
     const classObj = classes.find(c => c.students.includes(current.id));
 
     if (classObj) {
       const classId = classObj.id;
 
-      // تحميل الواجبات من السحابة
+      // مزامنة الواجبات
       syncAssignmentsFromFirestore(classId);
 
-      // تحميل إجابات الطالب من Firestore
+      // تحميل إجابات الطالب
       loadStudentAnswersFromFirestore(classId, current.id);
     } else {
       console.warn("⚠️ لم يتم العثور على فصل مرتبط بهذا الطالب.");
     }
   }
 
-  // بناء التنقل
+  // 8) بناء أجزاء الصفحة
   buildNav(current.role);
-
-  // بناء محتوى الصفحة
   renderLevels();
   renderBooks('ALL');
   renderStudentAssignments('required');
@@ -1570,6 +1567,9 @@ function startApp() {
   updateRail();
 }
 
+
+// ⭐⭐⭐ أضِف السطر هنا بالضبط ⭐⭐⭐
+window.startApp = startApp;
 
 // =============================
 // أحداث عامة
