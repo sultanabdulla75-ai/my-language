@@ -1232,31 +1232,39 @@ function confirmSubmitModal(callback) {
 
 
 // ===== Boot =====
-function startApp(){
+function startApp() {
   const current = readJSON(LS.CURRENT, null);
-  
-  // ⭐ إظهار أزرار المعلم فقط
+
+ // ⬅️⬅️ هنا بالضبط نضعه
+  autoFixAssignments();
+ 
   if (current && current.role === 'teacher') {
     $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
   } else {
     $$('.only-teacher').forEach(btn => btn.style.display = 'none');
   }
 
-  // ✅ إذا لا يوجد مستخدم في التخزين، نظهر شاشة الدخول فقط
-  if(!current){
+  if (!current) {
     $('#authView').classList.remove('hidden');
     $('#appShell').classList.add('hidden');
     $('#readerView').classList.add('hidden');
     return;
   }
 
-  // تابع تشغيل التطبيق كالمعتاد ↓
-  $('#helloName').textContent='مرحبًا '+current.name+'!';
-  $('#userName').textContent=current.name;
-  $('#userRoleLabel').textContent=current.role==='teacher'?'معلم':'طالب';
+  $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
+  $('#userName').textContent = current.name;
+  $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
   $('#authView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
   $('#readerView').classList.add('hidden');
+
+  if (current.role === "student") {
+    const classes = getClasses();
+    const classObj = classes.find(c => c.students.includes(current.id)) || { id: current.classId };
+    if (classObj && classObj.id) {
+      loadStudentAnswersFromFirestore(classObj.id, current.id);
+    }
+  }
 
   buildNav(current.role);
   renderLevels();
@@ -1266,7 +1274,6 @@ function startApp(){
   updateReports();
   updateRail();
 }
-
 
 // أحداث عامة
 document.addEventListener('click',(e)=>{
