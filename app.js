@@ -187,20 +187,33 @@ async function saveQuizToFirestore(classId, bookId, quiz) {
 }
 
 // 🔹 حفظ حل الطالب في Firestore
-async function saveAssignmentAnswerToFirestore(classId, assignId, studentId, data) {
-  if (!window.db) return;
-  await setDoc(
-    doc(
-      doc(window.db, "classes", classId),
-      "assignments", assignId,
-      "answers", studentId
-    ),
-    {
-      ...data,
-      updatedAt: Date.now()
-    },
-    { merge: true }
-  );
+async function saveAssignmentAnswerToFirestore(classId, assignId, studentId, answerText, fileName) {
+
+  const assignRef = doc(window.db, "classes", classId, "assignments", assignId);
+  const snap = await getDoc(assignRef);
+
+  if (!snap.exists()) {
+    console.error("❌ الواجب غير موجود!");
+    return;
+  }
+
+  const data = snap.data();
+
+  // تأكد من وجود كائن perStudent
+  data.perStudent = data.perStudent || {};
+
+  // تحديث إجابة الطالب
+  data.perStudent[studentId] = {
+    answer: answerText,
+    file: fileName || "",
+    status: "submitted",
+    progress: 50,
+    notes: data.perStudent[studentId]?.notes || ""
+  };
+
+  await setDoc(assignRef, data, { merge: true });
+
+  console.log("✔ تم حفظ إجابة الطالب في Firestore");
 }
 
 // 🔹 تحميل القصص من Firestore
@@ -800,17 +813,12 @@ function renderStudentAssignments(filter = 'required') {
 
           setAssignments(all);
 
-          await saveAssignmentAnswerToFirestore(
-            a.classId,
-            a.id,
-            current.id,
-            {
-              answer: text,
-              file,
-              status: "submitted",
-              progress: 50
-            }
-          );
+await saveAssignmentAnswerToFirestore(a.classId, a.id, current.email, {
+    answer: text,
+    file: file,
+    status: "submitted",
+    progress: 50
+});
 
           modal.remove();
           toast('✅ تم إرسال الحل، والإجابة الآن قيد المراجعة');
@@ -1203,47 +1211,77 @@ async function renderTeacherView() {
   const classId = current.classId;
   if (!classId) return;
 
-  // تحميل الواجبات من Firestore مباشرة
-  const snap = await getDocs(collection(window.db, "classes", classId, "assignments"));
-  const ass = snap.docs.map(a => ({ id: a.id, ...a.data(), classId }));
-
   const rows = $('#teacherRows');
-  if (rows) rows.innerHTML = '';
+  rows.innerHTML = "⏳ جاري التحميل...";
 
-  const usersSnap = await getDocs(collection(window.db, "classes", classId, "students"));
-  const users = {};
-  usersSnap.forEach(doc => { users[doc.id] = doc.data(); });
+  const assSnap = await getDocs(collection(window.db, "classes", classId, "assignments"));
 
-  ass.forEach(a => {
+  const stuSnap = await getDocs(collection(window.db, "classes", classId, "students"));
+  const students = {};
+  stuSnap.forEach(d => students[d.id] = d.data());
+
+  rows.innerHTML = '';
+
+  assSnap.forEach(aDoc => {
+    const a = { id: aDoc.id, ...aDoc.data(), classId };
+
     a.studentIds.forEach(sid => {
-      const stu = users[sid];
-      const ps = a.perStudent?.[sid] || { status: 'required', progress: 0, notes: '', answer: '' };
+
+      const stu = students[sid];
+      const ps = a.perStudent?.[sid] || {
+        status: "required",
+        progress: 0,
+        notes: "",
+        answer: ""
+      };
 
       const r = document.createElement('div');
-      r.className = 'row';
+      r.className = "row";
+
       r.innerHTML = `
         <div>${stu?.name || sid}</div>
         <div>${a.title}</div>
-        <div><span class="badge ${
-          ps.status === 'done'
-            ? 'ok'
-            : ps.status === 'submitted'
-            ? 'warn'
-            : 'err'
-        }">${ps.status}</span></div>
-        <div><div class="progress"><i style="width:${ps.progress || 0}%"></i></div></div>
-        <div>${ps.notes || '—'}</div>
-        <div class="actions"><button class="btn mini ghost" data-review="${a.id}:${sid}">👁 مراجعة</button></div>
+        <div>
+          <span class="badge ${
+            ps.status === 'done' ? 'ok' :
+            ps.status === 'submitted' ? 'warn' : 'err'
+          }">${ps.status}</span>
+        </div>
+        <div><div class="progress"><i style="width:${ps.progress}%"></i></div></div>
+        <div>${ps.notes || "—"}</div>
+        <div class="actions">
+          <button class="btn mini ghost" data-review="${a.id}:${sid}">👁 مراجعة</button>
+        </div>
       `;
+
       rows.appendChild(r);
 
-      r.querySelector('[data-review]').onclick = () => openReviewModal(a, sid, ps, stu);
+      r.querySelector('[data-review]').onclick = () =>
+        openReviewModal(a, sid, ps, stu);
     });
   });
 }
 
 
+
 async function openReviewModal(a, sid, ps, stu) {
+
+  // 📌 1) تحميل إجابة الطالب من Firestore
+  const ansRef = doc(
+    window.db,
+    "classes", a.classId,
+    "assignments", a.id,
+    "answers", sid
+  );
+
+  const ansSnap = await getDoc(ansRef);
+  let ansData = ansSnap.exists() ? ansSnap.data() : null;
+
+  // إذا لا توجد إجابة في Firestore استخدم ps القديمة (محليًا فقط)
+  const answerText = ansData?.answer || ps.answer || "— لم يُرسل إجابة —";
+  const answerFile = ansData?.file || ps.file || "";
+
+  // 📌 2) إنشاء نافذة المراجعة
   const modal = document.createElement('div');
   modal.className = 'modal';
 
@@ -1253,19 +1291,19 @@ async function openReviewModal(a, sid, ps, stu) {
 
       <h3>مراجعة حل الطالب</h3>
 
-      <div class="form-row"><b>الطالب:</b> ${stu?.name || '—'}</div>
+      <div class="form-row"><b>الطالب:</b> ${stu?.name || sid}</div>
       <div class="form-row"><b>عنوان الواجب:</b> ${a.title}</div>
 
       <div class="form-row"><b>إجابة الطالب:</b>
         <p style="background:#f8fafc;padding:.7rem;border-radius:10px">
-          ${ps.answer || '— لم يُرسل إجابة —'}
+          ${answerText}
         </p>
       </div>
 
-      ${ps.file ? `
+      ${answerFile ? `
         <div class="form-row">
           <b>الملف المرفق:</b>
-          <a href="${ps.file}" target="_blank" class="btn sky small">فتح الملف</a>
+          <a href="${answerFile}" target="_blank" class="btn sky small">فتح الملف</a>
         </div>
       ` : ''}
 
@@ -1282,35 +1320,35 @@ async function openReviewModal(a, sid, ps, stu) {
   `;
 
   document.body.appendChild(modal);
-
   $('#closeReview').onclick = () => modal.remove();
 
-  // ⭐ قبول الإجابة
+  // ⭐ 3) قبول الحل
   $('#approveAns').onclick = async () => {
     const note = $('#teacherNote').value.trim();
 
-    a.perStudent[sid] = { ...ps, notes: note, status: 'done', progress: 100 };
-
-    await setDoc(
-      doc(window.db, "classes", a.classId, "assignments", a.id),
-      a
-    );
+    // تحديث داخل Firestore
+    await setDoc(ansRef, {
+      ...ansData,
+      status: "done",
+      progress: 100,
+      notes: note
+    }, { merge: true });
 
     modal.remove();
-    toast("✨ تم قبول الحل");
+    toast("✨ تم قبول حل الطالب");
     renderTeacherView();
   };
 
-  // ⭐ رفض الإجابة
+  // ⭐ 4) رفض الحل
   $('#rejectAns').onclick = async () => {
     const note = $('#teacherNote').value.trim() || "يرجى تحسين الإجابة";
 
-    a.perStudent[sid] = { ...ps, notes: note, status: 'required', progress: 0 };
-
-    await setDoc(
-      doc(window.db, "classes", a.classId, "assignments", a.id),
-      a
-    );
+    await setDoc(ansRef, {
+      ...ansData,
+      status: "required",
+      progress: 0,
+      notes: note
+    }, { merge: true });
 
     modal.remove();
     toast("❌ تم رفض الحل");
