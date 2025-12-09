@@ -105,6 +105,7 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
 .assign-card .meta{display:flex;justify-content:space-between;color:var(--muted);font-size:.92rem;margin:.25rem 0}
 .progress{height:8px;background:#e5e7eb;border-radius:6px;overflow:hidden}
 .progress>i{display:block;height:8px;background:linear-gradient(90deg,#8b5cf6,#22d3ee)}
+.progress>i{ width: 0%; transition: width .3s ease; }
 
 /* Tables */
 .table{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:.9rem}
