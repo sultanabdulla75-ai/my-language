@@ -358,12 +358,13 @@
     </div>
   </div>
 
-  <script type="module">
+ <script type="module">
+
 // 🔹 تعريف المعلم الرئيس
 const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
 const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
 const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
-    
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
@@ -387,12 +388,11 @@ const db = getFirestore(app);
 window.db = db;
 
 // ===============================================
-//  تسجيل الدخول باستخدام Google  (الإصدار المصحّح)
-// ===============================================
-//  تسجيل الدخول باستخدام Google  (الإصدار المصحّح)
+//     تسجيل الدخول باستخدام Google (النسخة الصحيحة)
 // ===============================================
 
 document.getElementById("googleLogin")?.addEventListener("click", async () => {
+
   try {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
@@ -401,13 +401,13 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
 
     const isTeacher = (user.email === MAIN_TEACHER_EMAIL);
 
-    // =========================================
-    // 👨‍🏫 أولاً: حالة المعلم (أ. سلطان)
-    // =========================================
+    // ===============================
+    // 👨‍🏫 تسجيل دخول المعلم
+    // ===============================
     if (isTeacher) {
-      // نبحث عن الصف الذي teacherId فيه = UID المعلم
-      const classesSnap = await getDocs(collection(db, "classes"));
+
       let classId = null;
+      const classesSnap = await getDocs(collection(db, "classes"));
 
       classesSnap.forEach(c => {
         const data = c.data();
@@ -417,11 +417,10 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
       });
 
       if (!classId) {
-        alert("⚠ لا يوجد صف مرتبط بحساب المعلم في Firestore.\nتأكّد أن حقل teacherId في وثيقة الصف يساوي UID المعلم.");
+        alert("⚠ لا يوجد صف مرتبط بحساب المعلم.\nتأكد أن teacherId يساوي UID المعلم.");
         return;
       }
 
-      // نحفظ الجلسة الحالية كمعلم
       localStorage.setItem("arp.current", JSON.stringify({
         id: user.uid,
         name: user.displayName || MAIN_TEACHER_NAME,
@@ -430,25 +429,19 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
         classId
       }));
 
-      // تشغيل التطبيق
-      if (typeof window.startApp === "function") {
-        window.startApp();
-      }
+      window.startApp?.();
       return;
     }
 
-    // =========================================
-    // 👨‍🎓 ثانياً: حالة الطالب
-    // =========================================
-
-    // معرف الطالب = البريد دائمًا
+    // ===============================
+    // 👨‍🎓 تسجيل دخول الطالب
+    // ===============================
     const studentId = user.email;
 
-    // 1) البحث عن صف الطالب داخل Firestore
-    const classesSnap = await getDocs(collection(db, "classes"));
     let classId = null;
+    const classesSnap2 = await getDocs(collection(db, "classes"));
 
-    for (const c of classesSnap.docs) {
+    for (const c of classesSnap2.docs) {
       const stuRef = doc(db, "classes", c.id, "students", studentId);
       const stuSnap = await getDoc(stuRef);
       if (stuSnap.exists()) {
@@ -458,11 +451,10 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
     }
 
     if (!classId) {
-      alert("⚠ أنت غير مسجّل في أي صف في Firestore.\nاطلب من المعلم إضافتك في مجموعة الطلاب.");
+      alert("⚠ لست مسجلًا في أي صف.\nاطلب من المعلم إضافتك.");
       return;
     }
 
-    // 2) حفظ الجلسة الحالية (بدون لمس USERS/CLASSES المحلية)
     localStorage.setItem("arp.current", JSON.stringify({
       id: studentId,
       name: user.displayName,
@@ -471,22 +463,13 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
       classId
     }));
 
-    // 3) تشغيل التطبيق
-    if (typeof window.startApp === "function") {
-      window.startApp();
-    } else {
-      const wait = setInterval(() => {
-        if (typeof window.startApp === "function") {
-          clearInterval(wait);
-          window.startApp();
-        }
-      }, 100);
-    }
+    window.startApp?.();
 
   } catch (e) {
     console.error(e);
     alert("فشل تسجيل الدخول: " + e.message);
   }
+
 });
 
 </script>
