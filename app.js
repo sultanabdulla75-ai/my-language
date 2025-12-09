@@ -1196,143 +1196,126 @@ async function saveAssignment() {
 }
 
 
-function renderTeacherView() {
+async function renderTeacherView() {
   const current = readJSON(LS.CURRENT, null);
   if (!current) return;
-  const c = getTeacherClass(current.id);
-  const ass = getAssignments().filter(a => a.teacherId === current.id);
-  const users = getUsers();
 
-  $('#tc-stu').textContent = c.students.length;
-  $('#tc-asg').textContent = ass.length;
-  const doneCount = ass.reduce(
-    (sum, a) => sum + Object.values(a.perStudent || {}).filter(ps => ps.status === 'done').length,
-    0
-  );
-  $('#tc-done').textContent = doneCount;
+  const classId = current.classId;
+  if (!classId) return;
+
+  // تحميل الواجبات من Firestore مباشرة
+  const snap = await getDocs(collection(window.db, "classes", classId, "assignments"));
+  const ass = snap.docs.map(a => ({ id: a.id, ...a.data(), classId }));
 
   const rows = $('#teacherRows');
   if (rows) rows.innerHTML = '';
 
-  const addedRows = new Set();
+  const usersSnap = await getDocs(collection(window.db, "classes", classId, "students"));
+  const users = {};
+  usersSnap.forEach(doc => { users[doc.id] = doc.data(); });
 
   ass.forEach(a => {
     a.studentIds.forEach(sid => {
-      const key = `${a.id}-${sid}`;
-      if (addedRows.has(key)) return;
-      addedRows.add(key);
-      const stu = users.find(u => u.id === sid);
+      const stu = users[sid];
       const ps = a.perStudent?.[sid] || { status: 'required', progress: 0, notes: '', answer: '' };
 
       const r = document.createElement('div');
       r.className = 'row';
       r.innerHTML = `
-        <div>${stu?.name || '—'}</div>
+        <div>${stu?.name || sid}</div>
         <div>${a.title}</div>
         <div><span class="badge ${
           ps.status === 'done'
             ? 'ok'
-            : ps.status === 'overdue'
-            ? 'err'
-            : 'warn'
-        }">${ps.status === 'done' ? 'تم الحل' : ps.status === 'overdue' ? 'متأخر' : 'مطلوب'}</span></div>
+            : ps.status === 'submitted'
+            ? 'warn'
+            : 'err'
+        }">${ps.status}</span></div>
         <div><div class="progress"><i style="width:${ps.progress || 0}%"></i></div></div>
         <div>${ps.notes || '—'}</div>
         <div class="actions"><button class="btn mini ghost" data-review="${a.id}:${sid}">👁 مراجعة</button></div>
       `;
       rows.appendChild(r);
 
-      r.querySelector('[data-review]').onclick = () => {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-          <div class="modal-card" style="max-width:600px">
-            <button class="modal-close" id="closeReview">✖</button>
-            <h3>مراجعة حل الطالب</h3>
-            <div class="form-row"><b>الطالب:</b> ${stu?.name || '—'}</div>
-            <div class="form-row"><b>عنوان الواجب:</b> ${a.title}</div>
-            <div class="form-row"><b>إجابة الطالب:</b>
-              <p style="background:#f8fafc;border-radius:10px;padding:.7rem">${
-                ps.answer || '— لم يُرسل إجابة —'
-              }</p>
-            </div>
-            ${
-              ps.file
-                ? `<div class="form-row"><b>الملف المرفق:</b>
-                     <a href="${ps.file}" target="_blank" class="btn sky small">فتح الملف</a></div>`
-                : ''
-            }
-            <div class="form-row"><label>ملاحظة للطالب (اختياري)</label>
-              <textarea id="teacherNote" rows="3" placeholder="أضف ملاحظة...">${ps.notes || ''}</textarea>
-            </div>
-            <div class="row" style="display:flex;gap:.5rem;justify-content:flex-end">
-              <button id="rejectAns" class="btn warn small">رفض ❌</button>
-              <button id="approveAns" class="btn primary small">قبول ✅</button>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(modal);
-
-        $('#closeReview').onclick = () => modal.remove();
-
-        $('#approveAns').onclick = () => {
-          const note = $('#teacherNote').value.trim();
-          a.perStudent[sid] = { ...ps, notes: note, status: 'done', progress: 100 };
-          setAssignments(ass);
-          modal.remove();
-          toast('✅ تم قبول الحل');
-          renderTeacherView();
-        };
-
-        $('#rejectAns').onclick = () => {
-          const note = $('#teacherNote').value.trim() || 'يُرجى مراجعة الإجابة';
-          a.perStudent[sid] = { ...ps, notes: note, status: 'required', progress: 0 };
-          setAssignments(ass);
-          modal.remove();
-          toast('❌ تم رفض الحل');
-          renderTeacherView();
-        };
-      };
+      r.querySelector('[data-review]').onclick = () => openReviewModal(a, sid, ps, stu);
     });
   });
+}
 
-  const ctx = $('#chartTeacher');
-  if (ctx) {
-    const labels = ass.map(a => a.title);
-    const values = ass.map(a => {
-      const st = Object.values(a.perStudent || {});
-      if (!st.length) return 0;
-      return Math.round(st.reduce((s, x) => s + (x.progress || 0), 0) / st.length);
-    });
-    if (window._cht) window._cht.destroy();
-    window._cht = new Chart(ctx, {
-      type: 'bar',
-      data: { labels, datasets: [{ label: 'متوسط التقدّم %', data: values }] },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-      },
-    });
-  }
 
-  const host = $('#teacherAssignList');
-  if (host) host.innerHTML = '';
-  ass.forEach(a => {
-    const el = document.createElement('div');
-    el.className = 'assign-card';
-    const avg = (() => {
-      const st = Object.values(a.perStudent || {});
-      if (!st.length) return 0;
-      return Math.round(st.reduce((s, x) => s + (x.progress || 0), 0) / st.length);
-    })();
-    el.innerHTML = `<h4>${a.title}</h4>
-      <div class="meta"><span>${a.level}</span><span>${a.due || '-'}</span></div>
-      <div class="progress"><i style="width:${avg}%"></i></div>`;
-    host?.appendChild(el);
-  });
+async function openReviewModal(a, sid, ps, stu) {
+  const modal = document.createElement('div');
+  modal.className = 'modal';
 
-  if ($('#studentsRows')) renderTeacherStudents();
+  modal.innerHTML = `
+    <div class="modal-card" style="max-width:600px">
+      <button class="modal-close" id="closeReview">✖</button>
+
+      <h3>مراجعة حل الطالب</h3>
+
+      <div class="form-row"><b>الطالب:</b> ${stu?.name || '—'}</div>
+      <div class="form-row"><b>عنوان الواجب:</b> ${a.title}</div>
+
+      <div class="form-row"><b>إجابة الطالب:</b>
+        <p style="background:#f8fafc;padding:.7rem;border-radius:10px">
+          ${ps.answer || '— لم يُرسل إجابة —'}
+        </p>
+      </div>
+
+      ${ps.file ? `
+        <div class="form-row">
+          <b>الملف المرفق:</b>
+          <a href="${ps.file}" target="_blank" class="btn sky small">فتح الملف</a>
+        </div>
+      ` : ''}
+
+      <div class="form-row">
+        <label>ملاحظة للطالب (اختياري)</label>
+        <textarea id="teacherNote" rows="3">${ps.notes || ''}</textarea>
+      </div>
+
+      <div class="row" style="display:flex;justify-content:flex-end;gap:.5rem">
+        <button id="rejectAns" class="btn warn small">رفض ❌</button>
+        <button id="approveAns" class="btn primary small">قبول ✅</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  $('#closeReview').onclick = () => modal.remove();
+
+  // ⭐ قبول الإجابة
+  $('#approveAns').onclick = async () => {
+    const note = $('#teacherNote').value.trim();
+
+    a.perStudent[sid] = { ...ps, notes: note, status: 'done', progress: 100 };
+
+    await setDoc(
+      doc(window.db, "classes", a.classId, "assignments", a.id),
+      a
+    );
+
+    modal.remove();
+    toast("✨ تم قبول الحل");
+    renderTeacherView();
+  };
+
+  // ⭐ رفض الإجابة
+  $('#rejectAns').onclick = async () => {
+    const note = $('#teacherNote').value.trim() || "يرجى تحسين الإجابة";
+
+    a.perStudent[sid] = { ...ps, notes: note, status: 'required', progress: 0 };
+
+    await setDoc(
+      doc(window.db, "classes", a.classId, "assignments", a.id),
+      a
+    );
+
+    modal.remove();
+    toast("❌ تم رفض الحل");
+    renderTeacherView();
+  };
 }
 
 // ------------------------------------------------------
