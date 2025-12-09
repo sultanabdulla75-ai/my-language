@@ -1222,7 +1222,7 @@ async function renderTeacherView() {
 
   rows.innerHTML = '';
 
- assSnap.forEach(async aDoc => {
+assSnap.forEach(async aDoc => {
   const a = { id: aDoc.id, ...aDoc.data(), classId };
 
   for (let sid of a.studentIds) {
@@ -1250,7 +1250,6 @@ async function renderTeacherView() {
 
     const stu = students[sid];
 
-    // ⭐ بناء صف الواجب
     const r = document.createElement('div');
     r.className = "row";
 
