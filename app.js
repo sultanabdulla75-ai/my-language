@@ -1277,9 +1277,7 @@ assSnap.forEach(async aDoc => {
       () => openReviewModal(a, sid, ps, stu);
   }
 });
-
-
-
+} // 👈 هذه كانت مفقودة: إغلاق renderTeacherView
 
 async function openReviewModal(a, sid, ps, stu) {
 
