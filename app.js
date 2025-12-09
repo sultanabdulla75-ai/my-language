@@ -30,6 +30,12 @@ const LEVELS = [
   { id: 'L4', name: 'المستوى 4 (متقدم)' }
 ];
 
+// 🔹 بيانات المعلم الرئيس (من Firebase Authentication)
+const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
+const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
+const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
+
+
 const BOOKS = [
   {
     id: 'b1',
@@ -102,6 +108,12 @@ const writeJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 const uid = (p = 'U') => p + Math.random().toString(36).slice(2, 8);
 
 function toast(msg) { alert(msg); }
+
+// 🔹 بيانات المعلم الرئيس (من Firebase Authentication)
+const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
+const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
+const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
+
 
 // ------------------------------------------------------
 // Firestore Helpers (كتب + واجبات)
@@ -1019,7 +1031,7 @@ async function saveStudent() {
   // 4) حفظ في Firestore (إنترنت فقط)
   try {
     await setDoc(
-      doc(db, "classes", classId, "students", email),
+      doc(window.db, "classes", classId, "students", email),
       { name, email, className, uid: email }
     );
   } catch (e) {
@@ -1059,21 +1071,64 @@ function openCreateAssignment() {
   $('#modalAssign').classList.remove('hidden');
 }
 
-function saveAssignment() {
-  const current = readJSON(LS.CURRENT, null); if (!current) return;
+async function saveAssignment() {
+  const current = readJSON(LS.CURRENT, null); 
+  if (!current) return;
+
   const title = $('#aTitle').value.trim() || 'واجب جديد';
   const level = $('#aLevel').value;
   const due = $('#aDue').value;
   const desc = $('#aDesc').value.trim();
   const students = [...document.querySelectorAll('#studentsChecklist input[type=checkbox]:checked')].map(i => i.value);
-  if (!students.length) { toast('اختر طالبًا واحدًا على الأقل'); return; }
+
+  if (!students.length) { 
+    toast('اختر طالبًا واحدًا على الأقل'); 
+    return; 
+  }
+  const classId = getTeacherClass(current.id).id;
+
   const a = {
-    id: uid('A'), title, level, due, desc,
-    teacherId: current.id, classId: getTeacherClass(current.id).id,
+    id: uid('A'),
+    title,
+    level,
+    due,
+    desc,
+    teacherId: current.id,
+    classId,
     studentIds: students,
-    perStudent: students.reduce((acc, id) => (acc[id] = { status: 'required', progress: 0, notes: '' }, acc), {})
+    perStudent: students.reduce((acc, id) => {
+      acc[id] = { status: 'required', progress: 0, notes: '' };
+      return acc;
+    }, {})
   };
-  const all = getAssignments(); all.push(a); setAssignments(all);
+
+  // ✅ 1) حفظ محليًا (كـ cache)
+  const all = getAssignments(); 
+  all.push(a); 
+  setAssignments(all);
+
+  // ✅ 2) حفظ في Firestore ليظهر للطلاب من أي جهاز
+  if (window.db) {
+    try {
+      await setDoc(
+        doc(window.db, "classes", classId, "assignments", a.id),
+        {
+          title: a.title,
+          level: a.level,
+          due: a.due,
+          desc: a.desc,
+          teacherId: a.teacherId,
+          studentIds: a.studentIds,
+          perStudent: a.perStudent
+        }
+      );
+      console.log("✔ تم حفظ الواجب في Firestore");
+    } catch (e) {
+      console.error("❌ خطأ في حفظ الواجب في Firestore:", e);
+      toast("⚠ تم إنشاء الواجب محليًا فقط (تأكد من الاتصال بالإنترنت)");
+    }
+  }
+
   $('#modalAssign').classList.add('hidden');
   renderTeacherView();
   toast('تم إنشاء الواجب وإرساله للطلاب المحددين');
@@ -1506,7 +1561,7 @@ function autoFixAssignments() {
 // Boot
 // ------------------------------------------------------
 
-function startApp() {
+async function startApp() {
   // 1) قراءة المستخدم الحالي
   const current = readJSON(LS.CURRENT, null);
 
@@ -1540,22 +1595,47 @@ function startApp() {
   $('#readerView').classList.add('hidden');
 
   // 7) تحميل بيانات الواجبات من Firestore (للطلاب فقط)
+   // 7) تحميل بيانات الواجبات من Firestore (للطلاب فقط)
   if (current.role === 'student') {
-    const classes = getClasses();
-    const classObj = classes.find(c => c.students.includes(current.id));
+    // 🔹 أولاً نحاول استخدام classId المحفوظ من تسجيل الدخول بـ Google
+    let classId = current.classId || null;
 
-    if (classObj) {
-      const classId = classObj.id;
+    // 🔹 إذا لم يوجد، نحاول إيجاده من Firestore عن طريق البريد
+    if (!classId) {
+      classId = await findClassIdForStudent(current.email || current.id);
+    }
+
+    if (classId) {
+      // نحفظه في الجلسة ليسهل استخدامه لاحقًا
+      writeJSON(LS.CURRENT, { ...current, classId });
 
       // مزامنة الواجبات
-      syncAssignmentsFromFirestore(classId);
+      await syncAssignmentsFromFirestore(classId);
 
       // تحميل إجابات الطالب
-      loadStudentAnswersFromFirestore(classId, current.id);
+      await loadStudentAnswersFromFirestore(classId, current.id);
     } else {
       console.warn("⚠️ لم يتم العثور على فصل مرتبط بهذا الطالب.");
     }
   }
+
+
+  // 7 مكرر) مزامنة الواجبات للمعلم أيضًا من Firestore
+  if (current.role === 'teacher') {
+    let classId = current.classId || null;
+
+    if (!classId) {
+      const c = getTeacherClass(current.id);
+      if (c) classId = c.id;
+    }
+
+    if (classId) {
+      await syncAssignmentsFromFirestore(classId);
+    }
+  }
+
+
+  
 
   // 8) بناء أجزاء الصفحة
   buildNav(current.role);
