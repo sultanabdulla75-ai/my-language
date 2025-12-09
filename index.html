@@ -359,6 +359,11 @@
   </div>
 
   <script type="module">
+// 🔹 تعريف المعلم الرئيس
+const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
+const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
+const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
+    
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
@@ -394,72 +399,70 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
 
     console.log("✔ Logged in with Google:", user.email);
 
-    // 📌 تعريف معرف الطالب = البريد دائمًا
+    const isTeacher = (user.email === MAIN_TEACHER_EMAIL);
+
+    // =========================================
+    // 👨‍🏫 أولاً: حالة المعلم (أ. سلطان)
+    // =========================================
+    if (isTeacher) {
+      // نبحث عن الصف الذي teacherId فيه = UID المعلم
+      const classesSnap = await getDocs(collection(db, "classes"));
+      let classId = null;
+
+      classesSnap.forEach(c => {
+        const data = c.data();
+        if (data.teacherId === user.uid || data.teacherId === MAIN_TEACHER_UID) {
+          classId = c.id;
+        }
+      });
+
+      if (!classId) {
+        alert("⚠ لا يوجد صف مرتبط بحساب المعلم في Firestore.\nتأكّد أن حقل teacherId في وثيقة الصف يساوي UID المعلم.");
+        return;
+      }
+
+      // نحفظ الجلسة الحالية كمعلم
+      localStorage.setItem("arp.current", JSON.stringify({
+        id: user.uid,
+        name: user.displayName || MAIN_TEACHER_NAME,
+        email: user.email,
+        role: "teacher",
+        classId
+      }));
+
+      // تشغيل التطبيق
+      if (typeof window.startApp === "function") {
+        window.startApp();
+      }
+      return;
+    }
+
+    // =========================================
+    // 👨‍🎓 ثانياً: حالة الطالب
+    // =========================================
+
+    // معرف الطالب = البريد دائمًا
     const studentId = user.email;
 
-    // ------------------------------------------------
-    // 🔍 1) البحث عن صف الطالب داخل Firestore
-    // ------------------------------------------------
+    // 1) البحث عن صف الطالب داخل Firestore
     const classesSnap = await getDocs(collection(db, "classes"));
     let classId = null;
 
     for (const c of classesSnap.docs) {
-      const stu = await getDoc(doc(db, "classes", c.id, "students", studentId));
-      if (stu.exists()) {
+      const stuRef = doc(db, "classes", c.id, "students", studentId);
+      const stuSnap = await getDoc(stuRef);
+      if (stuSnap.exists()) {
         classId = c.id;
         break;
       }
     }
 
     if (!classId) {
-      alert("⚠ أنت غير مسجّل في أي صف. اطلب من المعلم إضافتك.");
+      alert("⚠ أنت غير مسجّل في أي صف في Firestore.\nاطلب من المعلم إضافتك في مجموعة الطلاب.");
       return;
     }
 
-    // ------------------------------------------------
-    // 2️⃣ إضافة الطالب في arp.users محليًا
-    // ------------------------------------------------
-    let users = JSON.parse(localStorage.getItem("arp.users") || "[]");
-
-    if (!users.some(u => u.email === studentId)) {
-      users.push({
-        id: studentId,        // ← لاحظ: المعرف هو البريد
-        name: user.displayName,
-        email: studentId,
-        pass: null,
-        role: "student",
-        className: "فصلي"
-      });
-
-      localStorage.setItem("arp.users", JSON.stringify(users));
-    }
-
-    // ------------------------------------------------
-    // 3️⃣ إضافة الطالب إلى الفصل محليًا
-    // ------------------------------------------------
-    let classes = JSON.parse(localStorage.getItem("arp.classes") || "[]");
-
-    let classObj = classes.find(c => c.id === classId);
-
-    if (!classObj) {
-      classObj = {
-        id: classId,
-        teacherId: "T1",
-        name: "فصلي",
-        students: []
-      };
-      classes.push(classObj);
-    }
-
-    if (!classObj.students.includes(studentId)) {
-      classObj.students.push(studentId);
-    }
-
-    localStorage.setItem("arp.classes", JSON.stringify(classes));
-
-    // ------------------------------------------------
-    // 4️⃣ حفظ الجلسة الحالية
-    // ------------------------------------------------
+    // 2) حفظ الجلسة الحالية (بدون لمس USERS/CLASSES المحلية)
     localStorage.setItem("arp.current", JSON.stringify({
       id: studentId,
       name: user.displayName,
@@ -468,36 +471,24 @@ document.getElementById("googleLogin")?.addEventListener("click", async () => {
       classId
     }));
 
-    // ------------------------------------------------
-    // 5️⃣ تحميل إجابات الواجبات له
-    // ------------------------------------------------
-    await loadStudentAnswersFromFirestore(classId, studentId);
-
-    // ------------------------------------------------
-    // 6️⃣ مزامنة القصص
-    // ------------------------------------------------
-    await syncBooks(classId);
-
-    // ------------------------------------------------
-    // 7️⃣ الدخول للمنصة
-    // ------------------------------------------------
-// نتأكد أولًا أن startApp موجودة من app.js
-if (typeof window.startApp === "function") {
-  window.startApp();
-} else {
-  // إذا لم تكن جاهزة، ننتظر حتى يتم تحميل app.js
-  const wait = setInterval(() => {
+    // 3) تشغيل التطبيق
     if (typeof window.startApp === "function") {
-      clearInterval(wait);
       window.startApp();
+    } else {
+      const wait = setInterval(() => {
+        if (typeof window.startApp === "function") {
+          clearInterval(wait);
+          window.startApp();
+        }
+      }, 100);
     }
-  }, 100);
-}
+
   } catch (e) {
     console.error(e);
     alert("فشل تسجيل الدخول: " + e.message);
   }
 });
+
 </script>
 
   <!-- تطبيق المنصة (يُستورد مرة واحدة فقط) -->
