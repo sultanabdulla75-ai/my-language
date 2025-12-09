@@ -257,11 +257,13 @@ export async function loadStudentAnswersFromFirestore(classId, studentId) {
   for (const docA of snap.docs) {
     const assignId = docA.id;
 
-    const ansRef = doc(
-      doc(window.db, "classes", classId),
-      "assignments", assignId,
-      "answers", studentId
-    );
+ const ansRef = doc(
+  window.db,
+  "classes", classId,
+  "assignments", assignId,
+  "answers", studentId
+);
+
 
     const ansSnap = await getDoc(ansRef);
 
