@@ -1072,12 +1072,14 @@ async function openCreateAssignment() {
   const current = readJSON(LS.CURRENT, null);
   if (!current) return;
 
-  // 1) الحصول على classId
-  const classObj = getTeacherClass(current.id);
-  const classId = classObj.id;
+  const classId = current.classId;
+  if (!classId) {
+    toast("⚠ لا يوجد فصل مرتبط بالمعلم!");
+    return;
+  }
 
-  // 2) ملء المستويات
-  const sel = $('#aLevel'); 
+  // تعبئة مستويات القراءة
+  const sel = $('#aLevel');
   sel.innerHTML = '';
   LEVELS.forEach(l => {
     const o = document.createElement('option');
@@ -1086,41 +1088,47 @@ async function openCreateAssignment() {
     sel.appendChild(o);
   });
 
-  // 3) تحميل الطلاب من Firestore
+  // تحميل الطلاب من Firestore
   const box = $('#studentsChecklist');
-  box.innerHTML = '<div>⏳ جاري تحميل الطلاب...</div>';
+  box.innerHTML = `<div style="padding:10px;color:#777">⏳ جاري تحميل الطلاب...</div>`;
 
-  let students = [];
   try {
-    students = await getTeacherStudents(classId); // ← من Firestore
-  } catch (e) {
-    console.error("❌ خطأ أثناء جلب الطلاب:", e);
-    box.innerHTML = "<p>لا يمكن تحميل الطلاب الآن.</p>";
-    return;
-  }
+    const stuSnap = await getDocs(
+      collection(window.db, "classes", classId, "students")
+    );
 
-  // 4) عرض الطلاب
-  box.innerHTML = '';
-  if (!students.length) {
-    box.innerHTML = "<p>لا يوجد طلاب مسجلون.</p>";
-  } else {
-    students.forEach(st => {
-      const idc = uid('CHK');
+    box.innerHTML = '';
+
+    if (stuSnap.empty) {
+      box.innerHTML = `<div style="padding:10px;color:#777">لا يوجد طلاب في هذا الفصل.</div>`;
+      return;
+    }
+
+    // إضافة الطلاب إلى القائمة
+    stuSnap.forEach(d => {
+      const st = d.data();
+      const idc = uid("CHK");
       const label = document.createElement('label');
-      label.innerHTML = `<input type="checkbox" id="${idc}" value="${st.email}"> ${st.name}`;
+      label.innerHTML = `
+        <input type="checkbox" id="${idc}" value="${st.email}">
+        ${st.name} (${st.email})
+      `;
       box.appendChild(label);
     });
+
+  } catch (e) {
+    console.error("❌ خطأ في تحميل الطلاب:", e);
+    box.innerHTML = `<div style="padding:10px;color:red">خطأ في تحميل الطلاب</div>`;
   }
 
-  // 5) تجهيز النموذج
+  // إعادة تعيين الحقول
   $('#aTitle').value = '';
   $('#aDue').value = '';
   $('#aDesc').value = '';
 
-  // 6) فتح نافذة إنشاء الواجب
+  // عرض النافذة
   $('#modalAssign').classList.remove('hidden');
 }
-
 
 async function saveAssignment() {
   const current = readJSON(LS.CURRENT, null); 
