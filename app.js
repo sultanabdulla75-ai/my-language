@@ -1222,45 +1222,61 @@ async function renderTeacherView() {
 
   rows.innerHTML = '';
 
-  assSnap.forEach(aDoc => {
-    const a = { id: aDoc.id, ...aDoc.data(), classId };
+ assSnap.forEach(async aDoc => {
+  const a = { id: aDoc.id, ...aDoc.data(), classId };
 
-    a.studentIds.forEach(sid => {
+  for (let sid of a.studentIds) {
 
-      const stu = students[sid];
-      const ps = a.perStudent?.[sid] || {
-        status: "required",
-        progress: 0,
-        notes: "",
-        answer: ""
-      };
+    // ⭐ تحميل إجابة الطالب من Firestore
+    const ansRef = doc(window.db,
+      "classes", classId,
+      "assignments", a.id,
+      "answers", sid
+    );
 
-      const r = document.createElement('div');
-      r.className = "row";
+    const ansSnap = await getDoc(ansRef);
 
-      r.innerHTML = `
-        <div>${stu?.name || sid}</div>
-        <div>${a.title}</div>
-        <div>
-          <span class="badge ${
-            ps.status === 'done' ? 'ok' :
-            ps.status === 'submitted' ? 'warn' : 'err'
-          }">${ps.status}</span>
-        </div>
-        <div><div class="progress"><i style="width:${ps.progress}%"></i></div></div>
-        <div>${ps.notes || "—"}</div>
-        <div class="actions">
-          <button class="btn mini ghost" data-review="${a.id}:${sid}">👁 مراجعة</button>
-        </div>
-      `;
+    let ps = a.perStudent?.[sid] || {
+      status: "required",
+      progress: 0,
+      notes: "",
+      answer: ""
+    };
 
-      rows.appendChild(r);
+    if (ansSnap.exists()) {
+      const data = ansSnap.data();
+      ps = { ...ps, ...data };   // ← دمج بيانات Firestore
+    }
 
-      r.querySelector('[data-review]').onclick = () =>
-        openReviewModal(a, sid, ps, stu);
-    });
-  });
-}
+    const stu = students[sid];
+
+    // ⭐ بناء صف الواجب
+    const r = document.createElement('div');
+    r.className = "row";
+
+    r.innerHTML = `
+      <div>${stu?.name || sid}</div>
+      <div>${a.title}</div>
+      <div>
+        <span class="badge ${
+          ps.status === 'done' ? 'ok' :
+          ps.status === 'submitted' ? 'warn' : 'err'
+        }">${ps.status}</span>
+      </div>
+      <div><div class="progress"><i style="width:${ps.progress}%"></i></div></div>
+      <div>${ps.notes || "—"}</div>
+      <div class="actions">
+        <button class="btn mini ghost" data-review="${a.id}:${sid}">👁 مراجعة</button>
+      </div>
+    `;
+
+    rows.appendChild(r);
+
+    r.querySelector('[data-review]').onclick =
+      () => openReviewModal(a, sid, ps, stu);
+  }
+});
+
 
 
 
@@ -1665,6 +1681,30 @@ async function startApp() {
     $$('.only-teacher').forEach(btn => btn.style.display = 'none');
   }
 
+// ⭐⭐⭐ تحميل الطلاب من Firestore لإدارة الطلاب ⭐⭐⭐
+if (current.role === "teacher") {
+    const classObj = getTeacherClass(current.id);
+    if (classObj) {
+        const classId = classObj.id;
+        const stuSnap = await getDocs(collection(window.db, "classes", classId, "students"));
+
+        const users = getUsers();
+        stuSnap.forEach(doc => {
+            const d = doc.data();
+            if (!users.some(u => u.id === d.email)) {
+                users.push({
+                    id: d.email,
+                    name: d.name,
+                    email: d.email,
+                    role: "student",
+                    pass: "123456"
+                });
+            }
+        });
+        setUsers(users);
+    }
+}
+  
   // 5) تعبئة بيانات المستخدم في الواجهة
   $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
   $('#userName').textContent = current.name;
