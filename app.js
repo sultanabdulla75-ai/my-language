@@ -30,12 +30,6 @@ const LEVELS = [
   { id: 'L4', name: 'المستوى 4 (متقدم)' }
 ];
 
-// 🔹 بيانات المعلم الرئيس (من Firebase Authentication)
-const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
-const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
-const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
-
-
 const BOOKS = [
   {
     id: 'b1',
