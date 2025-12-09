@@ -106,7 +106,22 @@ function toast(msg) { alert(msg); }
 // ------------------------------------------------------
 // Firestore Helpers (كتب + واجبات)
 // ------------------------------------------------------
+// 📌 تحميل الطلاب من Firestore للصف الخاص بالمعلم
+export async function getTeacherStudents(classId) {
+  const students = [];
+  const stuSnap = await getDocs(collection(window.db, "classes", classId, "students"));
 
+  stuSnap.forEach(doc => {
+    const d = doc.data();
+    students.push({
+      id: d.email,
+      name: d.name || d.email,
+      email: d.email
+    });
+  });
+
+  return students;
+}
 // 🔹 مزامنة القصص (محلي ↔ سحابة)
 export async function syncBooks(classId) {
   if (!classId) {
@@ -1053,29 +1068,59 @@ async function saveStudent() {
   renderTeacherView();
 }
 
-function openCreateAssignment() {
-  const current = readJSON(LS.CURRENT, null); if (!current) return;
-  const c = getTeacherClass(current.id);
-  const sel = $('#aLevel'); sel.innerHTML = '';
+async function openCreateAssignment() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return;
+
+  // 1) الحصول على classId
+  const classObj = getTeacherClass(current.id);
+  const classId = classObj.id;
+
+  // 2) ملء المستويات
+  const sel = $('#aLevel'); 
+  sel.innerHTML = '';
   LEVELS.forEach(l => {
     const o = document.createElement('option');
     o.value = l.id;
     o.textContent = l.name;
     sel.appendChild(o);
   });
-  const box = $('#studentsChecklist'); box.innerHTML = '';
-  const users = getUsers();
-  c.students.map(id => users.find(u => u.id === id)).filter(Boolean).forEach(st => {
-    const idc = uid('CHK');
-    const label = document.createElement('label');
-    label.innerHTML = `<input type="checkbox" id="${idc}" value="${st.id}"> ${st.name}`;
-    box.appendChild(label);
-  });
+
+  // 3) تحميل الطلاب من Firestore
+  const box = $('#studentsChecklist');
+  box.innerHTML = '<div>⏳ جاري تحميل الطلاب...</div>';
+
+  let students = [];
+  try {
+    students = await getTeacherStudents(classId); // ← من Firestore
+  } catch (e) {
+    console.error("❌ خطأ أثناء جلب الطلاب:", e);
+    box.innerHTML = "<p>لا يمكن تحميل الطلاب الآن.</p>";
+    return;
+  }
+
+  // 4) عرض الطلاب
+  box.innerHTML = '';
+  if (!students.length) {
+    box.innerHTML = "<p>لا يوجد طلاب مسجلون.</p>";
+  } else {
+    students.forEach(st => {
+      const idc = uid('CHK');
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="checkbox" id="${idc}" value="${st.email}"> ${st.name}`;
+      box.appendChild(label);
+    });
+  }
+
+  // 5) تجهيز النموذج
   $('#aTitle').value = '';
   $('#aDue').value = '';
   $('#aDesc').value = '';
+
+  // 6) فتح نافذة إنشاء الواجب
   $('#modalAssign').classList.remove('hidden');
 }
+
 
 async function saveAssignment() {
   const current = readJSON(LS.CURRENT, null); 
@@ -1085,13 +1130,17 @@ async function saveAssignment() {
   const level = $('#aLevel').value;
   const due = $('#aDue').value;
   const desc = $('#aDesc').value.trim();
+
+  // الطلاب من Firestore (تم ملؤهم في openCreateAssignment)
   const students = [...document.querySelectorAll('#studentsChecklist input[type=checkbox]:checked')].map(i => i.value);
 
   if (!students.length) { 
     toast('اختر طالبًا واحدًا على الأقل'); 
     return; 
   }
-  const classId = getTeacherClass(current.id).id;
+
+  // ❗ نستخدم classId من الجلسة (Firestore)
+  const classId = current.classId;
 
   const a = {
     id: uid('A'),
@@ -1108,37 +1157,36 @@ async function saveAssignment() {
     }, {})
   };
 
-  // ✅ 1) حفظ محليًا (كـ cache)
+  // 1) حفظ محليًا
   const all = getAssignments(); 
   all.push(a); 
   setAssignments(all);
 
-  // ✅ 2) حفظ في Firestore ليظهر للطلاب من أي جهاز
-  if (window.db) {
-    try {
-      await setDoc(
-        doc(window.db, "classes", classId, "assignments", a.id),
-        {
-          title: a.title,
-          level: a.level,
-          due: a.due,
-          desc: a.desc,
-          teacherId: a.teacherId,
-          studentIds: a.studentIds,
-          perStudent: a.perStudent
-        }
-      );
-      console.log("✔ تم حفظ الواجب في Firestore");
-    } catch (e) {
-      console.error("❌ خطأ في حفظ الواجب في Firestore:", e);
-      toast("⚠ تم إنشاء الواجب محليًا فقط (تأكد من الاتصال بالإنترنت)");
-    }
+  // 2) حفظ في Firestore
+  try {
+    await setDoc(
+      doc(window.db, "classes", classId, "assignments", a.id),
+      {
+        title: a.title,
+        level: a.level,
+        due: a.due,
+        desc: a.desc,
+        teacherId: a.teacherId,
+        studentIds: a.studentIds,
+        perStudent: a.perStudent
+      }
+    );
+    console.log("✔ تم حفظ الواجب في Firestore");
+  } catch (e) {
+    console.error("❌ خطأ في حفظ الواجب في Firestore:", e);
+    toast("⚠ تم إنشاء الواجب محليًا فقط (تأكد من الاتصال بالإنترنت)");
   }
 
   $('#modalAssign').classList.add('hidden');
   renderTeacherView();
   toast('تم إنشاء الواجب وإرساله للطلاب المحددين');
 }
+
 
 function renderTeacherView() {
   const current = readJSON(LS.CURRENT, null);
