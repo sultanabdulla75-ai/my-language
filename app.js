@@ -103,12 +103,6 @@ const uid = (p = 'U') => p + Math.random().toString(36).slice(2, 8);
 
 function toast(msg) { alert(msg); }
 
-// 🔹 بيانات المعلم الرئيس (من Firebase Authentication)
-const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
-const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
-const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
-
-
 // ------------------------------------------------------
 // Firestore Helpers (كتب + واجبات)
 // ------------------------------------------------------
@@ -290,7 +284,25 @@ export async function syncAssignmentsFromFirestore(classId) {
   console.log("✔ تمت مزامنة الواجبات من Firestore");
 }
 
+// 🔹 إيجاد classId للطالب من Firestore (للاحتياط إذا لم يُحفظ في الجلسة)
+async function findClassIdForStudent(studentEmail) {
+  if (!window.db || !studentEmail) return null;
 
+  try {
+    const classesSnap = await getDocs(collection(window.db, "classes"));
+    for (const c of classesSnap.docs) {
+      const stuRef = doc(window.db, "classes", c.id, "students", studentEmail);
+      const stuSnap = await getDoc(stuRef);
+      if (stuSnap.exists()) {
+        return c.id;
+      }
+    }
+  } catch (e) {
+    console.error("❌ خطأ في findClassIdForStudent:", e);
+  }
+
+  return null;
+}
 
 // ------------------------------------------------------
 // التنقل والتبويبات + لوحة الجانب الأيمن
@@ -509,13 +521,14 @@ function loginUser(e) {
   const user = users.find(u => u.email === email && u.pass === pass);
   if (!user) { $('#loginMsg').textContent = 'بيانات الدخول غير صحيحة.'; return; }
   writeJSON(LS.CURRENT, { id: user.id, name: user.name, email: user.email, role: user.role });
+
   // ⭐⭐ إضافة الطالب إلى فصل المعلم تلقائيًا ⭐⭐
-const classes = readJSON(LS.CLASSES, []);
-let classObj = classes[0]; // نفترض معلم واحد = فصل واحد
-if (classObj && !classObj.students.includes(user.id)) {
+  const classes = readJSON(LS.CLASSES, []);
+  let classObj = classes[0]; // نفترض معلم واحد = فصل واحد
+  if (classObj && !classObj.students.includes(user.id)) {
     classObj.students.push(user.id);
     writeJSON(LS.CLASSES, classes);
-}
+  }
   startApp();
 }
 
@@ -1040,7 +1053,6 @@ async function saveStudent() {
   renderTeacherView();
 }
 
-
 function openCreateAssignment() {
   const current = readJSON(LS.CURRENT, null); if (!current) return;
   const c = getTeacherClass(current.id);
@@ -1507,8 +1519,6 @@ function confirmSubmitModal(callback) {
   };
 }
 
-
-
 // ===============================================
 //  🛠 إصلاح تلقائي للواجبات لتعمل في كل المتصفحات
 //  يقوم بتحويل معرّفات الطلاب القديمة إلى البريد
@@ -1589,7 +1599,6 @@ async function startApp() {
   $('#readerView').classList.add('hidden');
 
   // 7) تحميل بيانات الواجبات من Firestore (للطلاب فقط)
-   // 7) تحميل بيانات الواجبات من Firestore (للطلاب فقط)
   if (current.role === 'student') {
     // 🔹 أولاً نحاول استخدام classId المحفوظ من تسجيل الدخول بـ Google
     let classId = current.classId || null;
@@ -1613,7 +1622,6 @@ async function startApp() {
     }
   }
 
-
   // 7 مكرر) مزامنة الواجبات للمعلم أيضًا من Firestore
   if (current.role === 'teacher') {
     let classId = current.classId || null;
@@ -1628,9 +1636,6 @@ async function startApp() {
     }
   }
 
-
-  
-
   // 8) بناء أجزاء الصفحة
   buildNav(current.role);
   renderLevels();
@@ -1641,8 +1646,7 @@ async function startApp() {
   updateRail();
 }
 
-
-// ⭐⭐⭐ أضِف السطر هنا بالضبط ⭐⭐⭐
+// ⭐⭐⭐ مهم: تعريف startApp على window ⭐⭐⭐
 window.startApp = startApp;
 
 // =============================
@@ -1655,7 +1659,6 @@ document.addEventListener('click', (e) => {
   const closeId = e.target.dataset?.close;
   if (closeId) document.getElementById(closeId).classList.add('hidden');
 });
-
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -1678,14 +1681,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('#searchBooks')?.addEventListener('input', () => renderBooks('ALL'));
 
-
   // تبديل تبويبات الواجبات للطالب
   $$('#tab-assign .pill').forEach(p => p.onclick = () => {
     $$('#tab-assign .pill').forEach(x => x.classList.remove('active'));
     p.classList.add('active');
     renderStudentAssignments(p.dataset.filter);
   });
-
 
   // أزرار إدارة المنصة
   document.addEventListener('click', (e) => {
@@ -1725,7 +1726,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-
   // قارئ القصص
   $('#backToApp').addEventListener('click', backToApp);
   $('#startRec').addEventListener('click', startRecording);
@@ -1735,7 +1735,6 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#closeQuiz')?.addEventListener('click', () => {
     $('#modalQuiz').classList.add('hidden');
   });
-
 
   // إصلاح خطأ اختيار الجواب في الاختبار
   $('#submitQuiz')?.addEventListener('click', () => {
@@ -1761,10 +1760,9 @@ document.addEventListener('DOMContentLoaded', () => {
     toast("✓ تم إنهاء النشاط. نتيجتك: " + score + "/" + currentBook.quiz.length);
   });
 
-
   // زر الخروج
   $('#logoutBtn')?.addEventListener('click', confirmLogout);
 
-  // تشغيل التطبيق
+  // تشغيل التطبيق مباشرة لو فيه مستخدم محفوظ
   startApp();
 });
