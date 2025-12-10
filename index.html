@@ -21,7 +21,6 @@
       <div class="nav-center" id="navLinks"></div>
 
       <div class="nav-right">
-        <!-- لا نستخدم onclick هنا، سيتم ربطه من app.js -->
         <button id="logoutBtn" class="chip ghost">خروج</button>
       </div>
     </nav>
@@ -310,7 +309,7 @@
       </div>
       <div class="form-row"><label>كلمة المرور</label><input type="password" id="sPass" placeholder="١٢٣٤٥٦"></div>
       <div class="row"><button class="btn small" id="saveStudent">إضافة</button></div>
-      <p class="muted" style="margin-top:.4rem">* إضافة محلية للتجربة — يمكن ربطها بـ API لاحقًا.</p>
+      <p class="muted" style="margin-top:.4rem">* إضافة محلية للتجربة — ويتم حفظها في Firestore للفصل الحالي.</p>
     </div>
   </div>
 
@@ -358,123 +357,111 @@
     </div>
   </div>
 
- <script type="module">
+  <!-- سكربت Firebase + تسجيل دخول Google -->
+  <script type="module">
+    // 🔹 تعريف المعلم الرئيس
+    const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
+    const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
+    const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
 
-// 🔹 تعريف المعلم الرئيس
-const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
-const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
-const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+    import { loadStudentAnswersFromFirestore, syncBooks } from "./app.js";
 
-import { loadStudentAnswersFromFirestore, syncBooks } from "./app.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyCcgfkdGNTZhqPxoY765hf53jh9KqOQPxU",
+      authDomain: "my-language2025.firebaseapp.com",
+      projectId: "my-language2025",
+      storageBucket: "my-language2025.firebasestorage.app",
+      messagingSenderId: "531458626572",
+      appId: "1:531458626572:web:711af89cd9019f0ee64a29",
+      measurementId: "G-EBEN4JWHM8"
+    };
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCcgfkdGNTZhqPxoY765hf53jh9KqOQPxU",
-  authDomain: "my-language2025.firebaseapp.com",
-  projectId: "my-language2025",
-  storageBucket: "my-language2025.firebasestorage.app",
-  messagingSenderId: "531458626572",
-  appId: "1:531458626572:web:711af89cd9019f0ee64a29",
-  measurementId: "G-EBEN4JWHM8"
-};
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    const db = getFirestore(app);
+    window.db = db;
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
-const db = getFirestore(app);
-window.db = db;
+    document.getElementById("googleLogin")?.addEventListener("click", async () => {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
 
-// ===============================================
-//     تسجيل الدخول باستخدام Google (النسخة الصحيحة)
-// ===============================================
+        console.log("✔ Logged in with Google:", user.email);
 
-document.getElementById("googleLogin")?.addEventListener("click", async () => {
+        const isTeacher = (user.email === MAIN_TEACHER_EMAIL);
 
-  try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
+        // 👨‍🏫 حالة المعلم
+        if (isTeacher) {
+          let classId = null;
+          const classesSnap = await getDocs(collection(db, "classes"));
 
-    console.log("✔ Logged in with Google:", user.email);
+          classesSnap.forEach(c => {
+            const data = c.data();
+            if (data.teacherId === user.uid || data.teacherId === MAIN_TEACHER_UID) {
+              classId = c.id;
+            }
+          });
 
-    const isTeacher = (user.email === MAIN_TEACHER_EMAIL);
+          if (!classId) {
+            alert("⚠ لا يوجد صف مرتبط بحساب المعلم.\nتأكد أن teacherId في وثيقة الصف يساوي UID المعلم.");
+            return;
+          }
 
-    // ===============================
-    // 👨‍🏫 تسجيل دخول المعلم
-    // ===============================
-    if (isTeacher) {
+          localStorage.setItem("arp.current", JSON.stringify({
+            id: user.uid,
+            name: user.displayName || MAIN_TEACHER_NAME,
+            email: user.email,
+            role: "teacher",
+            classId
+          }));
 
-      let classId = null;
-      const classesSnap = await getDocs(collection(db, "classes"));
-
-      classesSnap.forEach(c => {
-        const data = c.data();
-        if (data.teacherId === user.uid || data.teacherId === MAIN_TEACHER_UID) {
-          classId = c.id;
+          window.startApp?.();
+          return;
         }
-      });
 
-      if (!classId) {
-        alert("⚠ لا يوجد صف مرتبط بحساب المعلم.\nتأكد أن teacherId يساوي UID المعلم.");
-        return;
+        // 👨‍🎓 حالة الطالب
+        const studentId = user.email;
+
+        let classId = null;
+        const classesSnap2 = await getDocs(collection(db, "classes"));
+
+        for (const c of classesSnap2.docs) {
+          const stuRef = doc(db, "classes", c.id, "students", studentId);
+          const stuSnap = await getDoc(stuRef);
+          if (stuSnap.exists()) {
+            classId = c.id;
+            break;
+          }
+        }
+
+        if (!classId) {
+          alert("⚠ لست مسجلًا في أي صف.\nاطلب من المعلم إضافتك.");
+          return;
+        }
+
+        localStorage.setItem("arp.current", JSON.stringify({
+          id: studentId,
+          name: user.displayName,
+          email: studentId,
+          role: "student",
+          classId
+        }));
+
+        window.startApp?.();
+
+      } catch (e) {
+        console.error(e);
+        alert("فشل تسجيل الدخول: " + e.message);
       }
+    });
+  </script>
 
-      localStorage.setItem("arp.current", JSON.stringify({
-        id: user.uid,
-        name: user.displayName || MAIN_TEACHER_NAME,
-        email: user.email,
-        role: "teacher",
-        classId
-      }));
-
-      window.startApp?.();
-      return;
-    }
-
-    // ===============================
-    // 👨‍🎓 تسجيل دخول الطالب
-    // ===============================
-    const studentId = user.email;
-
-    let classId = null;
-    const classesSnap2 = await getDocs(collection(db, "classes"));
-
-    for (const c of classesSnap2.docs) {
-      const stuRef = doc(db, "classes", c.id, "students", studentId);
-      const stuSnap = await getDoc(stuRef);
-      if (stuSnap.exists()) {
-        classId = c.id;
-        break;
-      }
-    }
-
-    if (!classId) {
-      alert("⚠ لست مسجلًا في أي صف.\nاطلب من المعلم إضافتك.");
-      return;
-    }
-
-    localStorage.setItem("arp.current", JSON.stringify({
-      id: studentId,
-      name: user.displayName,
-      email: studentId,
-      role: "student",
-      classId
-    }));
-
-    window.startApp?.();
-
-  } catch (e) {
-    console.error(e);
-    alert("فشل تسجيل الدخول: " + e.message);
-  }
-
-});
-
-</script>
-
-  <!-- تطبيق المنصة (يُستورد مرة واحدة فقط) -->
+  <!-- تطبيق المنصة -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
