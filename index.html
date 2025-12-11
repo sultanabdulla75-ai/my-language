@@ -358,35 +358,43 @@
   </div>
 
   <!-- سكربت Firebase + تسجيل دخول Google -->
-  <script type="module">
-    // 🔹 تعريف المعلم الرئيس
-    const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
-    const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
-    const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
+<script type="module">
+  // 🔹 تعريف المعلم الرئيس
+  const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
+  const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
+  const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-    import { loadStudentAnswersFromFirestore, syncBooks } from "./app.js";
+  import { loadStudentAnswersFromFirestore, syncBooks } from "./app.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCcgfkdGNTZhqPxoY765hf53jh9KqOQPxU",
-      authDomain: "my-language2025.firebaseapp.com",
-      projectId: "my-language2025",
-      storageBucket: "my-language2025.firebasestorage.app",
-      messagingSenderId: "531458626572",
-      appId: "1:531458626572:web:711af89cd9019f0ee64a29",
-      measurementId: "G-EBEN4JWHM8"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcgfkdGNTZhqPxoY765hf53jh9KqOQPxU",
+    authDomain: "my-language2025.firebaseapp.com",
+    projectId: "my-language2025",
+    storageBucket: "my-language2025.firebasestorage.app",
+    messagingSenderId: "531458626572",
+    appId: "1:531458626572:web:711af89cd9019f0ee64a29",
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-    const db = getFirestore(app);
-    window.db = db;
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+  const db = getFirestore(app);
+  window.db = db;
 
-    document.getElementById("googleLogin")?.addEventListener("click", async () => {
+  // 🔥 حل المشكلة: انتظر تحميل الصفحة بالكامل
+  window.addEventListener("DOMContentLoaded", () => {
+
+    const googleBtn = document.getElementById("googleLogin");
+    if (!googleBtn) {
+      console.error("❌ زر Google غير موجود");
+      return;
+    }
+
+    googleBtn.addEventListener("click", async () => {
       try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
@@ -395,7 +403,7 @@
 
         const isTeacher = (user.email === MAIN_TEACHER_EMAIL);
 
-        // 👨‍🏫 حالة المعلم
+        // 👨‍🏫 المعلم
         if (isTeacher) {
           let classId = null;
           const classesSnap = await getDocs(collection(db, "classes"));
@@ -408,7 +416,7 @@
           });
 
           if (!classId) {
-            alert("⚠ لا يوجد صف مرتبط بحساب المعلم.\nتأكد أن teacherId في وثيقة الصف يساوي UID المعلم.");
+            alert("⚠ لا يوجد صف مرتبط بالمعلم.");
             return;
           }
 
@@ -424,10 +432,10 @@
           return;
         }
 
-        // 👨‍🎓 حالة الطالب
+        // 👨‍🎓 الطالب
         const studentId = user.email;
-
         let classId = null;
+
         const classesSnap2 = await getDocs(collection(db, "classes"));
 
         for (const c of classesSnap2.docs) {
@@ -440,13 +448,13 @@
         }
 
         if (!classId) {
-          alert("⚠ لست مسجلًا في أي صف.\nاطلب من المعلم إضافتك.");
+          alert("⚠ لست مسجلًا في أي صف.");
           return;
         }
 
         localStorage.setItem("arp.current", JSON.stringify({
           id: studentId,
-          name: user.displayName,
+          name: user.displayName || "طالب",
           email: studentId,
           role: "student",
           classId
@@ -455,11 +463,13 @@
         window.startApp?.();
 
       } catch (e) {
-        console.error(e);
+        console.error("Google login error:", e);
         alert("فشل تسجيل الدخول: " + e.message);
       }
     });
-  </script>
+  });
+</script>
+
 
 
 <script>
