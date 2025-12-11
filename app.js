@@ -5,9 +5,6 @@
 // ===== متغير عام للقصة الحالية في القارئ =====
 let currentBook = null;
 
-// ===== متغير عام لتتبع وقت بدء القراءة =====
-let readingStartTime = null; // New global variable
-
 // ===== Firestore Imports =====
 import {
   doc,
@@ -1234,226 +1231,171 @@ async function saveAssignment() {
   toast('تم إنشاء الواجب وإرساله للطلاب المحددين');
 }
 
-// ------------------------------------------------------
-// ✔ إصلاح لوحة المعلم Teacher Dashboard (إعادة كتابة بكفاءة عالية)
-// ------------------------------------------------------
 async function renderTeacherView() {
   const current = readJSON(LS.CURRENT, null);
   if (!current || current.role !== 'teacher') return;
+
   const classId = current.classId;
   if (!classId) return;
 
-  const rows = $('#teacherRows'); // الجدول/القائمة
-  const dashboardStats = $('#dashboardStats'); // افترضنا وجود هذا العنصر لإظهار الإحصاءات العليا
-  
+  const rows = $('#teacherRows');
+  if (!rows) return;
+
   rows.innerHTML = "⏳ جاري التحميل...";
 
-  // 1. جلب بيانات الطلاب والواجبات بكفاءة عالية (في طلبين متوازيين)
-  let stuSnap, assSnap;
-  try {
-    [stuSnap, assSnap] = await Promise.all([
-      getDocs(collection(window.db, "classes", classId, "students")),
-      getDocs(collection(window.db, "classes", classId, "assignments")),
-    ]);
-  } catch (e) {
-    console.error("❌ خطأ في جلب بيانات لوحة المعلم:", e);
-    rows.innerHTML = `<p style="color:var(--err)">❌ خطأ في تحميل البيانات: ${e.message}</p>`;
-    return;
-  }
+  const assSnap = await getDocs(collection(window.db, "classes", classId, "assignments"));
 
+  const stuSnap = await getDocs(collection(window.db, "classes", classId, "students"));
   const students = {};
   stuSnap.forEach(d => students[d.id] = d.data());
-  const studentCount = stuSnap.size; // ✔ حساب عدد الطلاب الحقيقي
-  const assignmentCount = assSnap.size; // ✔ حساب عدد الواجبات
 
-  // 2. معالجة الواجبات لجمع الإحصاءات وتحضير قائمة المراجعة
-  const assignmentsToDisplay = [];
-  let totalRequiresReview = 0;
-  
-  // 3. جلب إحصائيات الطلاب (وقت القراءة/الأنشطة العامة) من Firestore
-  const studentsReadingStats = {};
-  if (window.db) {
-      const statsSnap = await getDocs(collection(window.db, "student_stats"));
-      statsSnap.forEach(d => {
-          const data = d.data();
-          if (data.classId === classId) {
-              studentsReadingStats[data.studentId] = data;
-          }
-      });
-  }
-
-  assSnap.forEach(aDoc => {
-    const a = { id: aDoc.id, ...aDoc.data(), classId };
-    
-    for (let sid of a.studentIds || []) {
-      const ps = a.perStudent?.[sid] || {};
-      
-      if (ps.status === 'submitted' && students[sid]) {
-        totalRequiresReview++;
-        // جمع الواجبات التي تحتاج مراجعة فقط لعرضها في القائمة
-        assignmentsToDisplay.push({
-          assignment: a,
-          student: students[sid],
-          perStudent: ps
-        });
-      }
-    }
-  });
-
-  // 4. عرض إحصائيات لوحة المعلم العليا
-  const totalStudentActivities = Object.values(studentsReadingStats).reduce((sum, s) => sum + (s.activities || 0), 0);
-  
-  // ✔ حساب الأنشطة من student_stats (سابقًا perStudent)
-  if (dashboardStats) {
-      // يرجى التأكد من وجود عنصر id="dashboardStats" في ملف index.html
-      dashboardStats.innerHTML = `
-          <div class="stat-card primary">
-              <h3>الطلاب</h3>
-              <p>${studentCount}</p>
-          </div>
-          <div class="stat-card info">
-              <h3>الواجبات المنشأة</h3>
-              <p>${assignmentCount}</p>
-          </div>
-          <div class="stat-card warn">
-              <h3>بانتظار المراجعة</h3>
-              <p>${totalRequiresReview}</p>
-          </div>
-          <div class="stat-card success">
-              <h3>إجمالي الأنشطة المنجزة</h3>
-              <p>${totalStudentActivities}</p>
-          </div>
-      `;
-  }
-  
-  // 5. عرض قائمة الواجبات بانتظار المراجعة
   rows.innerHTML = '';
-  if (assignmentsToDisplay.length === 0) {
-      rows.innerHTML = '<div style="padding:1rem;text-align:center;color:#666">🎉 لا توجد واجبات بانتظار المراجعة حاليًا.</div>';
-  } else {
-      assignmentsToDisplay.forEach(item => {
-        const { assignment: a, student: st, perStudent: ps } = item;
-        
-        const r = document.createElement('div');
-        r.className = 'row assign-row';
-        
-        r.innerHTML = `
-          <div>${st.name || st.email}</div>
-          <div>${a.title}</div>
-          <div class="badge warn">بانتظار المراجعة ⏳</div>
-          <div class="actions">
-            <button class="btn mini primary" data-review="${a.id}:${st.email}">مراجعة الحل</button>
-          </div>
-        `;
-        
-        rows.appendChild(r);
-        
-        // ربط زر المراجعة بالدالة الجديدة
-        r.querySelector('[data-review]').onclick = () => openReviewModal(a, st.email, ps);
-      });
-  }
-}
 
-// ------------------------------------------------------
-// دالة مساعدة لفتح نافذة مراجعة الواجب (النسخة المعدلة)
-// ------------------------------------------------------
-async function openReviewModal(a, studentEmail, ps) {
-    const student = a.students?.[studentEmail] || { name: studentEmail };
-    const classId = a.classId;
+  assSnap.forEach(async aDoc => {
+    const a = { id: aDoc.id, ...aDoc.data(), classId };
 
-    if (!window.db || !classId) {
-        toast("خطأ في الاتصال بالبيانات");
-        return;
-    }
+    for (let sid of a.studentIds) {
 
-    // يجب أن تكون ps (perStudent) هي البيانات التي تم تمريرها من لوحة المعلم
-    const answerText = ps.answer || '— لم يرسل إجابة نصية —';
-    const answerFile = ps.file || '';
-    
-    // جلب مرجع الإجابة للطالب من subcollection (answers)
-    const ansRef = doc(
-        window.db,
+      // ⭐ تحميل إجابة الطالب من Firestore
+      const ansRef = doc(window.db,
         "classes", classId,
         "assignments", a.id,
-        "answers", studentEmail
-    );
-    const ansSnap = await getDoc(ansRef);
-    const ansData = ansSnap.exists() ? ansSnap.data() : {};
-    
-    // إنشاء النافذة المنبثقة
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.innerHTML = `
-        <div class="modal-card" style="max-width:550px">
-        <button class="modal-close" id="closeReview">✖</button>
-        <h3>مراجعة واجب الطالب: ${student.name || studentEmail}</h3>
-        <div class="form-row"><b>عنوان الواجب:</b> ${a.title}</div>
-        <div class="form-row"><b>إجابة الطالب:</b> <p style="background:#f8fafc;padding:.7rem;border-radius:10px">
-            ${answerText}
-        </p></div>
-        ${answerFile ? `
-        <div class="form-row">
-            <b>الملف المرفق:</b> <a href="${answerFile}" target="_blank" class="btn sky small">فتح الملف</a>
-        </div>` : ''}
-        <div class="form-row">
-            <label>ملاحظة للمعلم (اختياري)</label>
-            <textarea id="teacherNote" rows="3">${ps.notes || ''}</textarea>
-        </div>
-        <div class="row" style="display:flex;justify-content:flex-end;gap:.5rem">
-            <button id="rejectAns" class="btn warn small">رفض ❌</button>
-            <button id="approveAns" class="btn primary small">قبول ✅</button>
-        </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    document.getElementById('closeReview').onclick = () => modal.remove();
-    
-    // ⭐ 3) قبول الحل
-    document.getElementById('approveAns').onclick = async () => {
-        const note = document.getElementById('teacherNote').value.trim();
-        
-        // التحديث في subcollection (answers)
-        await setDoc(ansRef, { ...ansData, status: "done", progress: 100, notes: note }, { merge: true });
-        
-        // التحديث في الحقل perStudent بوثيقة الواجب الرئيسية
-        const assignRef = doc(window.db, "classes", classId, "assignments", a.id);
-        await updateDoc(assignRef, {
-            [`perStudent.${studentEmail}`]: {
-                ...(a.perStudent?.[studentEmail] || {}),
-                status: "done",
-                progress: 100,
-                notes: note
-            }
-        });
-        
-        modal.remove();
-        toast("✨ تم قبول حل الطالب");
-        renderTeacherView(); // إعادة تحديث اللوحة
-    };
+        "answers", sid
+      );
 
-    // ⭐ 4) رفض الحل
-    document.getElementById('rejectAns').onclick = async () => {
-        const note = document.getElementById('teacherNote').value.trim() || "يرجى تحسين الإجابة";
-        
-        // التحديث في subcollection (answers)
-        await setDoc(ansRef, { ...ansData, status: "required", progress: 0, notes: note }, { merge: true });
+      const ansSnap = await getDoc(ansRef);
 
-        // التحديث في الحقل perStudent بوثيقة الواجب الرئيسية
-        const assignRef = doc(window.db, "classes", classId, "assignments", a.id);
-        await updateDoc(assignRef, {
-            [`perStudent.${studentEmail}`]: {
-                ...(a.perStudent?.[studentEmail] || {}),
-                status: "required",
-                progress: 0,
-                notes: note
-            }
-        });
+      let ps = a.perStudent?.[sid] || {
+        status: "required",
+        progress: 0,
+        notes: "",
+        answer: "",
+        file: ""
+      };
 
-        modal.remove();
-        toast("❌ تم رفض الحل، وطلب تحسين الإجابة");
-        renderTeacherView(); // إعادة تحديث اللوحة
-    };
+      if (ansSnap.exists()) {
+        const data = ansSnap.data();
+        ps = { ...ps, ...data };   // ← دمج بيانات Firestore
+      }
+
+      const stu = students[sid];
+
+      const r = document.createElement('div');
+      r.className = "row";
+
+      r.innerHTML = `
+        <div>${stu?.name || sid}</div>
+        <div>${a.title}</div>
+        <div>
+          <span class="badge ${
+            ps.status === 'done' ? 'ok' :
+            ps.status === 'submitted' ? 'warn' : 'err'
+          }">${ps.status}</span>
+        </div>
+        <div><div class="progress"><i style="width:${ps.progress}%"></i></div></div>
+        <div>${ps.notes || "—"}</div>
+        <div class="actions">
+          <button class="btn mini ghost" data-review="${a.id}:${sid}">👁 مراجعة</button>
+        </div>
+      `;
+
+      rows.appendChild(r);
+
+      r.querySelector('[data-review]').onclick =
+        () => openReviewModal(a, sid, ps, stu);
+    }
+  });
 }
+
+async function openReviewModal(a, sid, ps, stu) {
+
+  // 📌 1) تحميل إجابة الطالب من Firestore
+  const ansRef = doc(
+    window.db,
+    "classes", a.classId,
+    "assignments", a.id,
+    "answers", sid
+  );
+
+  const ansSnap = await getDoc(ansRef);
+  let ansData = ansSnap.exists() ? ansSnap.data() : null;
+
+  const answerText = ansData?.answer || ps.answer || "— لم يُرسل إجابة —";
+  const answerFile = ansData?.file || ps.file || "";
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+
+  modal.innerHTML = `
+    <div class="modal-card" style="max-width:600px">
+      <button class="modal-close" id="closeReview">✖</button>
+
+      <h3>مراجعة حل الطالب</h3>
+
+      <div class="form-row"><b>الطالب:</b> ${stu?.name || sid}</div>
+      <div class="form-row"><b>عنوان الواجب:</b> ${a.title}</div>
+
+      <div class="form-row"><b>إجابة الطالب:</b>
+        <p style="background:#f8fafc;padding:.7rem;border-radius:10px">
+          ${answerText}
+        </p>
+      </div>
+
+      ${answerFile ? `
+        <div class="form-row">
+          <b>الملف المرفق:</b>
+          <a href="${answerFile}" target="_blank" class="btn sky small">فتح الملف</a>
+        </div>
+      ` : ''}
+
+      <div class="form-row">
+        <label>ملاحظة للطالب (اختياري)</label>
+        <textarea id="teacherNote" rows="3">${ps.notes || ''}</textarea>
+      </div>
+
+      <div class="row" style="display:flex;justify-content:flex-end;gap:.5rem">
+        <button id="rejectAns" class="btn warn small">رفض ❌</button>
+        <button id="approveAns" class="btn primary small">قبول ✅</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  $('#closeReview').onclick = () => modal.remove();
+
+  // ⭐ 3) قبول الحل
+  $('#approveAns').onclick = async () => {
+    const note = $('#teacherNote').value.trim();
+
+    await setDoc(ansRef, {
+      ...ansData,
+      status: "done",
+      progress: 100,
+      notes: note
+    }, { merge: true });
+
+    modal.remove();
+    toast("✨ تم قبول حل الطالب");
+    renderTeacherView();
+  };
+
+  // ⭐ 4) رفض الحل
+  $('#rejectAns').onclick = async () => {
+    const note = $('#teacherNote').value.trim() || "يرجى تحسين الإجابة";
+
+    await setDoc(ansRef, {
+      ...ansData,
+      status: "required",
+      progress: 0,
+      notes: note
+    }, { merge: true });
+
+    modal.remove();
+    toast("❌ تم رفض الحل");
+    renderTeacherView();
+  };
+}
+
 // ------------------------------------------------------
 // Reports
 // ------------------------------------------------------
@@ -1522,27 +1464,7 @@ function openReader(book) {
   updateReadStats(book.id);
 }
 
-// ------------------------------------------------------
-// ✔ تحديث دالة backToApp لتسجيل وقت الخروج وحساب المدة
-// ------------------------------------------------------
 function backToApp() {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current) return;
-  
-  // ✔ نظام وقت القراءة: تسجيل وقت الخروج وحساب المدة
-  if (window.readingStartTime && currentBook) {
-    const durationMs = Date.now() - window.readingStartTime;
-    // حساب المدة بالدقائق (على الأقل دقيقة واحدة)
-    const durationMinutes = Math.max(1, Math.ceil(durationMs / 60000)); 
-    
-    // تسجيل المدة وتحديث كافة الإحصاءات والتقارير
-    logReadingTime(currentBook.id, durationMinutes); 
-    
-    // إعادة تعيين وقت البدء
-    window.readingStartTime = null; 
-  }
-  
-  // الكود الأصلي للدالة
   $('#readerView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
 }
@@ -1586,48 +1508,18 @@ function playRecording() {
 }
 
 // تحديث بيانات القراء (محلي الآن)
-// ------------------------------------------------------
-// ✔ نظام وقت القراءة: تسجيل المدة وحفظها في Firestore
-// ------------------------------------------------------
-async function logReadingTime(bookId, durationMinutes) {
+function updateReadStats(bookId) {
   const current = readJSON(LS.CURRENT, null);
-  // يجب أن يكون الطالب مسجلاً وفي فصل
-  if (!current || !current.id || !current.classId) return;
+  if (!current) return;
 
   const key = LS.STATS(current.id);
   const s = readJSON(key, { reads: 0, minutes: 0, lastBook: '—', activities: 0 });
 
-  // 1. تحديث الإحصاءات المحلية (reads + minutes)
   s.reads += 1;
-  s.minutes += durationMinutes;
   s.lastBook = BOOKS.find(b => b.id === bookId)?.title || '—';
 
   writeJSON(key, s);
-  updateRail(); // تحديث الشريط الجانبي فورًا
-
-  // 2. تحديث Firestore
-  if (window.db) {
-    // تخزين إحصائيات الطالب في مجموعة مخصصة لسهولة الوصول (student_stats)
-    const statsRef = doc(window.db, "student_stats", current.id);
-    await setDoc(statsRef, {
-      studentId: current.id,
-      name: current.name,
-      email: current.email,
-      classId: current.classId,
-      reads: s.reads,
-      minutes: s.minutes,
-      lastBook: s.lastBook,
-      activities: s.activities || 0,
-      updatedAt: Date.now()
-    }, { merge: true });
-
-    console.log(`✔ تم تسجيل وقت القراءة (${durationMinutes} دقيقة) في Firestore`);
-  }
-  
-  // 3. تحديث التقارير/لوحة المعلم دون إعادة تحميل الصفحة
-  if (current.role === 'teacher') {
-      renderTeacherView(); // تحديث لوحة المعلم فورًا
-  }
+  updateRail();
 }
 
 // حفظ قصة جديدة — Firestore + تحديث المكتبة
