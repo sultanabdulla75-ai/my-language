@@ -4,12 +4,8 @@
 
 // ===== متغير عام للقصة الحالية في القارئ =====
 let currentBook = null;
-
-// ===== متغير عام للقصة الحالية في القارئ =====
-let currentBook = null;
 // وقت بدء القراءة الحالي (بالمللي ثانية)
 let readingStartAt = null;
-
 
 // ===== Firestore Imports =====
 import {
@@ -109,7 +105,21 @@ const BOOKS = [
 // ===== Utils =====
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
-const readJSON = (k, def) => JSON.parse(localStorage.getItem(k) || JSON.stringify(def));
+
+// ✅ إصلاح مهم: قراءة آمنة من localStorage حتى لو كانت البيانات تالفة
+const readJSON = (k, def) => {
+  try {
+    const raw = localStorage.getItem(k);
+    if (!raw) return def;
+    return JSON.parse(raw);
+  } catch (e) {
+    console.warn('readJSON error for', k, e);
+    // إذا كانت القيمة تالفة نمسحها حتى لا تكرّر الخطأ
+    localStorage.removeItem(k);
+    return def;
+  }
+};
+
 const writeJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 const uid = (p = 'U') => p + Math.random().toString(36).slice(2, 8);
 
@@ -360,7 +370,6 @@ function showOnly(selector) {
 
   if (selector === '#tab-teacher') {
     renderTeacherDashboard();
-
     renderAvgProgressChart();
   }
 }
@@ -404,7 +413,7 @@ function updateRail() {
 
   // المعلم: نعرض أصفارًا (إحصاءات الطلاب في أماكن أخرى)
   if (current.role === 'teacher') {
-renderTeacherDashboard();
+    renderTeacherDashboard();
 
     $('#railBooks').textContent = 0;
     $('#railTime').textContent = '0 د';
