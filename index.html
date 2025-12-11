@@ -3,332 +3,353 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>منصة لغتي - الإصدار الأول</title>
+  <title>منصّة أحب لغتي للقراءة المتدرجة</title>
 
+  <!-- خطوط -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="styles.css">
+
+  <!-- تنسيقات المنصّة -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <!-- ======= الشريط العلوي ======= -->
-  <header class="topbar">
-    <nav class="nav">
-      <div class="nav-left">
-        <img class="brand-logo" src="https://home.moe.gov.om/templates/moe/assets/images/sliders/others/MOE.png" alt="logo">
-        <span class="brand-title">منصة لغتي - الإصدار الأول</span>
-      </div>
-      <div class="nav-center" id="navLinks"></div>
-
-      <div class="nav-right">
-        <button id="logoutBtn" class="chip ghost">خروج</button>
-      </div>
-    </nav>
-  </header>
-
   <!-- ======= شاشة الدخول / التسجيل ======= -->
-  <section id="authView" class="center-stage">
-    <div class="auth-card glass">
+  <main id="authView" class="view">
+    <div class="auth-shell">
+      <div class="auth-card glass">
+        <h1 class="auth-title">منصّة أحب لغتي للقراءة المتدرجة</h1>
+        <p class="auth-subtitle">سجّل دخولك كطالب أو معلّم لتبدأ الرحلة مع القصص والقراءة المتدرجة 💫</p>
 
-      <div class="hero">
-        <h1>أهلًا بك 👋</h1>
-        <p class="muted">سجّل دخولك أو أنشئ حسابًا جديدًا</p>
-      </div>
-
-      <div class="tabs-inline center">
-        <button class="pill active" data-auth="login">تسجيل الدخول</button>
-        <button class="pill" data-auth="register">إنشاء حساب</button>
-      </div>
-
-      <!-- 🔹 تسجيل الدخول -->
-      <form id="loginForm" class="form">
-        <div class="form-row">
-          <label>البريد الإلكتروني</label>
-          <input type="email" id="loginEmail" required placeholder="name@example.com">
-        </div>
-        <div class="form-row">
-          <label>كلمة المرور</label>
-          <input type="password" id="loginPass" required placeholder="••••••••">
+        <div class="auth-tabs">
+          <button class="auth-tab pill active" data-auth="login">تسجيل الدخول</button>
+          <button class="auth-tab pill" data-auth="register">إنشاء حساب</button>
         </div>
 
-        <button id="loginBtn" class="btn primary full" type="submit">دخول</button>
-        <p id="loginMsg" class="msg"></p>
-      </form>
-
-      <!-- 🔹 إنشاء حساب -->
-      <form id="regForm" class="form hidden">
-        <div class="row2">
+        <!-- نموذج تسجيل الدخول -->
+        <form id="loginForm" class="auth-form">
           <div class="form-row">
-            <label>الاسم الكامل</label>
-            <input type="text" id="regName" required>
+            <label for="loginEmail">البريد الإلكتروني</label>
+            <input type="email" id="loginEmail" placeholder="name@example.com" required />
           </div>
           <div class="form-row">
-            <label>الدور</label>
-            <select id="regRole" required>
+            <label for="loginPass">كلمة المرور</label>
+            <input type="password" id="loginPass" placeholder="••••••••" required />
+          </div>
+          <div id="loginMsg" class="form-msg"></div>
+          <button type="submit" class="btn primary full">تسجيل الدخول</button>
+        </form>
+
+        <!-- نموذج إنشاء حساب -->
+        <form id="regForm" class="auth-form hidden">
+          <div class="form-row">
+            <label for="regName">الاسم الكامل</label>
+            <input type="text" id="regName" placeholder="اكتب اسمك الكامل" required />
+          </div>
+          <div class="form-row">
+            <label for="regEmail">البريد الإلكتروني</label>
+            <input type="email" id="regEmail" placeholder="name@example.com" required />
+          </div>
+          <div class="form-row">
+            <label for="regPass">كلمة المرور</label>
+            <input type="password" id="regPass" placeholder="••••••••" required />
+          </div>
+          <div class="form-row">
+            <label for="regRole">الدور</label>
+            <select id="regRole">
               <option value="student">طالب</option>
               <option value="teacher">معلم</option>
             </select>
           </div>
-        </div>
-
-        <div class="row2">
-          <div class="form-row">
-            <label>البريد الإلكتروني</label>
-            <input type="email" id="regEmail" required>
-          </div>
-          <div class="form-row">
-            <label>كلمة المرور</label>
-            <input type="password" id="regPass" minlength="6" required>
-          </div>
-        </div>
-
-        <button id="registerBtn" class="btn full" type="submit">إنشاء الحساب</button>
-        <p id="regMsg" class="msg"></p>
-      </form>
-
-      <!-- زر Google داخل بطاقة الدخول -->
-      <div style="margin-top:1rem;text-align:center">
-        <button id="googleLogin" class="google-btn">
-          <img src="https://developers.google.com/identity/images/g-logo.png" width="20" alt="">
-          الدخول باستخدام Google
-        </button>
+          <div id="regMsg" class="form-msg"></div>
+          <button type="submit" class="btn primary full">إنشاء الحساب</button>
+        </form>
       </div>
     </div>
-  </section>
+  </main>
 
-  <!-- ======= هيكل التطبيق ======= -->
-  <div id="appShell" class="app hidden">
+  <!-- ======= هيكل التطبيق بعد الدخول ======= -->
+  <div id="appShell" class="hidden">
 
-    <!-- المحتوى الرئيسي يسارًا -->
-    <main class="stage">
-      <!-- تبويب الرئيسية -->
-      <section class="view tab hidden" id="tab-home">
-        <div class="welcome">
-          <h2><span id="helloName">مرحبًا!</span></h2>
-          <p class="muted">ابدأ من هنا: تعلّم — اقرأ — أنجز.</p>
-          <div class="cards-4">
-            <div class="card action">
-              <div class="icon">📚</div>
-              <h4>الدروس</h4>
-              <button class="btn sky small go" data-go="#tab-levels">فتح</button>
+    <!-- الشريط العلوي -->
+    <header class="topbar">
+      <nav class="nav">
+        <div class="nav-left">
+          <img class="brand-logo" src="https://home.moe.gov.om/templates/moe/assets/images/sliders/others/MOE.png" alt="شعار الوزارة" />
+          <div class="brand-text">
+            <span class="brand-title">منصّة أحب لغتي للقراءة المتدرجة</span>
+            <small class="brand-sub">وزارة التربية والتعليم - سلطنة عُمان</small>
+          </div>
+        </div>
+
+        <div class="nav-center" id="navLinks">
+          <!-- يُبنى ديناميكيًا من app.js -->
+        </div>
+
+        <div class="nav-right">
+          <div class="nav-user">
+            <div class="nav-avatar">
+              <img id="userAvatar" src="img/avatar-student-omani.png" alt="أيقونة مستخدم" />
             </div>
-            <div class="card action">
-              <div class="icon">📝</div>
-              <h4>واجباتي</h4>
-              <button class="btn vio small go" data-go="#tab-assign">فتح</button>
+            <div class="nav-user-info">
+              <div id="userName" class="nav-user-name">—</div>
+              <small id="userRoleLabel" class="nav-user-role">—</small>
             </div>
-            <div class="card action">
-              <div class="icon">🎧</div>
-              <h4>تسجيل القراءة</h4>
-              <button class="btn em small go" data-go="#tab-library">فتح</button>
+          </div>
+          <button id="btnLogout" class="btn ghost small">تسجيل الخروج</button>
+        </div>
+      </nav>
+    </header>
+
+    <!-- محتوى التطبيق: سكة يمين + المحتوى -->
+    <main id="mainLayout">
+      <aside class="rail">
+        <div class="profile-card glass">
+          <div class="avatar">
+            <!-- نستخدم نفس الصورة الصغيرة هنا أيضًا إن أردت -->
+            <img id="railAvatar" src="img/avatar-student-omani.png" alt="أيقونة المستخدم" />
+          </div>
+          <div class="pname">
+            <strong id="helloName">مرحبًا!</strong>
+            <small id="railRoleText">—</small>
+          </div>
+        </div>
+
+        <div class="score-card glass">
+          <h3>بيانات القراءة</h3>
+          <div class="rail-grid">
+            <div>
+              <span class="label">عدد القصص المقروءة</span>
+              <span id="railBooks" class="value">0</span>
             </div>
-            <div class="card action">
-              <div class="icon">📊</div>
-              <h4>تقاريري</h4>
-              <button class="btn primary small go" data-go="#tab-reports">فتح</button>
+            <div>
+              <span class="label">زمن القراءة</span>
+              <span id="railTime" class="value">0 د</span>
+            </div>
+            <div>
+              <span class="label">الشارات</span>
+              <span id="railBadges" class="value">0</span>
+            </div>
+            <div>
+              <span class="label">متوسط الدقيقة/قصة</span>
+              <span id="railAvg" class="value">0 د</span>
+            </div>
+            <div>
+              <span class="label">آخر قصة</span>
+              <span id="railLastBook" class="value">—</span>
+            </div>
+            <div>
+              <span class="label">أنشطة منجزة</span>
+              <span id="railActs" class="value">0</span>
             </div>
           </div>
         </div>
-      </section>
+      </aside>
 
-      <!-- تبويب المستويات -->
-      <section class="view tab hidden" id="tab-levels">
-        <div class="section-header">
-          <h3>المستويات</h3>
-        </div>
-        <div id="levelsGrid" class="grid levels"></div>
-      </section>
-
-      <!-- تبويب واجبات الطالب -->
-      <section class="view tab hidden" id="tab-assign">
-        <div class="section-header">
-          <h3>واجباتي</h3>
-          <div class="tabs-inline">
-            <button class="pill active" data-filter="required">المطلوبة</button>
-            <button class="pill" data-filter="overdue">متأخرة</button>
-            <button class="pill" data-filter="done">المنجزة</button>
+      <section class="main">
+        <!-- تبويبات (Views) -->
+        <section id="tab-home" class="view">
+          <div class="glass section-card">
+            <h2>مرحبًا بك في منصّة أحب لغتي 👋</h2>
+            <p>يمكنك من هنا الانتقال إلى المستويات، أو المكتبة، أو واجباتك، أو تقاريرك.</p>
           </div>
-        </div>
-        <div id="assignList" class="assign-list"></div>
-      </section>
+        </section>
 
-      <!-- تقارير الطالب -->
-      <section class="view tab hidden" id="tab-reports">
-        <div class="section-header"><h3>تقاريري</h3></div>
-        <div class="cards-3">
-          <div class="card stat"><h4>نسبة الإنجاز</h4><div class="big" id="repPercent">0%</div></div>
-          <div class="card stat"><h4>عدد القراءات</h4><div class="big" id="repReads">0</div></div>
-          <div class="card stat"><h4>وقت القراءة</h4><div class="big" id="repTime">0 دقيقة</div></div>
-        </div>
-        <div class="card"><canvas id="chartReads" height="140"></canvas></div>
-      </section>
+        <section id="tab-levels" class="view hidden">
+          <div class="section-header">
+            <h2>المستويات القرائية</h2>
+            <p>اختر مستوى القراءة المناسب لك.</p>
+          </div>
+          <div id="levelsGrid" class="levels-grid"></div>
+        </section>
 
-      <!-- لوحة المعلم -->
-      <section class="view tab hidden" id="tab-teacher">
-        <div class="section-header">
-          <h3>لوحة المعلم</h3>
-        </div>
+        <section id="tab-library" class="view hidden">
+          <div class="section-header">
+            <h2>المكتبة</h2>
+            <div class="section-actions">
+              <input id="searchBooks" type="search" placeholder="ابحث عن قصة..." />
+              <button id="btnAddBook" class="btn small only-teacher">➕ إضافة قصة</button>
+            </div>
+          </div>
+          <div id="booksGrid" class="books-grid"></div>
+        </section>
 
-        <div class="cards-3">
-          <div class="card stat"><h4>الطلاب</h4><div class="big" id="tc-stu">0</div></div>
-          <div class="card stat"><h4>الواجبات</h4><div class="big" id="tc-asg">0</div></div>
-          <div class="card stat"><h4>المنجزة</h4><div class="big" id="tc-done">0</div></div>
-        </div>
+        <section id="tab-assign" class="view hidden">
+          <div class="section-header">
+            <h2>واجباتي</h2>
+          </div>
+          <div class="assign-filters">
+            <button class="pill small" data-filter="required">الواجبات المطلوبة</button>
+            <button class="pill small" data-filter="done">المنجزة</button>
+            <button class="pill small" data-filter="overdue">المتأخرة</button>
+          </div>
+          <div id="assignList" class="assign-list"></div>
+        </section>
 
-        <div class="card donut-card">
-          <h4 style="text-align:center;margin-bottom:10px">متوسط إنجاز الطلبة</h4>
-          <canvas id="chartAvgProgress" height="180"></canvas>
-        </div>
-      </section>
+        <section id="tab-teacher" class="view hidden">
+          <div class="section-header">
+            <h2>لوحة المعلم</h2>
+            <p>متوسط إنجاز طلاب الفصل.</p>
+          </div>
+          <div class="glass section-card">
+            <canvas id="chartAvgProgress" width="200" height="200"></canvas>
+          </div>
+        </section>
 
-      <!-- إدارة الطلاب -->
-      <section class="view tab hidden" id="tab-teacher-students">
-        <div class="section-header">
-          <h3>إدارة الطلاب</h3>
-          <button class="btn sky small" id="addStudentBtn">إضافة طالب</button>
-        </div>
-        <div class="table">
-          <div class="thead">
+        <section id="tab-teacher-students" class="view hidden">
+          <div class="section-header">
+            <h2>طلاب الفصل</h2>
+            <button id="btnAddStudent" class="btn small only-teacher">➕ إضافة طالب</button>
+          </div>
+          <div class="table-header">
             <div>الاسم</div>
             <div>البريد</div>
-            <div>الفصل</div>
+            <div>الصف</div>
             <div>إجراءات</div>
           </div>
-          <div id="studentsRows" class="tbody"></div>
-        </div>
-      </section>
+          <div id="studentsRows" class="table-rows"></div>
+        </section>
 
-      <!-- إدارة الواجبات -->
-      <section class="view tab hidden" id="tab-teacher-assignments">
-        <div class="section-header">
-          <h3>إدارة الواجبات</h3>
-          <button class="btn primary small" id="newAssignBtn">إضافة واجب</button>
-        </div>
-
-        <div id="teacherAssignList" class="assign-list"></div>
-
-        <div class="card">
-          <canvas id="chartTeacher" height="120"></canvas>
-        </div>
-
-        <div class="table">
-          <div class="thead">
+        <section id="tab-teacher-assignments" class="view hidden">
+          <div class="section-header">
+            <h2>إدارة الواجبات</h2>
+            <button id="btnCreateAssign" class="btn small only-teacher">➕ إنشاء واجب</button>
+          </div>
+          <div class="table-header">
             <div>الطالب</div>
             <div>عنوان الواجب</div>
             <div>الحالة</div>
             <div>التقدّم</div>
-            <div>ملاحظات</div>
+            <div>ملاحظة</div>
             <div>إجراءات</div>
           </div>
-          <div id="teacherRows" class="tbody"></div>
-        </div>
-      </section>
+          <div id="teacherRows" class="table-rows"></div>
+        </section>
 
-      <!-- المكتبة -->
-      <section class="view tab hidden" id="tab-library">
-        <div class="section-header">
-          <h3>المكتبة</h3>
-          <input type="search" id="searchBooks" class="search" placeholder="ابحث عن قصة…">
-          <button class="btn vio small only-teacher" id="addBookBtn">إضافة قصة</button>
-          <button class="btn em small only-teacher" id="addQuizBtn">إضافة أنشطة</button>
-        </div>
-        <div id="booksGrid" class="grid books"></div>
+        <section id="tab-reports" class="view hidden">
+          <div class="section-header">
+            <h2>تقاريري</h2>
+          </div>
+          <div class="reports-grid">
+            <div class="glass stat-card">
+              <span class="label">نسبة إنجاز القصص</span>
+              <span id="repPercent" class="value big">0%</span>
+            </div>
+            <div class="glass stat-card">
+              <span class="label">عدد القصص المقروءة</span>
+              <span id="repReads" class="value big">0</span>
+            </div>
+            <div class="glass stat-card">
+              <span class="label">إجمالي زمن القراءة</span>
+              <span id="repTime" class="value big">0 دقيقة</span>
+            </div>
+          </div>
+          <div class="glass section-card">
+            <canvas id="chartReads" height="220"></canvas>
+          </div>
+        </section>
       </section>
     </main>
+  </div>
 
-    <!-- السكة اليمنى الثابتة -->
-    <aside class="rail">
-      <div class="profile-card glass">
-        <div class="avatar">😊</div>
-        <div class="pname">
-          <strong id="userName">—</strong>
-          <small id="userRoleLabel">—</small>
+  <!-- ======= قارئ القصة ======= -->
+  <div id="readerView" class="view hidden">
+    <div class="reader-shell">
+      <div class="reader-header">
+        <button class="btn ghost small" onclick="backToApp()">⬅ العودة للمنصّة</button>
+        <div class="reader-meta">
+          <h2 id="storyTitle">عنوان القصة</h2>
+          <span id="storyLevel" class="badge">المستوى —</span>
         </div>
       </div>
-      <div class="score-card glass">
-        <div class="score-row"><span>الكتب</span><b id="railBooks">0</b></div>
-        <div class="score-row"><span>الوقت</span><b id="railTime">0د</b></div>
-        <div class="score-row"><span>الأوسمة</span><b id="railBadges">0</b></div>
-      </div>
-      <div class="score-card glass">
-        <div class="score-row"><span>متوسط القراءة</span><b id="railAvg">0 د</b></div>
-        <div class="score-row"><span>آخر قصة</span><b id="railLastBook">—</b></div>
-        <div class="score-row"><span>الأنشطة</span><b id="railActs">0</b></div>
-      </div>
-    </aside>
-  </div>
 
-  <!-- قارئ النص -->
-  <section id="readerView" class="reader hidden">
-    <header class="reader-top">
-      <button id="backToApp" class="btn ghost small">🏠 العودة</button>
-      <h2 id="storyTitle">عنوان القصة</h2>
-      <span class="level-chip" id="storyLevel">المستوى 1</span>
-    </header>
-    <div class="story-meta">
-      <img id="storyCover" src="https://picsum.photos/160/210" alt="غلاف" class="story-cover">
-      <div class="hints">
-        <div>👆 اضغط الكلمات لتظليلها</div>
-        <div>🎤 سجّل قراءتك ثم استمع</div>
+      <div class="reader-body glass">
+        <div class="reader-cover">
+          <img id="storyCover" src="" alt="غلاف القصة" />
+        </div>
+        <div id="storyContent" class="reader-text">
+          <!-- يُملأ نص القصة من app.js -->
+        </div>
       </div>
-    </div>
-    <article id="storyContent" class="story-content"></article>
-    <div class="story-actions">
-      <button id="startRec" class="btn small">🎤 ابدأ التسجيل</button>
-      <button id="stopRec" class="btn small hidden">⏹️ إيقاف</button>
-      <button id="playRec" class="btn small hidden">▶️ تشغيل</button>
-      <span id="recordTime">⏱️ 00:00</span>
-      <button id="openActivitiesBtn" class="btn sky" style="margin:20px 0">الأنشطة 📘</button>
-    </div>
-  </section>
 
-  <!-- مودال: إنشاء واجب -->
-  <div class="modal hidden" id="modalAssign">
-    <div class="modal-card">
-      <button class="modal-close" data-close="modalAssign">✖</button>
-      <h3>إنشاء واجب قراءة</h3>
-      <div class="form-row"><label>العنوان</label><input type="text" id="aTitle" placeholder="اقرأ قصة من المستوى 2 واستخرج الفكرة"></div>
-      <div class="form-row"><label>المستوى</label><select id="aLevel"></select></div>
-      <div class="form-row"><label>تاريخ التسليم</label><input type="date" id="aDue"></div>
-      <div class="form-row"><label>التعليمات</label><textarea id="aDesc" placeholder="سجّل صوتك وأجب عن الأسئلة"></textarea></div>
-      <div class="form-row"><label>إرسال إلى الطلاب</label><div id="studentsChecklist" class="checklist"></div></div>
-      <div class="row"><button class="btn primary small" id="saveAssign">حفظ</button></div>
+      <div class="reader-footer glass">
+        <div class="record-controls">
+          <span id="recordTime">⏱️ 00:00</span>
+          <div class="record-buttons">
+            <button id="startRec" class="btn small">🎙 بدء التسجيل</button>
+            <button id="stopRec" class="btn small hidden">⏹ إيقاف</button>
+            <button id="playRec" class="btn small hidden">▶ تشغيل التسجيل</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- مودال: إضافة طالب -->
-  <div class="modal hidden" id="modalStudent">
+  <!-- ======= نافذة إضافة طالب ======= -->
+  <div id="modalStudent" class="modal hidden">
     <div class="modal-card">
-      <button class="modal-close" data-close="modalStudent">✖</button>
-      <h3>إضافة طالب</h3>
-      <div class="form-row"><label>الاسم الكامل</label><input type="text" id="sName" placeholder="الاسم"></div>
-      <div class="form-row"><label>البريد الإلكتروني</label><input type="email" id="sEmail" placeholder="student@example.com"></div>
+      <button class="modal-close" onclick="document.getElementById('modalStudent').classList.add('hidden')">✖</button>
+      <h3>إضافة طالب جديد</h3>
+      <div class="form-row">
+        <label>الاسم الكامل</label>
+        <input type="text" id="sName" />
+      </div>
+      <div class="form-row">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="sEmail" />
+      </div>
       <div class="form-row">
         <label>الصف</label>
-        <input id="sClass" type="text" placeholder="مثلاً: الصف السادس">
+        <input type="text" id="sClass" placeholder="مثلاً: الصف السادس" />
       </div>
-      <div class="form-row"><label>كلمة المرور</label><input type="password" id="sPass" placeholder="١٢٣٤٥٦"></div>
-      <div class="row"><button class="btn small" id="saveStudent">إضافة</button></div>
-      <p class="muted" style="margin-top:.4rem">* إضافة محلية للتجربة — ويتم حفظها في Firestore للفصل الحالي.</p>
+      <div class="form-row">
+        <label>كلمة المرور (اختياري)</label>
+        <input type="text" id="sPass" value="123456" />
+      </div>
+      <button class="btn primary full" onclick="saveStudent()">حفظ الطالب</button>
     </div>
   </div>
 
-  <!-- مودال اختبار القصة -->
-  <div id="modalQuiz" class="modal hidden">
-    <div class="modal-card" style="max-width:600px">
-      <button class="modal-close" id="closeQuiz">✖</button>
-      <h3>اختبار القصة</h3>
-      <div id="quizContent"></div>
-      <button class="btn primary full" id="submitQuiz">إنهاء الاختبار</button>
+  <!-- ======= نافذة إنشاء واجب ======= -->
+  <div id="modalAssign" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-close" onclick="document.getElementById('modalAssign').classList.add('hidden')">✖</button>
+      <h3>إنشاء واجب جديد</h3>
+      <div class="form-row">
+        <label>عنوان الواجب</label>
+        <input type="text" id="aTitle" />
+      </div>
+      <div class="form-row">
+        <label>المستوى</label>
+        <select id="aLevel"></select>
+      </div>
+      <div class="form-row">
+        <label>تاريخ التسليم</label>
+        <input type="date" id="aDue" />
+      </div>
+      <div class="form-row">
+        <label>وصف الواجب</label>
+        <textarea id="aDesc" rows="3"></textarea>
+      </div>
+      <div class="form-row">
+        <label>الطلاب</label>
+        <div id="studentsChecklist" class="checklist"></div>
+      </div>
+      <button class="btn primary full" onclick="saveAssignment()">حفظ الواجب</button>
     </div>
   </div>
 
-  <!-- مودال إضافة قصة -->
-  <div class="modal hidden" id="modalBook">
-    <div class="modal-card" style="max-width:600px">
-      <button class="modal-close" data-close="modalBook">✖</button>
+  <!-- ======= نافذة إضافة قصة ======= -->
+  <div id="modalBook" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-close" onclick="document.getElementById('modalBook').classList.add('hidden')">✖</button>
       <h3>إضافة قصة جديدة</h3>
-      <div class="form-row"><label>العنوان</label><input type="text" id="bTitle" placeholder="عنوان القصة"></div>
+      <div class="form-row">
+        <label>عنوان القصة</label>
+        <input type="text" id="bTitle" />
+      </div>
       <div class="form-row">
         <label>المستوى</label>
         <select id="bLevel">
@@ -338,130 +359,66 @@
           <option value="L4">المستوى 4</option>
         </select>
       </div>
-      <div class="form-row"><label>رابط الصورة</label><input type="text" id="bCover" placeholder="https://…"></div>
-      <div class="form-row"><label>النص (سطر لكل فقرة)</label><textarea id="bText" rows="5" placeholder="الفقرة الأولى…"></textarea></div>
-      <button id="saveBook" class="btn primary full">حفظ القصة</button>
+      <div class="form-row">
+        <label>رابط الغلاف (اختياري)</label>
+        <input type="text" id="bCover" placeholder="https://..." />
+      </div>
+      <div class="form-row">
+        <label>رفع صورة غلاف (اختياري)</label>
+        <input type="file" id="bFile" accept="image/*" />
+      </div>
+      <div class="form-row">
+        <label>نص القصة (كل فقرة في سطر)</label>
+        <textarea id="bText" rows="6"></textarea>
+      </div>
+      <button class="btn primary full" onclick="saveBook()">حفظ القصة</button>
     </div>
   </div>
 
-  <!-- مودال إضافة أسئلة للقصة -->
-  <div class="modal hidden" id="modalQuizEditor">
-    <div class="modal-card" style="max-width:600px">
-      <button class="modal-close" data-close="modalQuizEditor">✖</button>
-      <h3>إضافة أسئلة للقصة</h3>
-      <div class="form-row"><label>اختر القصة</label><select id="qBookSelect"></select></div>
-      <div class="form-row"><label>السؤال</label><input type="text" id="qText" placeholder="نص السؤال"></div>
-      <div class="form-row"><label>الخيارات (سطر لكل خيار)</label><textarea id="qOptions" rows="4" placeholder="الخيار 1…"></textarea></div>
-      <div class="form-row"><label>رقم الإجابة الصحيحة (0–3)</label><input type="number" id="qCorrect" min="0" max="3"></div>
-      <button id="saveQuiz" class="btn primary full">إضافة السؤال</button>
+  <!-- ======= نافذة إضافة أسئلة للقصة ======= -->
+  <div id="modalQuizEditor" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-close" onclick="document.getElementById('modalQuizEditor').classList.add('hidden')">✖</button>
+      <h3>إضافة سؤال للقصة</h3>
+      <div class="form-row">
+        <label>اختر القصة</label>
+        <select id="qBookSelect"></select>
+      </div>
+      <div class="form-row">
+        <label>نص السؤال</label>
+        <textarea id="qText" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <label>الخيارات (كل خيار في سطر)</label>
+        <textarea id="qOptions" rows="4"></textarea>
+      </div>
+      <div class="form-row">
+        <label>رقم الإجابة الصحيحة (0 = الخيار الأول)</label>
+        <input type="number" id="qCorrect" />
+      </div>
+      <button class="btn primary full" onclick="saveQuiz()">حفظ السؤال</button>
     </div>
   </div>
 
-  <!-- سكربت Firebase + تسجيل دخول Google -->
+  <!-- ======= Firebase + Firestore إعداد ======= -->
   <script type="module">
-    // 🔹 تعريف المعلم الرئيس
-    const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
-    const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
-    const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
-
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
-
-    import { loadStudentAnswersFromFirestore, syncBooks } from "./app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCcgfkdGNTZhqPxoY765hf53jh9KqOQPxU",
       authDomain: "my-language2025.firebaseapp.com",
       projectId: "my-language2025",
-      storageBucket: "my-language2025.firebasestorage.app",
-      messagingSenderId: "531458626572",
-      appId: "1:531458626572:web:711af89cd9019f0ee64a29",
-      measurementId: "G-EBEN4JWHM8"
+      storageBucket: "my-language2025.appspot.com",
+      messagingSenderId: "1060862300996",
+      appId: "1:1060862300996:web:xxxxxxxxxxxxxxxxxxxxxx"
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-    const db = getFirestore(app);
-    window.db = db;
-
-    document.getElementById("googleLogin")?.addEventListener("click", async () => {
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-
-        console.log("✔ Logged in with Google:", user.email);
-
-        const isTeacher = (user.email === MAIN_TEACHER_EMAIL);
-
-        // 👨‍🏫 حالة المعلم
-        if (isTeacher) {
-          let classId = null;
-          const classesSnap = await getDocs(collection(db, "classes"));
-
-          classesSnap.forEach(c => {
-            const data = c.data();
-            if (data.teacherId === user.uid || data.teacherId === MAIN_TEACHER_UID) {
-              classId = c.id;
-            }
-          });
-
-          if (!classId) {
-            alert("⚠ لا يوجد صف مرتبط بحساب المعلم.\nتأكد أن teacherId في وثيقة الصف يساوي UID المعلم.");
-            return;
-          }
-
-          localStorage.setItem("arp.current", JSON.stringify({
-            id: user.uid,
-            name: user.displayName || MAIN_TEACHER_NAME,
-            email: user.email,
-            role: "teacher",
-            classId
-          }));
-
-          window.startApp?.();
-          return;
-        }
-
-        // 👨‍🎓 حالة الطالب
-        const studentId = user.email;
-
-        let classId = null;
-        const classesSnap2 = await getDocs(collection(db, "classes"));
-
-        for (const c of classesSnap2.docs) {
-          const stuRef = doc(db, "classes", c.id, "students", studentId);
-          const stuSnap = await getDoc(stuRef);
-          if (stuSnap.exists()) {
-            classId = c.id;
-            break;
-          }
-        }
-
-        if (!classId) {
-          alert("⚠ لست مسجلًا في أي صف.\nاطلب من المعلم إضافتك.");
-          return;
-        }
-
-        localStorage.setItem("arp.current", JSON.stringify({
-          id: studentId,
-          name: user.displayName,
-          email: studentId,
-          role: "student",
-          classId
-        }));
-
-        window.startApp?.();
-
-      } catch (e) {
-        console.error(e);
-        alert("فشل تسجيل الدخول: " + e.message);
-      }
-    });
+    window.db = getFirestore(app);
   </script>
 
-  <!-- تطبيق المنصة -->
+  <!-- ======= سكربت المنصّة ======= -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
