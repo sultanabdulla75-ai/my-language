@@ -1819,19 +1819,19 @@ function autoFixAssignments() {
 
 async function startApp() {
   // 1) قراءة المستخدم الحالي
-  const current = readJSON(LS.CURRENT, null);
+ let current = JSON.parse(localStorage.getItem("arp.current") || "null");
 
-  // 2) إذا لم يوجد مستخدم → نظهر شاشة الدخول فقط
-  if (!current) {
-    console.warn("⚠ لا يوجد مستخدم مسجّل — عرض شاشة الدخول فقط");
-    $('#authView').classList.remove('hidden');
-    $('#appShell').classList.add('hidden');
-    $('#readerView').classList.add('hidden');
-    return;
-  }
+console.log("DEBUG CURRENT =", current);
+
+if (!current || !current.email) {
+  localStorage.removeItem("arp.current");
+  $('#authView').classList.remove('hidden');
+  $('#appShell').classList.add('hidden');
+  return;
+}
 
   // 3) إصلاح الواجبات القديمة (يعمل فقط عند وجود مستخدم)
-  autoFixAssignments();
+// autoFixAssignments();
 
   // 4) التحكم في أزرار المعلم
   if (current.role === 'teacher') {
