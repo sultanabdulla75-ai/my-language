@@ -359,6 +359,8 @@ function showOnly(selector) {
   });
 
   if (selector === '#tab-teacher') {
+    renderTeacherDashboard();
+
     renderAvgProgressChart();
   }
 }
@@ -402,6 +404,8 @@ function updateRail() {
 
   // المعلم: نعرض أصفارًا (إحصاءات الطلاب في أماكن أخرى)
   if (current.role === 'teacher') {
+    await renderTeacherDashboard();
+
     $('#railBooks').textContent = 0;
     $('#railTime').textContent = '0 د';
     $('#railBadges').textContent = 0;
@@ -974,6 +978,7 @@ async function renderTeacherStudents() {
           await deleteDoc(doc(window.db, "classes", classId, "students", email));
           toast('❌ تم حذف الطالب بنجاح');
           renderTeacherStudents();
+
         } catch (e) {
           console.error(e);
           toast('⚠ حدث خطأ أثناء الحذف');
@@ -1105,6 +1110,8 @@ async function saveStudent() {
   // تحديث الواجهة فورًا
   renderTeacherStudents();
   renderTeacherView();
+  renderTeacherDashboard();
+
 }
 
 async function openCreateAssignment() {
@@ -1234,6 +1241,8 @@ async function saveAssignment() {
 
   $('#modalAssign').classList.add('hidden');
   renderTeacherView();
+  renderTeacherDashboard();
+
   toast('تم إنشاء الواجب وإرساله للطلاب المحددين');
 }
 
@@ -1312,6 +1321,66 @@ async function renderTeacherView() {
     }
   });
 }
+
+
+// ------------------------------------------------------
+// لوحة المعلم (إحصاءات الطلاب / الواجبات / الإنجاز)
+// ------------------------------------------------------
+async function renderTeacherDashboard() {
+  const current = readJSON(LS.CURRENT, null);
+
+  const elStu  = document.getElementById('tc-stu');
+  const elAsg  = document.getElementById('tc-asg');
+  const elDone = document.getElementById('tc-done');
+
+  // في حال عدم وجود العناصر في الصفحة نخرج بهدوء
+  if (!elStu || !elAsg || !elDone) return;
+
+  // قيم افتراضية
+  elStu.textContent  = '0';
+  elAsg.textContent  = '0';
+  elDone.textContent = '0';
+
+  // إن لم يكن المستخدم معلماً أو لا توجد قاعدة بيانات — نكتفي بالتصفير
+  if (!current || current.role !== 'teacher' || !window.db || !current.classId) return;
+
+  try {
+    // 🔹 عدد الطلاب من Firestore
+    const stuSnap = await getDocs(
+      collection(window.db, "classes", current.classId, "students")
+    );
+    let totalStudents = 0;
+    stuSnap.forEach(() => { totalStudents++; });
+
+    // 🔹 عدد الواجبات + عدد الأنشطة المنجزة من perStudent
+    const asgSnap = await getDocs(
+      collection(window.db, "classes", current.classId, "assignments")
+    );
+    let totalAssignments = 0;
+    let totalDone = 0;
+
+    asgSnap.forEach(docSnap => {
+      totalAssignments++;
+      const data = docSnap.data() || {};
+      const per  = data.perStudent || {};
+      Object.values(per).forEach(ps => {
+        if (!ps) return;
+        if (ps.status === 'done' || ps.progress === 100) {
+          totalDone++;
+        }
+      });
+    });
+
+    elStu.textContent  = String(totalStudents);
+    elAsg.textContent  = String(totalAssignments);
+    elDone.textContent = String(totalDone);
+  } catch (err) {
+    console.error("⚠ خطأ في تحميل إحصاءات لوحة المعلم:", err);
+  }
+}
+
+
+
 
 async function openReviewModal(a, sid, ps, stu) {
 
