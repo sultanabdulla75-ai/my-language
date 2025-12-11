@@ -404,7 +404,7 @@ function updateRail() {
 
   // المعلم: نعرض أصفارًا (إحصاءات الطلاب في أماكن أخرى)
   if (current.role === 'teacher') {
-    await renderTeacherDashboard();
+renderTeacherDashboard();
 
     $('#railBooks').textContent = 0;
     $('#railTime').textContent = '0 د';
@@ -1333,26 +1333,23 @@ async function renderTeacherDashboard() {
   const elAsg  = document.getElementById('tc-asg');
   const elDone = document.getElementById('tc-done');
 
-  // في حال عدم وجود العناصر في الصفحة نخرج بهدوء
   if (!elStu || !elAsg || !elDone) return;
 
-  // قيم افتراضية
   elStu.textContent  = '0';
   elAsg.textContent  = '0';
   elDone.textContent = '0';
 
-  // إن لم يكن المستخدم معلماً أو لا توجد قاعدة بيانات — نكتفي بالتصفير
   if (!current || current.role !== 'teacher' || !window.db || !current.classId) return;
 
   try {
-    // 🔹 عدد الطلاب من Firestore
+    // عدد الطلاب
     const stuSnap = await getDocs(
       collection(window.db, "classes", current.classId, "students")
     );
     let totalStudents = 0;
-    stuSnap.forEach(() => { totalStudents++; });
+    stuSnap.forEach(() => totalStudents++);
 
-    // 🔹 عدد الواجبات + عدد الأنشطة المنجزة من perStudent
+    // الواجبات والمنجز
     const asgSnap = await getDocs(
       collection(window.db, "classes", current.classId, "assignments")
     );
@@ -1365,21 +1362,18 @@ async function renderTeacherDashboard() {
       const per  = data.perStudent || {};
       Object.values(per).forEach(ps => {
         if (!ps) return;
-        if (ps.status === 'done' || ps.progress === 100) {
-          totalDone++;
-        }
+        if (ps.status === 'done' || ps.progress === 100) totalDone++;
       });
     });
 
     elStu.textContent  = String(totalStudents);
     elAsg.textContent  = String(totalAssignments);
     elDone.textContent = String(totalDone);
+
   } catch (err) {
     console.error("⚠ خطأ في تحميل إحصاءات لوحة المعلم:", err);
   }
 }
-
-
 
 
 async function openReviewModal(a, sid, ps, stu) {
@@ -1519,21 +1513,31 @@ let mediaRecorder, chunks = [], timerInt, startTime, audioBlob = null;
 
 function openReader(book) {
   currentBook = book;
+
   // تسجيل وقت بدء القراءة
   readingStartAt = Date.now();
 
   $('#appShell').classList.add('hidden');
   $('#readerView').classList.remove('hidden');
+
   $('#storyTitle').textContent = book.title;
   $('#storyLevel').textContent = 'المستوى ' + (book.level || '').replace('L', '');
   $('#storyCover').src = book.cover;
-  const host = $('#storyContent'); host.innerHTML = '';
+
+  const host = $('#storyContent');
+  host.innerHTML = '';
+
   book.text.forEach(p => {
     const para = document.createElement('p');
     para.innerHTML = p.split(' ').map(w => `<span>${w}</span>`).join(' ');
     host.appendChild(para);
   });
-  host.querySelectorAll('span').forEach(sp => sp.onclick = () => sp.classList.toggle('highlighted'));
+
+  host.querySelectorAll('span').forEach(sp => {
+    sp.onclick = () => sp.classList.toggle('highlighted');
+  });
+
+  // تهيئة عناصر التسجيل في القارئ
   $('#recordTime').textContent = '⏱️ 00:00';
   $('#playRec').classList.add('hidden');
   $('#stopRec').classList.add('hidden');
@@ -1545,15 +1549,16 @@ function backToApp() {
   $('#readerView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
 
-  // حساب وقت القراءة الفعلي وحفظه
-  const current = readJSON(LS.CURRENT, null);
-  if (current && current.role === 'student' && currentBook && readingStartAt) {
+  // حساب وقت القراءة
+  if (readingStartAt && currentBook) {
     const diffMs = Date.now() - readingStartAt;
-    const minutes = Math.max(1, Math.round(diffMs / 60000));
-    updateReadStats(currentBook.id, minutes);
+    const minutesSpent = Math.max(1, Math.round(diffMs / 60000));
+    updateReadStats(currentBook.id, minutesSpent);
   }
+
   readingStartAt = null;
 }
+
 
 
 async function startRecording() {
@@ -1604,25 +1609,23 @@ function updateReadStats(bookId, minutesSpent = 0) {
   // زيادة عدد القراءات
   s.reads += 1;
 
-  // إضافة وقت القراءة بالدقائق (إن وجد)
-  if (minutesSpent && minutesSpent > 0) {
+  // إضافة وقت القراءة
+  if (minutesSpent > 0) {
     s.minutes += minutesSpent;
   }
 
-  // آخر قصة تمت قراءتها
+  // تحديث آخر قصة
   const bookTitle = BOOKS.find(b => b.id === bookId)?.title;
-  if (bookTitle) {
-    s.lastBook = bookTitle;
-  }
+  if (bookTitle) s.lastBook = bookTitle;
 
-  // حفظ محليًا
+  // حفظ محلي
   writeJSON(key, s);
 
-  // تحديث الواجهة + التقارير فورًا
+  // تحديث الواجهة فورًا
   updateRail();
   updateReports();
 
-  // حفظ في Firestore (بشكل غير متزامن حتى لا تتأثر الواجهة)
+  // حفظ في Firestore
   if (window.db && current.email) {
     (async () => {
       try {
@@ -1640,6 +1643,7 @@ function updateReadStats(bookId, minutesSpent = 0) {
     })();
   }
 }
+
 
 
 // حفظ قصة جديدة — Firestore + تحديث المكتبة
