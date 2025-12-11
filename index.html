@@ -461,6 +461,31 @@
     });
   </script>
 
+
+<script>
+// تبديل بين تسجيل الدخول والتسجيل الجديد
+document.querySelectorAll(".pill[data-auth]").forEach(btn => {
+  btn.addEventListener("click", () => {
+
+    // إزالة active من الكل
+    document.querySelectorAll(".pill[data-auth]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    const target = btn.getAttribute("data-auth");
+
+    if (target === "login") {
+      document.getElementById("loginForm").classList.remove("hidden");
+      document.getElementById("regForm").classList.add("hidden");
+    } else {
+      document.getElementById("loginForm").classList.add("hidden");
+      document.getElementById("regForm").classList.remove("hidden");
+    }
+
+  });
+});
+</script>
+
+  
   <!-- تطبيق المنصة -->
   <script type="module" src="app.js"></script>
 </body>
