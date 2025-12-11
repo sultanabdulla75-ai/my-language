@@ -5,6 +5,12 @@
 // ===== متغير عام للقصة الحالية في القارئ =====
 let currentBook = null;
 
+// ===== متغير عام للقصة الحالية في القارئ =====
+let currentBook = null;
+// وقت بدء القراءة الحالي (بالمللي ثانية)
+let readingStartAt = null;
+
+
 // ===== Firestore Imports =====
 import {
   doc,
@@ -1444,6 +1450,9 @@ let mediaRecorder, chunks = [], timerInt, startTime, audioBlob = null;
 
 function openReader(book) {
   currentBook = book;
+  // تسجيل وقت بدء القراءة
+  readingStartAt = Date.now();
+
   $('#appShell').classList.add('hidden');
   $('#readerView').classList.remove('hidden');
   $('#storyTitle').textContent = book.title;
@@ -1460,14 +1469,23 @@ function openReader(book) {
   $('#playRec').classList.add('hidden');
   $('#stopRec').classList.add('hidden');
   $('#startRec').classList.remove('hidden');
-
-  updateReadStats(book.id);
 }
+
 
 function backToApp() {
   $('#readerView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
+
+  // حساب وقت القراءة الفعلي وحفظه
+  const current = readJSON(LS.CURRENT, null);
+  if (current && current.role === 'student' && currentBook && readingStartAt) {
+    const diffMs = Date.now() - readingStartAt;
+    const minutes = Math.max(1, Math.round(diffMs / 60000));
+    updateReadStats(currentBook.id, minutes);
+  }
+  readingStartAt = null;
 }
+
 
 async function startRecording() {
   try {
@@ -1507,20 +1525,53 @@ function playRecording() {
   new Audio(URL.createObjectURL(audioBlob)).play();
 }
 
-// تحديث بيانات القراء (محلي الآن)
-function updateReadStats(bookId) {
+function updateReadStats(bookId, minutesSpent = 0) {
   const current = readJSON(LS.CURRENT, null);
-  if (!current) return;
+  if (!current || current.role !== 'student') return;
 
   const key = LS.STATS(current.id);
   const s = readJSON(key, { reads: 0, minutes: 0, lastBook: '—', activities: 0 });
 
+  // زيادة عدد القراءات
   s.reads += 1;
-  s.lastBook = BOOKS.find(b => b.id === bookId)?.title || '—';
 
+  // إضافة وقت القراءة بالدقائق (إن وجد)
+  if (minutesSpent && minutesSpent > 0) {
+    s.minutes += minutesSpent;
+  }
+
+  // آخر قصة تمت قراءتها
+  const bookTitle = BOOKS.find(b => b.id === bookId)?.title;
+  if (bookTitle) {
+    s.lastBook = bookTitle;
+  }
+
+  // حفظ محليًا
   writeJSON(key, s);
+
+  // تحديث الواجهة + التقارير فورًا
   updateRail();
+  updateReports();
+
+  // حفظ في Firestore (بشكل غير متزامن حتى لا تتأثر الواجهة)
+  if (window.db && current.email) {
+    (async () => {
+      try {
+        const statsRef = doc(window.db, "readingStats", current.email);
+        await setDoc(statsRef, {
+          reads: s.reads,
+          minutes: s.minutes,
+          lastBook: s.lastBook,
+          activities: s.activities || 0,
+          updatedAt: Date.now()
+        }, { merge: true });
+      } catch (err) {
+        console.error("⚠ خطأ في حفظ إحصاءات القراءة في Firestore:", err);
+      }
+    })();
+  }
 }
+
 
 // حفظ قصة جديدة — Firestore + تحديث المكتبة
 async function saveBook() {
