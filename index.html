@@ -359,24 +359,22 @@
 
   <!-- سكربت Firebase + تسجيل دخول Google -->
 <script type="module">
-  // 🔹 تعريف المعلم الرئيس
-  const MAIN_TEACHER_UID   = "pcjID2PpIENNI36UOMfr5xbSQwE2";
-  const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
-  const MAIN_TEACHER_NAME  = "أ.سلطان بن عبدالله الشهيمي";
 
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+  import { initializeApp } 
+    from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup } 
+    from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, getDocs, collection } 
+    from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-  import { loadStudentAnswersFromFirestore, syncBooks } from "./app.js";
-
+  // إعداد Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyCcgfkdGNTZhqPxoY765hf53jh9KqOQPxU",
     authDomain: "my-language2025.firebaseapp.com",
     projectId: "my-language2025",
-    storageBucket: "my-language2025.firebasestorage.app",
-    messagingSenderId: "531458626572",
-    appId: "1:531458626572:web:711af89cd9019f0ee64a29",
+    storageBucket: "my-language2025.appspot.com",
+    messagingSenderId: "964255780843",
+    appId: "1:964255780843:web:1ba80757b4433c182b9c97"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -385,61 +383,41 @@
   const db = getFirestore(app);
   window.db = db;
 
-  // 🔥 حل المشكلة: انتظر تحميل الصفحة بالكامل
-  window.addEventListener("DOMContentLoaded", () => {
+  // المعلم الأساسي
+  const MAIN_TEACHER_EMAIL = "sultan.1429@edu.moe.om";
 
-    const googleBtn = document.getElementById("googleLogin");
-    if (!googleBtn) {
-      console.error("❌ زر Google غير موجود");
-      return;
-    }
+  // تشغيل زر Google
+  document.getElementById("googleLogin")?.addEventListener("click", async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
 
-    googleBtn.addEventListener("click", async () => {
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
+      const email = user.email.toLowerCase();
 
-        console.log("✔ Logged in with Google:", user.email);
+      let role = "student";
+      let classId = null;
 
-        const isTeacher = (user.email === MAIN_TEACHER_EMAIL);
+      // 🔥 لو كان معلم
+      if (email === MAIN_TEACHER_EMAIL) {
+        role = "teacher";
 
-        // 👨‍🏫 المعلم
-        if (isTeacher) {
-          let classId = null;
-          const classesSnap = await getDocs(collection(db, "classes"));
+        const classesSnap = await getDocs(collection(db, "classes"));
+        classesSnap.forEach(c => {
+          const data = c.data();
+          if (data.teacherEmail === email) classId = c.id;
+        });
 
-          classesSnap.forEach(c => {
-            const data = c.data();
-            if (data.teacherId === user.uid || data.teacherId === MAIN_TEACHER_UID) {
-              classId = c.id;
-            }
-          });
-
-          if (!classId) {
-            alert("⚠ لا يوجد صف مرتبط بالمعلم.");
-            return;
-          }
-
-          localStorage.setItem("arp.current", JSON.stringify({
-            id: user.uid,
-            name: user.displayName || MAIN_TEACHER_NAME,
-            email: user.email,
-            role: "teacher",
-            classId
-          }));
-
-          window.startApp?.();
+        if (!classId) {
+          alert("⚠ لا يوجد فصل مرتبط بالمعلم");
           return;
         }
+      }
 
-        // 👨‍🎓 الطالب
-        const studentId = user.email;
-        let classId = null;
-
-        const classesSnap2 = await getDocs(collection(db, "classes"));
-
-        for (const c of classesSnap2.docs) {
-          const stuRef = doc(db, "classes", c.id, "students", studentId);
+      // 🔥 لو طالب
+      if (role === "student") {
+        const classesSnap = await getDocs(collection(db, "classes"));
+        for (const c of classesSnap.docs) {
+          const stuRef = doc(db, "classes", c.id, "students", email);
           const stuSnap = await getDoc(stuRef);
           if (stuSnap.exists()) {
             classId = c.id;
@@ -448,26 +426,28 @@
         }
 
         if (!classId) {
-          alert("⚠ لست مسجلًا في أي صف.");
+          alert("⚠ لست مسجلاً في أي صف");
           return;
         }
-
-        localStorage.setItem("arp.current", JSON.stringify({
-          id: studentId,
-          name: user.displayName || "طالب",
-          email: studentId,
-          role: "student",
-          classId
-        }));
-
-        window.startApp?.();
-
-      } catch (e) {
-        console.error("Google login error:", e);
-        alert("فشل تسجيل الدخول: " + e.message);
       }
-    });
+
+      // حفظ الدخول
+      localStorage.setItem("arp.current", JSON.stringify({
+        id: email,
+        name: user.displayName || "مستخدم",
+        email,
+        role,
+        classId
+      }));
+
+      window.startApp?.();
+
+    } catch (e) {
+      console.error("Google Login error:", e);
+      alert("فشل تسجيل الدخول");
+    }
   });
+
 </script>
 
 
