@@ -28,13 +28,6 @@ const LS = {
   STATS: uid => `arp.stats.${uid}`
 };
 
-// ===== صور الأفاتار حسب الدور =====
-const AVATARS = {
-  student: "img/avatar-student-omani.png",
-  teacher: "img/avatar-teacher-omani.png"
-};
-
-
 // ===== Data =====
 const LEVELS = [
   { id: 'L1', name: 'المستوى 1 (مبتدئ)' },
@@ -1727,32 +1720,6 @@ async function startApp() {
   $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
   $('#userName').textContent = current.name;
   $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
-
-    // 🔹 تحديث صورة الأفاتار حسب الدور (طالب / معلم)
-  const avatarImg = document.getElementById('userAvatar');
-  const railAvatarImg = document.getElementById('railAvatar');
-
-  const roleKey = current.role === 'teacher' ? 'teacher' : 'student';
-  const avatarSrc = AVATARS[roleKey];
-
-  if (avatarImg && avatarSrc) {
-    avatarImg.src = avatarSrc;
-    avatarImg.alt = current.role === 'teacher' ? 'أيقونة معلم' : 'أيقونة طالب';
-  }
-
-  if (railAvatarImg && avatarSrc) {
-    railAvatarImg.src = avatarSrc;
-    railAvatarImg.alt = current.role === 'teacher' ? 'أيقونة معلم' : 'أيقونة طالب';
-  }
-
-  // 🔹 تحديث وصف الدور في السكة اليمنى
-  const railRoleText = document.getElementById('railRoleText');
-  if (railRoleText) {
-    railRoleText.textContent = current.role === 'teacher'
-      ? 'وضع المعلم — عرض إحصاءات الفصل'
-      : 'وضع الطالب — تابع قراءتك وإنجازاتك';
-  }
-
 
   // 6) إخفاء شاشة الدخول وإظهار التطبيق
   $('#authView').classList.add('hidden');
