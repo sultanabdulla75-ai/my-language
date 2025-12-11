@@ -1354,95 +1354,106 @@ async function renderTeacherView() {
   }
 }
 
-async function openReviewModal(a, sid, ps, stu) {
+// ------------------------------------------------------
+// دالة مساعدة لفتح نافذة مراجعة الواجب (النسخة المعدلة)
+// ------------------------------------------------------
+async function openReviewModal(a, studentEmail, ps) {
+    const student = a.students?.[studentEmail] || { name: studentEmail };
+    const classId = a.classId;
 
-  // 📌 1) تحميل إجابة الطالب من Firestore
-  const ansRef = doc(
-    window.db,
-    "classes", a.classId,
-    "assignments", a.id,
-    "answers", sid
-  );
+    if (!window.db || !classId) {
+        toast("خطأ في الاتصال بالبيانات");
+        return;
+    }
 
-  const ansSnap = await getDoc(ansRef);
-  let ansData = ansSnap.exists() ? ansSnap.data() : null;
-
-  const answerText = ansData?.answer || ps.answer || "— لم يُرسل إجابة —";
-  const answerFile = ansData?.file || ps.file || "";
-
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-
-  modal.innerHTML = `
-    <div class="modal-card" style="max-width:600px">
-      <button class="modal-close" id="closeReview">✖</button>
-
-      <h3>مراجعة حل الطالب</h3>
-
-      <div class="form-row"><b>الطالب:</b> ${stu?.name || sid}</div>
-      <div class="form-row"><b>عنوان الواجب:</b> ${a.title}</div>
-
-      <div class="form-row"><b>إجابة الطالب:</b>
-        <p style="background:#f8fafc;padding:.7rem;border-radius:10px">
-          ${answerText}
-        </p>
-      </div>
-
-      ${answerFile ? `
+    // يجب أن تكون ps (perStudent) هي البيانات التي تم تمريرها من لوحة المعلم
+    const answerText = ps.answer || '— لم يرسل إجابة نصية —';
+    const answerFile = ps.file || '';
+    
+    // جلب مرجع الإجابة للطالب من subcollection (answers)
+    const ansRef = doc(
+        window.db,
+        "classes", classId,
+        "assignments", a.id,
+        "answers", studentEmail
+    );
+    const ansSnap = await getDoc(ansRef);
+    const ansData = ansSnap.exists() ? ansSnap.data() : {};
+    
+    // إنشاء النافذة المنبثقة
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-card" style="max-width:550px">
+        <button class="modal-close" id="closeReview">✖</button>
+        <h3>مراجعة واجب الطالب: ${student.name || studentEmail}</h3>
+        <div class="form-row"><b>عنوان الواجب:</b> ${a.title}</div>
+        <div class="form-row"><b>إجابة الطالب:</b> <p style="background:#f8fafc;padding:.7rem;border-radius:10px">
+            ${answerText}
+        </p></div>
+        ${answerFile ? `
         <div class="form-row">
-          <b>الملف المرفق:</b>
-          <a href="${answerFile}" target="_blank" class="btn sky small">فتح الملف</a>
+            <b>الملف المرفق:</b> <a href="${answerFile}" target="_blank" class="btn sky small">فتح الملف</a>
+        </div>` : ''}
+        <div class="form-row">
+            <label>ملاحظة للمعلم (اختياري)</label>
+            <textarea id="teacherNote" rows="3">${ps.notes || ''}</textarea>
         </div>
-      ` : ''}
+        <div class="row" style="display:flex;justify-content:flex-end;gap:.5rem">
+            <button id="rejectAns" class="btn warn small">رفض ❌</button>
+            <button id="approveAns" class="btn primary small">قبول ✅</button>
+        </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('closeReview').onclick = () => modal.remove();
+    
+    // ⭐ 3) قبول الحل
+    document.getElementById('approveAns').onclick = async () => {
+        const note = document.getElementById('teacherNote').value.trim();
+        
+        // التحديث في subcollection (answers)
+        await setDoc(ansRef, { ...ansData, status: "done", progress: 100, notes: note }, { merge: true });
+        
+        // التحديث في الحقل perStudent بوثيقة الواجب الرئيسية
+        const assignRef = doc(window.db, "classes", classId, "assignments", a.id);
+        await updateDoc(assignRef, {
+            [`perStudent.${studentEmail}`]: {
+                ...(a.perStudent?.[studentEmail] || {}),
+                status: "done",
+                progress: 100,
+                notes: note
+            }
+        });
+        
+        modal.remove();
+        toast("✨ تم قبول حل الطالب");
+        renderTeacherView(); // إعادة تحديث اللوحة
+    };
 
-      <div class="form-row">
-        <label>ملاحظة للطالب (اختياري)</label>
-        <textarea id="teacherNote" rows="3">${ps.notes || ''}</textarea>
-      </div>
+    // ⭐ 4) رفض الحل
+    document.getElementById('rejectAns').onclick = async () => {
+        const note = document.getElementById('teacherNote').value.trim() || "يرجى تحسين الإجابة";
+        
+        // التحديث في subcollection (answers)
+        await setDoc(ansRef, { ...ansData, status: "required", progress: 0, notes: note }, { merge: true });
 
-      <div class="row" style="display:flex;justify-content:flex-end;gap:.5rem">
-        <button id="rejectAns" class="btn warn small">رفض ❌</button>
-        <button id="approveAns" class="btn primary small">قبول ✅</button>
-      </div>
-    </div>
-  `;
+        // التحديث في الحقل perStudent بوثيقة الواجب الرئيسية
+        const assignRef = doc(window.db, "classes", classId, "assignments", a.id);
+        await updateDoc(assignRef, {
+            [`perStudent.${studentEmail}`]: {
+                ...(a.perStudent?.[studentEmail] || {}),
+                status: "required",
+                progress: 0,
+                notes: note
+            }
+        });
 
-  document.body.appendChild(modal);
-  $('#closeReview').onclick = () => modal.remove();
-
-  // ⭐ 3) قبول الحل
-  $('#approveAns').onclick = async () => {
-    const note = $('#teacherNote').value.trim();
-
-    await setDoc(ansRef, {
-      ...ansData,
-      status: "done",
-      progress: 100,
-      notes: note
-    }, { merge: true });
-
-    modal.remove();
-    toast("✨ تم قبول حل الطالب");
-    renderTeacherView();
-  };
-
-  // ⭐ 4) رفض الحل
-  $('#rejectAns').onclick = async () => {
-    const note = $('#teacherNote').value.trim() || "يرجى تحسين الإجابة";
-
-    await setDoc(ansRef, {
-      ...ansData,
-      status: "required",
-      progress: 0,
-      notes: note
-    }, { merge: true });
-
-    modal.remove();
-    toast("❌ تم رفض الحل");
-    renderTeacherView();
-  };
+        modal.remove();
+        toast("❌ تم رفض الحل، وطلب تحسين الإجابة");
+        renderTeacherView(); // إعادة تحديث اللوحة
+    };
 }
-
 // ------------------------------------------------------
 // Reports
 // ------------------------------------------------------
