@@ -1531,7 +1531,7 @@ function openReader(book) {
 
   // تسجيل وقت بدء القراءة
   readingStartAt = Date.now();
-hasReadingInteraction = false;
+hasInteractedWithStory = false;
 
   $('#appShell').classList.add('hidden');
   $('#readerView').classList.remove('hidden');
@@ -1554,7 +1554,7 @@ hasReadingInteraction = false;
     sp.classList.toggle('highlighted');
 
     // ✅ تسجيل تفاعل قراءة حقيقي
-    hasReadingInteraction = true;
+hasInteractedWithStory = true;
   };
 });
 
@@ -1578,7 +1578,7 @@ function backToApp() {
     // ✅ شروط القراءة الحقيقية
     const MIN_SECONDS = 30; // حد أدنى واقعي
 
-    if (hasReadingInteraction && secondsSpent >= MIN_SECONDS) {
+if (hasInteractedWithStory && secondsSpent >= MIN_SECONDS) {
       const minutesSpent = Math.max(1, Math.round(secondsSpent / 60));
       updateReadStats(currentBook.id, minutesSpent);
     } else {
@@ -1587,7 +1587,7 @@ function backToApp() {
   }
 
   readingStartAt = null;
-  hasReadingInteraction = false;
+hasInteractedWithStory = false;
 }
 
 async function startRecording() {
