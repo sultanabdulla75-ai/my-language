@@ -132,8 +132,8 @@ function setUnifiedAvatar(role){
   if (!avatar) return;
 
   avatar.src = role === "teacher"
-    ? "./img/avatar-teacher.png"
-    : "./img/avatar-student.png";
+    ? "./img/avatar-teacher-omani.png"
+    : "./img/avatar-student-omani.png";
 }
 
 
