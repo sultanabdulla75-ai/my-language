@@ -18,12 +18,13 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
 .topbar{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.6));backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
 .nav{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem}
 .brand-logo{
-  height: 32px;
+  height: 48px;          /* متوافق مع العنوان */
   width: auto;
-  margin-inline-end: .4rem;
   object-fit: contain;
-  filter: grayscale(.15);
+  margin-inline-end: 12px;
+  filter: none;          /* مهم: لا تشوّه الشعار */
 }
+
 .brand-title{font-weight:800}
 .nav-center{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center}
 .chip{border:none;border-radius:999px;padding:.45rem .9rem;font-weight:800;cursor:pointer}
