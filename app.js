@@ -126,6 +126,17 @@ const readJSON = (k, def) => {
 const writeJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 const uid = (p = 'U') => p + Math.random().toString(36).slice(2, 8);
 
+// ===== Avatar (موحّد) =====
+function setUnifiedAvatar(role){
+  const avatar = document.getElementById("userAvatar");
+  if (!avatar) return;
+
+  avatar.src = role === "teacher"
+    ? "./img/avatar-teacher.png"
+    : "./img/avatar-student.png";
+}
+
+
 function toast(msg) { alert(msg); }
 
 // ------------------------------------------------------
@@ -1871,6 +1882,7 @@ if (!current || !current.email) {
   $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
   $('#userName').textContent = current.name;
   $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
+setUnifiedAvatar(current.role);
 
   // 6) إخفاء شاشة الدخول وإظهار التطبيق
   $('#authView').classList.add('hidden');
