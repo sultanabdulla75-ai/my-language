@@ -24,7 +24,11 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
   margin-inline-end: 12px;
   filter: none;          /* مهم: لا تشوّه الشعار */
 }
-
+.nav-left{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .brand-title{font-weight:800}
 .nav-center{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center}
 .chip{border:none;border-radius:999px;padding:.45rem .9rem;font-weight:800;cursor:pointer}
@@ -149,8 +153,6 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
   background: white;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
 }
-
-
 
 .google-btn {
   background: white;
