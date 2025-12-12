@@ -7,6 +7,9 @@ let currentBook = null;
 // وقت بدء القراءة الحالي (بالمللي ثانية)
 let readingStartAt = null;
 
+let readingStartTime = null;
+let hasInteractedWithStory = false;
+
 // ===== Firestore Imports =====
 import {
   doc,
@@ -1525,6 +1528,7 @@ function openReader(book) {
 
   // تسجيل وقت بدء القراءة
   readingStartAt = Date.now();
+hasReadingInteraction = false;
 
   $('#appShell').classList.add('hidden');
   $('#readerView').classList.remove('hidden');
@@ -1542,9 +1546,14 @@ function openReader(book) {
     host.appendChild(para);
   });
 
-  host.querySelectorAll('span').forEach(sp => {
-    sp.onclick = () => sp.classList.toggle('highlighted');
-  });
+ host.querySelectorAll('span').forEach(sp => {
+  sp.onclick = () => {
+    sp.classList.toggle('highlighted');
+
+    // ✅ تسجيل تفاعل قراءة حقيقي
+    hasReadingInteraction = true;
+  };
+});
 
   // تهيئة عناصر التسجيل في القارئ
   $('#recordTime').textContent = '⏱️ 00:00';
@@ -1558,17 +1567,24 @@ function backToApp() {
   $('#readerView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
 
-  // حساب وقت القراءة
   if (readingStartAt && currentBook) {
     const diffMs = Date.now() - readingStartAt;
-    const minutesSpent = Math.max(1, Math.round(diffMs / 60000));
-    updateReadStats(currentBook.id, minutesSpent);
+    const secondsSpent = Math.round(diffMs / 1000);
+
+    // ✅ شروط القراءة الحقيقية
+    const MIN_SECONDS = 30; // حد أدنى واقعي
+
+    if (hasReadingInteraction && secondsSpent >= MIN_SECONDS) {
+      const minutesSpent = Math.max(1, Math.round(secondsSpent / 60));
+      updateReadStats(currentBook.id, minutesSpent);
+    } else {
+      console.log("⏭️ قراءة لم تُحتسب (تفاعل أو وقت غير كافٍ)");
+    }
   }
 
   readingStartAt = null;
+  hasReadingInteraction = false;
 }
-
-
 
 async function startRecording() {
   try {
