@@ -131,10 +131,15 @@ function setUnifiedAvatar(role){
   const avatar = document.getElementById("userAvatar");
   if (!avatar) return;
 
+  avatar.onerror = () => {
+    avatar.src = "./img/avatar-student-omani.png";
+  };
+
   avatar.src = role === "teacher"
     ? "./img/avatar-teacher-omani.png"
     : "./img/avatar-student-omani.png";
 }
+
 
 
 function toast(msg) { alert(msg); }
