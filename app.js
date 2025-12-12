@@ -1574,20 +1574,18 @@ function backToApp() {
   if (readingStartAt && currentBook) {
     const diffMs = Date.now() - readingStartAt;
     const secondsSpent = Math.round(diffMs / 1000);
+    const MIN_SECONDS = 30;
 
-    // ✅ شروط القراءة الحقيقية
-    const MIN_SECONDS = 30; // حد أدنى واقعي
-
-if (hasInteractedWithStory && secondsSpent >= MIN_SECONDS) {
+    if (hasInteractedWithStory && secondsSpent >= MIN_SECONDS) {
       const minutesSpent = Math.max(1, Math.round(secondsSpent / 60));
       updateReadStats(currentBook.id, minutesSpent);
     } else {
-      console.log("⏭️ قراءة لم تُحتسب (تفاعل أو وقت غير كافٍ)");
+      console.log("⏭️ قراءة لم تُحتسب");
     }
   }
 
   readingStartAt = null;
-hasInteractedWithStory = false;
+  hasInteractedWithStory = false;
 }
 
 async function startRecording() {
