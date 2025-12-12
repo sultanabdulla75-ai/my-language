@@ -659,7 +659,6 @@ async function renderBooks(level = 'ALL') {
     const c = getTeacherClass(current.id);
     classId = c ? c.id : current.classId;
   } else {
-    // للطالب نستخدم classId المحفوظ من Google أو من البحث
     classId = current.classId || null;
   }
 
@@ -691,10 +690,14 @@ async function renderBooks(level = 'ALL') {
       <h4>${b.title}</h4>
       <div class="badge ok">مستوى ${b.level}</div>
     `;
-    c.onclick = () => openReader(b);
+
+    // ✅ التصحيح الحاسم هنا
+    c.onclick = () => window.openReader(b);
+
     g.appendChild(c);
   });
 }
+
 
 function getStudentAssignments(uid) {
   return getAssignments().filter(a => a.studentIds.includes(uid));
