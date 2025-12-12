@@ -175,3 +175,15 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
 .only-teacher {
   display: none;
 }
+
+/* ===== Avatar (موحّد) ===== */
+.avatar-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+  background-color: #fff;
+  flex-shrink: 0;
+}
+
