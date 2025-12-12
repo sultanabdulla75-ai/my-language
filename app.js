@@ -1561,6 +1561,7 @@ hasReadingInteraction = false;
   $('#stopRec').classList.add('hidden');
   $('#startRec').classList.remove('hidden');
 }
+window.openReader = openReader;
 
 
 function backToApp() {
