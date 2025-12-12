@@ -17,30 +17,30 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
 /* ===== Topbar ===== */
 .topbar{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.6));backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
 .nav{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem}
-.brand-logo{
-  height: 48px;
-  width: auto;
-  object-fit: contain;
+/* === Logo like Avatar === */
+.logo-wrap{
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;              /* 🔴 المفتاح الأساسي */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-inline-end: 12px;
-  filter: none;
+  background: #fff;
+  border: 2px solid #e6e9f2;     /* نفس منطق إطار الأفاتار */
+}
+
+.brand-logo{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;             /* 🔴 يملأ الدائرة مثل الأفاتار */
 }
 
 .nav-left{
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.logo-wrap{
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: #fff;              /* أو transparent */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-inline-end: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
 
 .brand-title{font-weight:800}
