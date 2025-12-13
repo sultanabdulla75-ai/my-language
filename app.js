@@ -1614,10 +1614,40 @@ if (aiInput) aiInput.value = "";
   host.innerHTML = '';
 
   book.text.forEach(p => {
-    const para = document.createElement('p');
-    para.innerHTML = p.split(' ').map(w => `<span>${w}</span>`).join(' ');
-    host.appendChild(para);
-  });
+  const para = document.createElement('p');
+
+  // 1️⃣ إنشاء محتوى الفقرة (كلمات)
+  para.innerHTML = p.split(' ').map(w => `<span>${w}</span>`).join(' ');
+
+  // 2️⃣ ⭐⭐⭐ هنا تضع para.onclick (شرح الفقرة)
+  para.onclick = () => {
+    // إزالة التحديد من بقية الفقرات
+    host.querySelectorAll('p').forEach(x =>
+      x.classList.remove('para-selected')
+    );
+
+    // تمييز الفقرة الحالية
+    para.classList.add('para-selected');
+
+    // حفظ نص الفقرة
+    selectedParagraph = para.textContent.trim();
+
+    // تمرير الفقرة للمساعد
+    const aiInput = document.getElementById("noorAiInput");
+    if (aiInput) aiInput.value = selectedParagraph;
+
+    // ضبط سياق شرح الفقرة
+    currentAIContext = `
+اشرح الفقرة التالية بأسلوب تربوي مبسط يناسب الطلاب:
+عنوان القصة: ${book.title}
+المستوى: ${book.level}
+النص:
+`;
+  };
+
+  // 3️⃣ إضافة الفقرة للواجهة
+  host.appendChild(para);
+});
 
   host.querySelectorAll('span').forEach(sp => {
     sp.onclick = () => {
