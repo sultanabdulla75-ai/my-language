@@ -75,8 +75,40 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
 .profile-card{display:flex;align-items:center;gap:.7rem}
 .avatar{font-size:36px}
 .pname strong{font-weight:800}
-.score-row{display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px dashed var(--border)}
+.score-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:.4rem 0;
+  border-bottom:1px dashed var(--border)
+}
 .score-row:last-child{border-bottom:0}
+
+/* ===============================
+   Noor Badges – Sidebar
+   =============================== */
+
+.score-row .noor-badges{
+  display:flex;
+  gap:6px;
+}
+
+/* تصغير الأوسمة لتناسب السكة */
+.score-row .noor-badge{
+  width:46px;
+  height:46px;
+}
+
+.score-row .noor-badge .icon{
+  font-size:16px;
+}
+
+.score-row .noor-badge small{
+  font-size:11px;
+}
+
+
 
 .section-header{display:flex;justify-content:space-between;align-items:center;margin:.4rem 0 .6rem}
 .search{border:1px solid var(--border);border-radius:12px;padding:.55rem .7rem;width:260px;background:#fff}
