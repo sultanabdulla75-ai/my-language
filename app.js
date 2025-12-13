@@ -817,22 +817,39 @@ function renderStudentAssignments(filter = 'required') {
 
       const modal = document.createElement('div');
       modal.className = 'modal';
-      modal.innerHTML = `
-        <div class="modal-card">
-          <button class="modal-close" id="closeAns">✖</button>
-          <h3 id="taskTitle"></h3>
-          <div class="form-row">
-            <label>إجابتك</label>
-            <textarea id="ansText" rows="4" placeholder="اكتب إجابتك هنا..."
-              style="width:100%;border:1px solid #ddd;border-radius:8px;padding:.6rem;">${a.answer || ''}</textarea>
-          </div>
-          <div class="form-row">
-            <label>أرفق ملفًا (اختياري)</label>
-            <input type="file" id="ansFile" accept=".pdf,.doc,.mp3,.wav,.m4a,.jpg,.png"/>
-          </div>
-          <button id="sendAnsBtn" class="btn primary small full">إرسال الحل</button>
+     modal.innerHTML = `
+  <div class="modal-card">
+    <button class="modal-close" id="closeAns">✖</button>
+    <h3 id="taskTitle"></h3>
+
+    ${
+      a.notes && a.notes.trim() !== ''
+        ? `
+        <div class="teacher-note">
+          <strong>📝 ملحوظات المعلم:</strong>
+          <p>${a.notes}</p>
         </div>
-      `;
+        `
+        : ''
+    }
+
+    <div class="form-row">
+      <label>إجابتك</label>
+      <textarea id="ansText" rows="4"
+        style="width:100%;border:1px solid #ddd;border-radius:8px;padding:.6rem;">
+        ${a.answer || ''}
+      </textarea>
+    </div>
+
+    <div class="form-row">
+      <label>أرفق ملفًا (اختياري)</label>
+      <input type="file" id="ansFile" />
+    </div>
+
+    <button id="sendAnsBtn" class="btn primary small full">إرسال الحل</button>
+  </div>
+`;
+
       document.body.appendChild(modal);
 
       document.getElementById("taskTitle").textContent = "إرسال حل الواجب: " + a.title;
