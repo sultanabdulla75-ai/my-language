@@ -2099,62 +2099,64 @@ document.addEventListener('DOMContentLoaded', () => {
 // 🤖 Noor AI – Logic (Local Smart Assistant)
 // =========================================
 
+const aiInput = document.getElementById("noorAiInput");
+const aiAnswer = document.getElementById("noorAiAnswer");
+const askBtn = document.getElementById("askNoorAI");
+const aiActions = document.querySelectorAll("[data-ai]");
 
-// زر: اسأل المساعد
-askBtn?.addEventListener("click", () => {
-  const text = aiInput.value.trim();
-  if (!text) {
-    alert("✍️ اكتب سؤالًا أو حدّد فقرة أولًا");
-    return;
-  }
+if (!aiInput || !aiAnswer || !askBtn) {
+  console.warn("🤖 Noor AI: العناصر غير موجودة الآن (سيعمل عند فتح القصة)");
+} else {
 
-  aiAnswer.classList.remove("hidden");
-  aiAnswer.innerHTML = `
-    <strong>🤖 مساعد نور:</strong>
-    <p>سؤالك هو: <b>${text}</b></p>
-    <p>⚠️ هذه نسخة تجريبية، وسيتم ربطها بالذكاء الاصطناعي لاحقًا.</p>
-  `;
-});
-
-// أزرار الإجراءات (شرح – معنى – أسئلة)
-aiActions.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const type = btn.dataset.ai;
-
-    if (!aiInput.value.trim()) {
-      alert("📌 حدّد فقرة أو كلمة من القصة أولًا");
+  // زر: اسأل المساعد
+  askBtn.addEventListener("click", () => {
+    const text = aiInput.value.trim();
+    if (!text) {
+      alert("✍️ حدّد فقرة أو كلمة أولًا");
       return;
     }
 
     aiAnswer.classList.remove("hidden");
-
-    if (type === "explain") {
-      aiAnswer.innerHTML = `
-        <strong>📖 شرح الفقرة:</strong>
-        <p>${aiInput.value}</p>
-      `;
-    }
-
-    if (type === "word") {
-      aiAnswer.innerHTML = `
-        <strong>📘 معنى الكلمة:</strong>
-        <p>سيتم شرح معنى: <b>${aiInput.value}</b></p>
-      `;
-    }
-
-    if (type === "questions") {
-      aiAnswer.innerHTML = `
-        <strong>❓ أسئلة فهم:</strong>
-        <ul>
-          <li>ما الفكرة الرئيسة؟</li>
-          <li>من الشخصيات المذكورة؟</li>
-          <li>ما الحدث الأهم؟</li>
-        </ul>
-      `;
-    }
+    aiAnswer.innerHTML = `
+      <strong>🤖 مساعد نور:</strong>
+      <p>${text}</p>
+    `;
   });
-});
 
+  // أزرار (شرح – معنى – أسئلة)
+  aiActions.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const type = btn.dataset.ai;
+
+      if (!aiInput.value.trim()) {
+        alert("📌 حدّد فقرة أو كلمة من النص");
+        return;
+      }
+
+      aiAnswer.classList.remove("hidden");
+
+      if (type === "explain") {
+        aiAnswer.innerHTML = `<strong>📖 شرح:</strong><p>${aiInput.value}</p>`;
+      }
+
+      if (type === "word") {
+        aiAnswer.innerHTML = `<strong>📘 معنى الكلمة:</strong><p>${aiInput.value}</p>`;
+      }
+
+      if (type === "questions") {
+        aiAnswer.innerHTML = `
+          <strong>❓ أسئلة فهم:</strong>
+          <ul>
+            <li>ما الفكرة الرئيسة؟</li>
+            <li>ما الحدث الأهم؟</li>
+            <li>ماذا تعلّمنا؟</li>
+          </ul>
+        `;
+      }
+    });
+  });
+
+}
 
   $('#loginForm').addEventListener('submit', loginUser);
   $('#regForm').addEventListener('submit', registerUser);
