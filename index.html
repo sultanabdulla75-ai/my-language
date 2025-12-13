@@ -299,6 +299,31 @@
         <div>🎤 سجّل قراءتك ثم استمع</div>
       </div>
     </div>
+
+  <!-- 🤖 مساعد نور الذكي -->
+  <div class="noor-ai-box">
+    <div class="noor-ai-header">
+      🤖 مساعد نور الذكي
+    </div>
+
+    <div class="noor-ai-actions">
+      <button data-ai="explain">اشرح الفقرة</button>
+      <button data-ai="word">معنى كلمة</button>
+      <button data-ai="questions">أسئلة فهم</button>
+    </div>
+
+    <textarea id="noorAiInput"
+      placeholder="اكتب سؤالك هنا أو حدّد كلمة من القصة..."
+    ></textarea>
+
+    <button id="askNoorAI" class="btn sky small full">
+      اسأل المساعد
+    </button>
+
+    <div id="noorAiAnswer" class="noor-ai-answer hidden"></div>
+  </div>
+  <!-- نهاية مساعد نور -->
+ 
     <article id="storyContent" class="story-content"></article>
     <div class="story-actions">
       <button id="startRec" class="btn small">🎤 ابدأ التسجيل</button>
