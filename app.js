@@ -2273,17 +2273,32 @@ if (!aiInput || !aiAnswer || !askBtn) {
 
  document.addEventListener("DOMContentLoaded", () => {
 
-  // زر الخروج
-  $('#logoutBtn')?.addEventListener('click', confirmLogout);
+// ===================================================
+// تشغيل المنصة بعد تحميل عناصر الصفحة
+// ===================================================
+document.addEventListener("DOMContentLoaded", () => {
 
-  // زر اسأل المساعد
-  const askBtn = document.getElementById("askNoorAI");
-  if (askBtn) {
-    askBtn.addEventListener("click", () => {
-      alert("✅ الزر يعمل");
+  /* ===============================
+     زر تسجيل الخروج
+  =============================== */
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", confirmLogout);
+  }
+
+  /* ===============================
+     زر "اسأل المساعد"
+  =============================== */
+  const askNoorBtn = document.getElementById("askNoorAI");
+  if (askNoorBtn) {
+    askNoorBtn.addEventListener("click", () => {
+      alert("✅ زر اسأل المساعد يعمل");
     });
   }
 
-  // تشغيل التطبيق
+  /* ===============================
+     تشغيل التطبيق تلقائيًا
+  =============================== */
   startApp();
+
 });
