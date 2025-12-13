@@ -1597,6 +1597,15 @@ function openReader(book) {
   $('#appShell').classList.add('hidden');
   $('#readerView').classList.remove('hidden');
 
+  // 🧹 تنظيف المساعد عند فتح قصة جديدة
+const aiBox = document.getElementById("noorAiAnswer");
+if (aiBox) {
+  aiBox.textContent = "";
+  aiBox.classList.add("hidden");
+}
+const aiInput = document.getElementById("noorAiInput");
+if (aiInput) aiInput.value = "";
+  
   $('#storyTitle').textContent = book.title;
   $('#storyLevel').textContent = 'المستوى ' + (book.level || '').replace('L', '');
   $('#storyCover').src = book.cover;
@@ -1673,16 +1682,6 @@ window.openReader = openReader;
 function backToApp() {
   $('#readerView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
-
-// 🧹 تنظيف المساعد عند فتح قصة جديدة
-const aiBox = document.getElementById("noorAiAnswer");
-if (aiBox) {
-  aiBox.textContent = "";
-  aiBox.classList.add("hidden");
-}
-const aiInput = document.getElementById("noorAiInput");
-if (aiInput) aiInput.value = "";
-
    if (readingStartAt && currentBook) {
     const diffMs = Date.now() - readingStartAt;
     const secondsSpent = Math.round(diffMs / 1000);
