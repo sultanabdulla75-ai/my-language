@@ -2271,9 +2271,19 @@ if (!aiInput || !aiAnswer || !askBtn) {
     $('#modalQuiz').classList.remove('hidden');
   });
 
+ document.addEventListener("DOMContentLoaded", () => {
+
   // زر الخروج
   $('#logoutBtn')?.addEventListener('click', confirmLogout);
 
-  // تشغيل التطبيق مباشرة لو فيه مستخدم محفوظ
+  // زر اسأل المساعد
+  const askBtn = document.getElementById("askNoorAI");
+  if (askBtn) {
+    askBtn.addEventListener("click", () => {
+      alert("✅ الزر يعمل");
+    });
+  }
+
+  // تشغيل التطبيق
   startApp();
 });
