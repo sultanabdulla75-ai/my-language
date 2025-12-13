@@ -1590,7 +1590,7 @@ function openReader(book) {
 
   // تسجيل وقت بدء القراءة
   readingStartAt = Date.now();
-hasInteractedWithStory = false;
+  hasInteractedWithStory = false;
 
   $('#appShell').classList.add('hidden');
   $('#readerView').classList.remove('hidden');
@@ -1608,14 +1608,57 @@ hasInteractedWithStory = false;
     host.appendChild(para);
   });
 
- host.querySelectorAll('span').forEach(sp => {
-  sp.onclick = () => {
-    sp.classList.toggle('highlighted');
+  host.querySelectorAll('span').forEach(sp => {
+    sp.onclick = () => {
+      sp.classList.toggle('highlighted');
 
-    // ✅ تسجيل تفاعل قراءة حقيقي
-hasInteractedWithStory = true;
-  };
-});
+      // ✅ تسجيل تفاعل قراءة حقيقي
+      hasInteractedWithStory = true;
+
+      // ⭐ إضافة: تمرير الكلمة للمساعد تلقائيًا
+      const aiInput = document.getElementById("noorAiInput");
+      if (aiInput) {
+        aiInput.value = sp.textContent.trim();
+      }
+
+      // ⭐ إضافة: ضبط سياق معنى كلمة
+      currentAIContext = `
+اشرح معنى الكلمة التالية مع مثال من القصة:
+عنوان القصة: ${book.title}
+المستوى: ${book.level}
+`;
+    };
+  });
+
+   // ⭐ إضافة: ربط أزرار مساعد نور بعد فتح القصة
+  document.querySelectorAll("[data-ai]").forEach(btn => {
+    btn.onclick = () => {
+      const type = btn.dataset.ai;
+
+      if (type === "explain") {
+        currentAIContext = `
+اشرح الفقرة التالية بأسلوب تربوي مبسط:
+عنوان القصة: ${book.title}
+المستوى: ${book.level}
+`;
+      }
+
+      if (type === "word") {
+        currentAIContext = `
+اشرح معنى الكلمة التالية مع مثال من القصة:
+عنوان القصة: ${book.title}
+`;
+      }
+
+      if (type === "questions") {
+        currentAIContext = `
+كوّن أسئلة فهم مناسبة للطلاب من النص التالي:
+عنوان القصة: ${book.title}
+المستوى: ${book.level}
+`;
+      }
+    };
+  });
 
   // تهيئة عناصر التسجيل في القارئ
   $('#recordTime').textContent = '⏱️ 00:00';
@@ -1624,7 +1667,6 @@ hasInteractedWithStory = true;
   $('#startRec').classList.remove('hidden');
 }
 window.openReader = openReader;
-
 
 function backToApp() {
   $('#readerView').classList.add('hidden');
