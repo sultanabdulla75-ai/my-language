@@ -465,6 +465,32 @@ function updateRail() {
   if (actBox) actBox.textContent = s.activities;
 }
 
+function renderStaticNoorBadges(){
+  const el = document.getElementById("railBadges");
+  if (!el) return;
+
+  const raw = el.textContent.trim();
+  const count = parseInt(raw, 10) || 0;
+
+  el.innerHTML = `
+    <div class="noor-badge gold" title="إنجاز عالٍ">
+      <span class="icon">🏅</span>
+      <small>${Math.floor(count / 4)}</small>
+    </div>
+
+    <div class="noor-badge silver" title="إنجاز متوسط">
+      <span class="icon">🏅</span>
+      <small>${Math.floor(count / 2)}</small>
+    </div>
+
+    <div class="noor-badge bronze" title="بداية مميزة">
+      <span class="icon">🏅</span>
+      <small>${count}</small>
+    </div>
+  `;
+}
+
+
 function addActivity() {
   const current = readJSON(LS.CURRENT, null);
   if (!current) return;
@@ -1954,6 +1980,7 @@ setUnifiedAvatar(current.role);
   await renderTeacherView();
   updateReports();
   updateRail();
+  renderStaticNoorBadges(); // ← أضفه هنا
 }
 
 // ⭐⭐⭐ مهم: تعريف startApp على window ⭐⭐⭐
