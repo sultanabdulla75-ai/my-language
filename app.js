@@ -9,6 +9,8 @@ let readingStartAt = null;
 
 let readingStartTime = null;
 let hasInteractedWithStory = false;
+let currentAIContext = "";
+
 
 // ===== Firestore Imports =====
 import {
