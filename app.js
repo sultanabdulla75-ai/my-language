@@ -1605,8 +1605,21 @@ function openReader(book) {
 
     book.text.forEach(p => {
       const para = document.createElement("p");
-      para.textContent = p;
-      host.appendChild(para);
+// تقسيم الفقرة إلى كلمات قابلة للنقر
+para.innerHTML = p.split(' ').map(word =>
+  `<span class="word">${word}</span>`
+).join(' ');
+
+// تفعيل التظليل عند الضغط
+para.querySelectorAll('.word').forEach(span => {
+  span.onclick = () => {
+    span.classList.toggle('word-selected');
+    hasInteractedWithStory = true;
+  };
+});
+
+host.appendChild(para);
+
     });
   }
 
