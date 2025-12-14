@@ -18,7 +18,14 @@ import {
   getDocs,
   collection,
   deleteDoc,
-  updateDoc
+  updateDoc,
+
+  // 🔔 إشعارات (إضافة مطلوبة)
+  query,
+  where,
+  orderBy,
+  onSnapshot
+
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
 // ملاحظة: سنستخدم window.db الذي تم ضبطه في index.html
@@ -1906,6 +1913,54 @@ function autoFixAssignments() {
   }
 }
 
+
+
+function listenToNotifications() {
+  const current = JSON.parse(localStorage.getItem("arp.current") || "null");
+  if (!current || !current.email || !window.db) return;
+
+  const q = query(
+    collection(window.db, "notifications"),
+    where("studentId", "==", current.email),
+    orderBy("createdAt", "desc")
+  );
+
+  onSnapshot(q, snap => {
+    const list  = document.getElementById("notifyList");
+    const count = document.getElementById("notifyCount");
+
+    if (!list || !count) return;
+
+    list.innerHTML = "";
+    let unread = 0;
+
+    if (snap.empty) {
+      list.innerHTML = `<div class="notify-empty">لا توجد إشعارات</div>`;
+      count.classList.add("hidden");
+      return;
+    }
+
+    snap.forEach(doc => {
+      const n = doc.data();
+      if (!n.isRead) unread++;
+
+      const item = document.createElement("div");
+      item.className = "notify-item";
+      item.innerHTML = `
+        <div><strong>${n.icon || "🔔"} ${n.title}</strong></div>
+        <div>${n.message}</div>
+      `;
+      list.appendChild(item);
+    });
+
+    count.textContent = unread;
+    count.classList.toggle("hidden", unread === 0);
+  });
+}
+
+
+
+
 // ------------------------------------------------------
 // Boot
 // ------------------------------------------------------
@@ -1988,7 +2043,11 @@ setUnifiedAvatar(current.role);
   updateReports();
   updateRail();
   renderStaticNoorBadges(); // ← أضفه هنا
+
+// بعد buildNav و updateRail
+listenToNotifications();
 }
+
 
 // ⭐⭐⭐ مهم: تعريف startApp على window ⭐⭐⭐
 window.startApp = startApp;
