@@ -2193,6 +2193,20 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#modalQuiz').classList.remove('hidden');
   });
 
+// 🔔 فتح / إغلاق لوحة الإشعارات
+document.getElementById("notifyBtn")?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  document.getElementById("notifyPanel")?.classList.toggle("hidden");
+});
+
+// إغلاقها عند الضغط خارجها
+document.addEventListener("click", () => {
+  document.getElementById("notifyPanel")?.classList.add("hidden");
+});
+
+
+  
+
  // ============================================
 // زر الخروج
 $('#logoutBtn')?.addEventListener('click', confirmLogout);
