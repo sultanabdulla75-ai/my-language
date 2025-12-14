@@ -1592,16 +1592,33 @@ function openReader(book) {
   readingStartAt = Date.now();
   hasInteractedWithStory = false;
 
+  // إظهار القارئ
   $('#appShell').classList.add('hidden');
   $('#readerView').classList.remove('hidden');
 
+  // ===============================
+  // ✅ عرض نص القصة
+  // ===============================
+  const host = document.getElementById("storyContent");
+  if (host) {
+    host.innerHTML = "";
 
-  // تهيئة عناصر التسجيل في القارئ
+    book.text.forEach(p => {
+      const para = document.createElement("p");
+      para.textContent = p;
+      host.appendChild(para);
+    });
+  }
+
+  // ===============================
+  // تهيئة عناصر التسجيل
+  // ===============================
   $('#recordTime').textContent = '⏱️ 00:00';
   $('#playRec').classList.add('hidden');
   $('#stopRec').classList.add('hidden');
   $('#startRec').classList.remove('hidden');
 }
+
 window.openReader = openReader;
 
 function backToApp() {
