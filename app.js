@@ -149,6 +149,39 @@ function setUnifiedAvatar(role){
 
 
 
+// ============================================
+// 🔔 إنشاء إشعار
+// ============================================
+async function createNotification({
+  studentId,
+  title,
+  message,
+  icon = "🔔",
+  type = "",
+  refId = ""
+}) {
+  if (!window.db || !studentId) return;
+
+  try {
+    await setDoc(
+      doc(collection(window.db, "notifications")),
+      {
+        studentId,
+        title,
+        message,
+        icon,
+        type,
+        refId,
+        isRead: false,
+        createdAt: Date.now()
+      }
+    );
+  } catch (e) {
+    console.error("⚠ فشل إنشاء الإشعار:", e);
+  }
+}
+
+
 function toast(msg) { alert(msg); }
 
 // ------------------------------------------------------
@@ -259,6 +292,12 @@ async function saveAssignmentAnswerToFirestore(classId, assignId, studentId, ans
   await setDoc(assignRef, data, { merge: true });
 
   console.log("✔ تم حفظ إجابة الطالب في Firestore");
+
+} catch (e) {
+  console.error("❌ خطأ في حفظ الواجب في Firestore:", e);
+  toast("⚠ تم إنشاء الواجب محليًا فقط (تأكد من الاتصال بالإنترنت)");
+}
+  
 }
 
 // 🔹 تحميل القصص من Firestore
@@ -1300,25 +1339,41 @@ async function saveAssignment() {
   all.push(a);
   setAssignments(all);
 
-  // 2) حفظ في Firestore
-  try {
-    await setDoc(
-      doc(window.db, "classes", classId, "assignments", a.id),
-      {
-        title: a.title,
-        level: a.level,
-        due: a.due,
-        desc: a.desc,
-        teacherId: a.teacherId,
-        studentIds: a.studentIds,
-        perStudent: a.perStudent
-      }
-    );
-    console.log("✔ تم حفظ الواجب في Firestore");
-  } catch (e) {
-    console.error("❌ خطأ في حفظ الواجب في Firestore:", e);
-    toast("⚠ تم إنشاء الواجب محليًا فقط (تأكد من الاتصال بالإنترنت)");
+ // 2) حفظ في Firestore
+try {
+  await setDoc(
+    doc(window.db, "classes", classId, "assignments", a.id),
+    {
+      title: a.title,
+      level: a.level,
+      due: a.due,
+      desc: a.desc,
+      teacherId: a.teacherId,
+      studentIds: a.studentIds,
+      perStudent: a.perStudent
+    }
+  );
+
+  console.log("✔ تم حفظ الواجب في Firestore");
+
+  // ✅ ✅ ✅ التحديث هنا بالضبط (بعد الحفظ مباشرة)
+  // 🔔 إرسال إشعار لكل طالب
+  for (const email of students) {
+    await createNotification({
+      studentId: email,
+      title: "📘 واجب جديد",
+      message: `تم إضافة واجب جديد: ${title}`,
+      icon: "📝",
+      type: "assignment",
+      refId: a.id
+    });
   }
+
+} catch (e) {
+  console.error("❌ خطأ في حفظ الواجب في Firestore:", e);
+  toast("⚠ تم إنشاء الواجب محليًا فقط (تأكد من الاتصال بالإنترنت)");
+}
+
 
   $('#modalAssign').classList.add('hidden');
   renderTeacherView();
