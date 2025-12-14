@@ -1568,37 +1568,67 @@ async function openReviewModal(a, sid, ps, stu) {
   document.body.appendChild(modal);
   $('#closeReview').onclick = () => modal.remove();
 
-  // ⭐ 3) قبول الحل
-  $('#approveAns').onclick = async () => {
-    const note = $('#teacherNote').value.trim();
+// ⭐ 3) قبول الحل
+$('#approveAns').onclick = async () => {
+  const note = $('#teacherNote').value.trim();
 
-    await setDoc(ansRef, {
+  await setDoc(
+    ansRef,
+    {
       ...ansData,
       status: "done",
       progress: 100,
       notes: note
-    }, { merge: true });
+    },
+    { merge: true }
+  );
 
-    modal.remove();
-    toast("✨ تم قبول حل الطالب");
-    renderTeacherView();
-  };
+  // 🔔 إشعار للطالب (تم قبول الحل)
+  await createNotification({
+    studentId: sid,
+    title: "✅ تم تصحيح واجبك",
+    message: `تم قبول واجب: ${a.title}`,
+    icon: "🎉",
+    type: "review",
+    refId: a.id
+  });
 
-  // ⭐ 4) رفض الحل
-  $('#rejectAns').onclick = async () => {
-    const note = $('#teacherNote').value.trim() || "يرجى تحسين الإجابة";
+  modal.remove();
+  toast("✨ تم قبول حل الطالب");
+  renderTeacherView();
+};
 
-    await setDoc(ansRef, {
+
+ // ⭐ 4) رفض الحل
+$('#rejectAns').onclick = async () => {
+  const note = $('#teacherNote').value.trim() || "يرجى تحسين الإجابة";
+
+  await setDoc(
+    ansRef,
+    {
       ...ansData,
       status: "required",
       progress: 0,
       notes: note
-    }, { merge: true });
+    },
+    { merge: true }
+  );
 
-    modal.remove();
-    toast("❌ تم رفض الحل");
-    renderTeacherView();
-  };
+  // 🔔 إشعار للطالب (تم رفض الحل)
+  await createNotification({
+    studentId: sid,
+    title: "❌ تم رفض الحل",
+    message: `يرجى مراجعة واجب: ${a.title}`,
+    icon: "📝",
+    type: "review",
+    refId: a.id
+  });
+
+  modal.remove();
+  toast("❌ تم رفض الحل");
+  renderTeacherView();
+};
+
 }
 
 // ------------------------------------------------------
