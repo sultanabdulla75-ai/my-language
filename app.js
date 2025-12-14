@@ -1595,109 +1595,6 @@ function openReader(book) {
   $('#appShell').classList.add('hidden');
   $('#readerView').classList.remove('hidden');
 
-  // 🧹 تنظيف المساعد عند فتح قصة جديدة
-const aiBox = document.getElementById("noorAiAnswer");
-if (aiBox) {
-  aiBox.textContent = "";
-  aiBox.classList.add("hidden");
-}
-const aiInput = document.getElementById("noorAiInput");
-if (aiInput) aiInput.value = "";
-  
-  $('#storyTitle').textContent = book.title;
-  $('#storyLevel').textContent = 'المستوى ' + (book.level || '').replace('L', '');
-  $('#storyCover').src = book.cover;
-
-  const host = $('#storyContent');
-  host.innerHTML = '';
-
-  book.text.forEach(p => {
-  const para = document.createElement('p');
-
-  // 1️⃣ إنشاء محتوى الفقرة (كلمات)
-  para.innerHTML = p.split(' ').map(w => `<span>${w}</span>`).join(' ');
-
-  // 2️⃣ ⭐⭐⭐ هنا تضع para.onclick (شرح الفقرة)
-  para.onclick = () => {
-    // إزالة التحديد من بقية الفقرات
-    host.querySelectorAll('p').forEach(x =>
-      x.classList.remove('para-selected')
-    );
-
-    // تمييز الفقرة الحالية
-    para.classList.add('para-selected');
-
-    // حفظ نص الفقرة
-    selectedParagraph = para.textContent.trim();
-
-    // تمرير الفقرة للمساعد
-    const aiInput = document.getElementById("noorAiInput");
-    if (aiInput) aiInput.value = selectedParagraph;
-
-    // ضبط سياق شرح الفقرة
-    currentAIContext = `
-اشرح الفقرة التالية بأسلوب تربوي مبسط يناسب الطلاب:
-عنوان القصة: ${book.title}
-المستوى: ${book.level}
-النص:
-`;
-  };
-
-  // 3️⃣ إضافة الفقرة للواجهة
-  host.appendChild(para);
-});
-
-  host.querySelectorAll('span').forEach(sp => {
-    sp.onclick = () => {
-      sp.classList.toggle('highlighted');
-
-      // ✅ تسجيل تفاعل قراءة حقيقي
-      hasInteractedWithStory = true;
-
-      // ⭐ إضافة: تمرير الكلمة للمساعد تلقائيًا
-      const aiInput = document.getElementById("noorAiInput");
-      if (aiInput) {
-        aiInput.value = sp.textContent.trim();
-      }
-
-      // ⭐ إضافة: ضبط سياق معنى كلمة
-      currentAIContext = `
-اشرح معنى الكلمة التالية مع مثال من القصة:
-عنوان القصة: ${book.title}
-المستوى: ${book.level}
-`;
-    };
-  });
-
-   // ⭐ إضافة: ربط أزرار مساعد نور بعد فتح القصة
-  document.querySelectorAll("[data-ai]").forEach(btn => {
-    btn.onclick = () => {
-      const type = btn.dataset.ai;
-
-      if (type === "explain") {
-        currentAIContext = `
-اشرح الفقرة التالية بأسلوب تربوي مبسط:
-عنوان القصة: ${book.title}
-المستوى: ${book.level}
-`;
-      }
-
-      if (type === "word") {
-        currentAIContext = `
-اشرح معنى الكلمة التالية مع مثال من القصة:
-عنوان القصة: ${book.title}
-`;
-      }
-
-      if (type === "questions") {
-        currentAIContext = `
-كوّن أسئلة فهم مناسبة للطلاب من النص التالي:
-عنوان القصة: ${book.title}
-المستوى: ${book.level}
-`;
-      }
-    };
-  });
 
   // تهيئة عناصر التسجيل في القارئ
   $('#recordTime').textContent = '⏱️ 00:00';
@@ -2213,9 +2110,5 @@ $('#logoutBtn')?.addEventListener('click', confirmLogout);
 
 // تشغيل التطبيق مباشرة لو فيه مستخدم محفوظ
 startApp();
-});
-
-document.getElementById("askNoorAI")?.addEventListener("click", () => {
-  alert("✅ الزر يعمل");
 });
 
