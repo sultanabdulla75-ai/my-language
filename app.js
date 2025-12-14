@@ -2271,11 +2271,9 @@ if (!aiInput || !aiAnswer || !askBtn) {
     $('#modalQuiz').classList.remove('hidden');
   });
 
- document.addEventListener("DOMContentLoaded", () => {
-
-// ===================================================
-// تشغيل المنصة بعد تحميل عناصر الصفحة
-// ===================================================
+ // ============================================
+// تهيئة الأحداث بعد تحميل الصفحة
+// ============================================
 document.addEventListener("DOMContentLoaded", () => {
 
   /* ===============================
@@ -2287,18 +2285,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ===============================
-     زر "اسأل المساعد"
-  =============================== */
-  const askNoorBtn = document.getElementById("askNoorAI");
-  if (askNoorBtn) {
-    askNoorBtn.addEventListener("click", () => {
-      alert("✅ زر اسأل المساعد يعمل");
-    });
-  }
-
-  /* ===============================
-     تشغيل التطبيق تلقائيًا
+     تشغيل التطبيق إذا كان المستخدم محفوظًا
   =============================== */
   startApp();
 
 });
+
+/* ===============================
+   زر "اسأل المساعد" (اختبار)
+=============================== */
+const askNoorBtn = document.getElementById("askNoorAI");
+if (askNoorBtn) {
+  askNoorBtn.addEventListener("click", () => {
+    alert("✅ الزر يعمل");
+  });
+}
