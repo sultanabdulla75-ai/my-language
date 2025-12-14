@@ -2003,11 +2003,11 @@ function listenToNotifications() {
   const current = JSON.parse(localStorage.getItem("arp.current") || "null");
   if (!current || !current.email || !window.db) return;
 
-  const q = query(
-    collection(window.db, "notifications"),
-    where("studentId", "==", current.email),
-    orderBy("createdAt", "desc")
-  );
+const q = query(
+  collection(window.db, "notifications"),
+  where("studentId", "==", current.email)
+);
+
 
   onSnapshot(q, snap => {
     const list  = document.getElementById("notifyList");
