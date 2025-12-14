@@ -263,7 +263,7 @@ export async function syncBooks(classId) {
 // 🔹 حفظ حل الطالب في Firestore (answers + perStudent في assignment)
 async function saveAssignmentAnswerToFirestore(classId, assignId, studentId, answerData) {
   if (!window.db) return;
-
+try {
   const ansRef = doc(
     window.db,
     "classes", classId,
@@ -293,11 +293,10 @@ async function saveAssignmentAnswerToFirestore(classId, assignId, studentId, ans
 
   console.log("✔ تم حفظ إجابة الطالب في Firestore");
 
-} catch (e) {
-  console.error("❌ خطأ في حفظ الواجب في Firestore:", e);
-  toast("⚠ تم إنشاء الواجب محليًا فقط (تأكد من الاتصال بالإنترنت)");
-}
-  
+  } catch (e) {
+    console.error("❌ خطأ في حفظ الواجب في Firestore:", e);
+    toast("⚠ خطأ في حفظ الإجابة");
+  }
 }
 
 // 🔹 تحميل القصص من Firestore
