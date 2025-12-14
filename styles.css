@@ -426,3 +426,105 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
   to   { opacity: 1; transform: translateY(0); }
 }
 
+
+/* ================================
+   🔔 مركز الإشعارات
+================================ */
+
+/* الحاوية */
+.notify-wrap {
+  position: relative;
+  margin-inline-start: .5rem;
+}
+
+/* زر الجرس */
+.notify-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  position: relative;
+  line-height: 1;
+}
+
+/* عدّاد الإشعارات */
+.notify-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: #fff;
+  font-size: .65rem;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: bold;
+}
+
+/* لوحة الإشعارات */
+.notify-panel {
+  position: absolute;
+  top: 140%;
+  left: 0;
+  width: 280px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.15);
+  overflow: hidden;
+  z-index: 999;
+}
+
+/* رأس اللوحة */
+.notify-header {
+  padding: .6rem .8rem;
+  font-weight: bold;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* قائمة الإشعارات */
+.notify-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* عنصر إشعار واحد */
+.notify-item {
+  padding: .7rem .8rem;
+  font-size: .9rem;
+  border-bottom: 1px solid #f1f1f1;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.notify-item:hover {
+  background: #f9fafb;
+}
+
+.notify-item:last-child {
+  border-bottom: none;
+}
+
+/* لا توجد إشعارات */
+.notify-empty {
+  padding: 1rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: .85rem;
+}
+
+/* إخفاء */
+.hidden {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .notify-panel {
+    left: auto;
+    right: 0;
+    width: 90vw;
+  }
+}
