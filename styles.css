@@ -528,3 +528,15 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
     width: 90vw;
   }
 }
+
+/* إشعار غير مقروء */
+.notify-item.unread {
+  background: #f1f5ff;
+  font-weight: 700;
+}
+
+/* عنوان الإشعار غير المقروء */
+.notify-item.unread strong {
+  color: #1d4ed8;
+}
+
