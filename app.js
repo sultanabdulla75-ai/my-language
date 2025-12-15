@@ -1947,18 +1947,34 @@ const q = query(
       return;
     }
 
-    snap.forEach(doc => {
-      const n = doc.data();
-      if (!n.isRead) unread++;
-      
-const item = document.createElement("div");
-item.className = "notify-item" + (!n.isRead ? " unread" : "");
-      item.innerHTML = `
-        <div><strong>${n.icon || "🔔"} ${n.title}</strong></div>
-        <div>${n.message}</div>
-      `;
-      list.appendChild(item);
-    });
+   const NOTIFY_TTL = 12 * 60 * 60 * 1000; // 12 ساعة
+
+snap.forEach(docSnap => {
+  const n = docSnap.data();
+
+  // ⏳ تجاهل الإشعار المقروء القديم (أكثر من 12 ساعة)
+  if (
+    n.isRead &&
+    n.readAt &&
+    Date.now() - n.readAt > NOTIFY_TTL
+  ) {
+    return;
+  }
+
+  // 🔢 عدّ غير المقروء
+  if (!n.isRead) unread++;
+
+  const item = document.createElement("div");
+  item.className = "notify-item" + (!n.isRead ? " unread" : "");
+
+  item.innerHTML = `
+    <div><strong>${n.icon || "🔔"} ${n.title}</strong></div>
+    <div>${n.message}</div>
+  `;
+
+  list.appendChild(item);
+});
+
 
     count.textContent = unread;
     count.classList.toggle("hidden", unread === 0);
@@ -1979,7 +1995,8 @@ async function markNotificationsAsRead() {
 
   snap.forEach(docSnap => {
     updateDoc(doc(window.db, "notifications", docSnap.id), {
-      isRead: true
+      isRead: true,
+  readAt: Date.now()   // ⭐ مهم للخطوة القادمة
     });
   });
 }
@@ -2095,7 +2112,6 @@ setUnifiedAvatar(current.role);
 // بعد buildNav و updateRail
 listenToNotifications();
 }
-
 
 // ⭐⭐⭐ مهم: تعريف startApp على window ⭐⭐⭐
 window.startApp = startApp;
