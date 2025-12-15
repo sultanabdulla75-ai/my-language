@@ -1965,6 +1965,25 @@ const q = query(
   });
 }
 
+async function markNotificationsAsRead() {
+  const current = JSON.parse(localStorage.getItem("arp.current") || "null");
+  if (!current || !current.email || !window.db) return;
+
+  const q = query(
+    collection(window.db, "notifications"),
+    where("studentId", "==", current.email),
+    where("isRead", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  snap.forEach(docSnap => {
+    updateDoc(doc(window.db, "notifications", docSnap.id), {
+      isRead: true
+    });
+  });
+}
+
 
 function listenToReadingStats() {
   const current = readJSON(LS.CURRENT, null);
@@ -2234,10 +2253,18 @@ document.getElementById("openActivitiesBtn")?.addEventListener("click", () => {
 
 
 // 🔔 فتح / إغلاق لوحة الإشعارات
-document.getElementById("notifyBtn")?.addEventListener("click", (e) => {
+document.getElementById("notifyBtn")?.addEventListener("click", async (e) => {
   e.stopPropagation();
-  document.getElementById("notifyPanel")?.classList.toggle("hidden");
+
+  const panel = document.getElementById("notifyPanel");
+  panel?.classList.toggle("hidden");
+
+  // ✅ إذا فُتحت اللوحة → اعتبر الإشعارات مقروءة
+  if (!panel?.classList.contains("hidden")) {
+    markNotificationsAsRead();
+  }
 });
+
 
 // إغلاقها عند الضغط خارجها
 document.addEventListener("click", () => {
