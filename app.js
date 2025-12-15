@@ -1950,9 +1950,9 @@ const q = query(
     snap.forEach(doc => {
       const n = doc.data();
       if (!n.isRead) unread++;
-
-      const item = document.createElement("div");
-      item.className = "notify-item";
+      
+const item = document.createElement("div");
+item.className = "notify-item" + (!n.isRead ? " unread" : "");
       item.innerHTML = `
         <div><strong>${n.icon || "🔔"} ${n.title}</strong></div>
         <div>${n.message}</div>
