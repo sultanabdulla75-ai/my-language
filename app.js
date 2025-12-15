@@ -37,7 +37,7 @@ const LS = {
   ROLE: 'arp.role',
   CLASSES: 'arp.classes',
   ASSIGN: 'arp.assignments',
-  STATS: uid => `arp.stats.${uid}`
+// =====STATS: uid => `arp.stats.${uid}` =====
 };
 
 // ===== Data =====
@@ -475,40 +475,42 @@ function updateRail() {
   const current = readJSON(LS.CURRENT, null);
   if (!current) return;
 
-  // المعلم: نعرض أصفارًا (إحصاءات الطلاب في أماكن أخرى)
+  // ✅ المعلم فقط
   if (current.role === 'teacher') {
     renderTeacherDashboard();
 
     $('#railBooks').textContent = 0;
     $('#railTime').textContent = '0 د';
     $('#railBadges').textContent = 0;
-    const avgBox = $('#railAvg');
-    if (avgBox) avgBox.textContent = '0 د';
-    const lastBox = $('#railLastBook');
-    if (lastBox) lastBox.textContent = '—';
-    const actBox = $('#railActs');
-    if (actBox) actBox.textContent = 0;
-    return;
+    $('#railAvg').textContent = '0 د';
+    $('#railLastBook').textContent = '—';
+    $('#railActs').textContent = 0;
   }
-
-  // الطالب (محليًا الآن، ويمكن لاحقًا نقلها إلى Firestore بالكامل)
-  const key = LS.STATS(current.id);
-  const s = readJSON(key, { reads: 0, minutes: 0, lastBook: '—', activities: 0 });
-
-  $('#railBooks').textContent = s.reads;
-  $('#railTime').textContent = s.minutes + ' د';
-  $('#railBadges').textContent = Math.floor(s.reads / 5);
-
-  const avg = s.reads > 0 ? (s.minutes / s.reads).toFixed(1) : 0;
-  const avgBox = $('#railAvg');
-  if (avgBox) avgBox.textContent = avg + ' د';
-
-  const lastBox = $('#railLastBook');
-  if (lastBox) lastBox.textContent = s.lastBook;
-
-  const actBox = $('#railActs');
-  if (actBox) actBox.textContent = s.activities;
 }
+
+function updateRailFromStats(s) {
+  const booksBox = document.getElementById("railBooks");
+  if (booksBox) booksBox.textContent = s.reads || 0;
+
+  const timeBox = document.getElementById("railTime");
+  if (timeBox) timeBox.textContent = (s.minutes || 0) + " د";
+
+  const lastBox = document.getElementById("railLastBook");
+  if (lastBox) lastBox.textContent = s.lastBook || "—";
+
+  const actBox = document.getElementById("railActs");
+  if (actBox) actBox.textContent = s.activities || 0;
+
+  const avgBox = document.getElementById("railAvg");
+  if (avgBox) {
+    const avg = s.reads > 0
+      ? (s.minutes / s.reads).toFixed(1)
+      : 0;
+    avgBox.textContent = avg + " د";
+  }
+}
+
+
 
 function renderStaticNoorBadges(){
   const el = document.getElementById("railBadges");
@@ -536,15 +538,20 @@ function renderStaticNoorBadges(){
 }
 
 
-function addActivity() {
+async function addActivity() {
   const current = readJSON(LS.CURRENT, null);
-  if (!current) return;
-  const key = LS.STATS(current.id);
-  const s = readJSON(key, { reads: 0, minutes: 0, lastBook: '—', activities: 0 });
-  s.activities += 1;
-  writeJSON(key, s);
-  updateRail();
+  if (!current || !window.db) return;
+
+  const ref = doc(window.db, "readingStats", current.email);
+  const snap = await getDoc(ref);
+  const s = snap.exists() ? snap.data() : { activities: 0 };
+
+  await setDoc(ref, {
+    activities: (s.activities || 0) + 1,
+    updatedAt: Date.now()
+  }, { merge: true });
 }
+
 
 // ------------------------------------------------------
 // حساب متوسط إنجاز الفصل ومخطط الدائرة
@@ -557,78 +564,6 @@ function setClasses(x) { writeJSON(LS.CLASSES, x); }
 function getUsers() { return readJSON(LS.USERS, []); }
 function setUsers(x) { writeJSON(LS.USERS, x); }
 
-function computeAverageProgress() {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== 'teacher') return 0;
-
-  const c = getTeacherClass(current.id);
-  if (!c || !c.students || !c.students.length) return 0;
-
-  let totalRead = 0;
-  let totalQuiz = 0;
-  let totalAssign = 0;
-  let count = 0;
-
-  c.students.forEach(sid => {
-    const key = LS.STATS(sid);
-    const stats = readJSON(key, { reads: 0, minutes: 0, lastBook: '—', activities: 0 });
-
-    const readPercent = Math.min(100, Math.round((stats.reads / BOOKS.length) * 100));
-    const quizPercent = Math.min(100, Math.round((stats.activities / BOOKS.length) * 100));
-
-    let assignSum = 0, assignCount = 0;
-    getAssignments().forEach(a => {
-      const ps = a.perStudent?.[sid];
-      if (ps && ps.progress != null) {
-        assignSum += ps.progress;
-        assignCount++;
-      }
-    });
-
-    const assignPercent = assignCount ? Math.round(assignSum / assignCount) : 0;
-
-    totalRead += readPercent;
-    totalQuiz += quizPercent;
-    totalAssign += assignPercent;
-    count++;
-  });
-
-  if (count === 0) return 0;
-  return Math.round((totalRead + totalQuiz + totalAssign) / (count * 3));
-}
-
-let avgChart = null;
-
-function renderAvgProgressChart() {
-  const avg = computeAverageProgress();
-  const ctx = document.getElementById('chartAvgProgress');
-  if (!ctx) return;
-
-  if (avgChart) avgChart.destroy();
-
-  avgChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['الإنجاز', 'متبقّي'],
-      datasets: [{
-        data: [avg, 100 - avg],
-        borderWidth: 0,
-        hoverOffset: 6
-      }]
-    },
-    options: {
-      cutout: '60%',
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: c => `${c.label}: ${c.raw}%`
-          }
-        }
-      }
-    }
-  });
-}
 
 // ------------------------------------------------------
 // Auth (تسجيل وإنشاء حساب + تسجيل خروج) — محلي للتجربة
@@ -1634,42 +1569,42 @@ $('#rejectAns').onclick = async () => {
 // Reports
 // ------------------------------------------------------
 
-function updateReports() {
-  const current = readJSON(LS.CURRENT, null);
-
-  if (!current || current.role !== 'student') {
-    $('#repPercent').textContent = '0%';
-    $('#repReads').textContent = 0;
-    $('#repTime').textContent = '0 دقيقة';
-    const ctx = $('#chartReads');
-    if (ctx && window._cr) window._cr.destroy();
-    return;
-  }
-
-  const key = LS.STATS(current.id);
-  const s = readJSON(key, { reads: 0, minutes: 0 });
-
+function updateReportsFromStats(s) {
   const percent = Math.min(100, Math.floor((s.reads / BOOKS.length) * 100));
   $('#repPercent').textContent = percent + '%';
-  $('#repReads').textContent = s.reads;
-  $('#repTime').textContent = s.minutes + ' دقيقة';
+  $('#repReads').textContent = s.reads || 0;
+  $('#repTime').textContent = (s.minutes || 0) + ' دقيقة';
+}
 
-  const ctx = $('#chartReads'); if (!ctx) return;
+function updateReportsChart(s) {
+  const ctx = $('#chartReads');
+  if (!ctx) return;
+
   if (window._cr) window._cr.destroy();
+
   window._cr = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: BOOKS.map(b => b.title),
-      datasets: [{ label: 'القراءات', data: BOOKS.map((_, i) => i < s.reads ? 1 : 0) }]
+      datasets: [{
+        label: 'القراءات',
+        data: BOOKS.map((_, i) => i < (s.reads || 0) ? 1 : 0)
+      }]
     },
     options: {
       responsive: true,
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { precision: 0, maxTicksLimit: 4 } } }
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0, maxTicksLimit: 4 }
+        }
+      }
     }
   });
 }
 
+  
 // ------------------------------------------------------
 // Reader + تسجيل الصوت + تحديث الإحصاءات
 // ------------------------------------------------------
@@ -1783,50 +1718,30 @@ function playRecording() {
   new Audio(URL.createObjectURL(audioBlob)).play();
 }
 
-function updateReadStats(bookId, minutesSpent = 0) {
+async function updateReadStats(bookId, minutesSpent = 0) {
   const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== 'student') return;
+  if (!current || current.role !== 'student' || !window.db) return;
 
-  const key = LS.STATS(current.id);
-  const s = readJSON(key, { reads: 0, minutes: 0, lastBook: '—', activities: 0 });
+  const ref = doc(window.db, "readingStats", current.email);
+  const snap = await getDoc(ref);
 
-  // زيادة عدد القراءات
-  s.reads += 1;
+  const prev = snap.exists() ? snap.data() : {
+    reads: 0,
+    minutes: 0,
+    lastBook: '—',
+    activities: 0
+  };
 
-  // إضافة وقت القراءة
-  if (minutesSpent > 0) {
-    s.minutes += minutesSpent;
-  }
+  const bookTitle = BOOKS.find(b => b.id === bookId)?.title || prev.lastBook;
 
-  // تحديث آخر قصة
-  const bookTitle = BOOKS.find(b => b.id === bookId)?.title;
-  if (bookTitle) s.lastBook = bookTitle;
-
-  // حفظ محلي
-  writeJSON(key, s);
-
-  // تحديث الواجهة فورًا
-  updateRail();
-  updateReports();
-
-  // حفظ في Firestore
-  if (window.db && current.email) {
-    (async () => {
-      try {
-        const statsRef = doc(window.db, "readingStats", current.email);
-        await setDoc(statsRef, {
-          reads: s.reads,
-          minutes: s.minutes,
-          lastBook: s.lastBook,
-          activities: s.activities || 0,
-          updatedAt: Date.now()
-        }, { merge: true });
-      } catch (err) {
-        console.error("⚠ خطأ في حفظ إحصاءات القراءة في Firestore:", err);
-      }
-    })();
-  }
+  await setDoc(ref, {
+    reads: prev.reads + 1,
+    minutes: prev.minutes + minutesSpent,
+    lastBook: bookTitle,
+    updatedAt: Date.now()
+  }, { merge: true });
 }
+
 
 
 
@@ -2043,6 +1958,25 @@ const q = query(
 }
 
 
+function listenToReadingStats() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || current.role !== "student" || !window.db) return;
+
+  const ref = doc(window.db, "readingStats", current.email);
+
+  onSnapshot(ref, snap => {
+    if (!snap.exists()) return;
+
+    const s = snap.data();
+
+    // السكة اليمنى
+    updateRailFromStats(s);   // (أنت أنشأتها سابقًا)
+
+    // التقارير
+    updateReportsFromStats(s);
+    updateReportsChart(s);
+  });
+}
 
 
 // ------------------------------------------------------
@@ -2089,6 +2023,7 @@ setUnifiedAvatar(current.role);
 
     if (!classId) {
       classId = await findClassIdForStudent(current.email || current.id);
+
     }
 
     if (classId) {
@@ -2100,6 +2035,10 @@ setUnifiedAvatar(current.role);
     } else {
       console.warn("⚠️ لم يتم العثور على فصل مرتبط بهذا الطالب.");
     }
+
+    // ✅ هنا المكان الصحيح (خارج if)
+  listenToReadingStats();
+  
   }
 
   // 7 مكرر) مزامنة الواجبات للمعلم أيضًا من Firestore
@@ -2124,9 +2063,6 @@ setUnifiedAvatar(current.role);
   renderStudentAssignments('required');
   await renderTeacherStudents();
   await renderTeacherView();
-  updateReports();
-  updateRail();
-  renderStaticNoorBadges(); // ← أضفه هنا
 
 // بعد buildNav و updateRail
 listenToNotifications();
@@ -2287,9 +2223,7 @@ document.getElementById("notifyBtn")?.addEventListener("click", (e) => {
 document.addEventListener("click", () => {
   document.getElementById("notifyPanel")?.classList.add("hidden");
 });
-
-
-  
+ 
 
  // ============================================
 // زر الخروج
