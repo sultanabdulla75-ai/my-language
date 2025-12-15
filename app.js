@@ -1971,6 +1971,7 @@ function listenToReadingStats() {
 
     // السكة اليمنى
     updateRailFromStats(s);   // (أنت أنشأتها سابقًا)
+    renderStaticNoorBadges();   // ✅ أضف هذا السطر
 
     // التقارير
     updateReportsFromStats(s);
