@@ -2169,58 +2169,69 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#modalQuiz').classList.add('hidden');
   });
 
-  // زر إنهاء اختبار القصة
-  $('#submitQuiz')?.addEventListener('click', () => {
+// زر فتح الأنشطة للقصة الحالية
+document.getElementById("openActivitiesBtn")?.addEventListener("click", () => {
+  if (!currentBook || !currentBook.quiz || !currentBook.quiz.length) {
+    toast("لا توجد أنشطة لهذه القصة");
+    return;
+  }
 
-    if (!currentBook || !currentBook.quiz) {
-      toast("لا توجد أنشطة لهذه القصة");
-      return;
-    }
+  const box = $('#quizContent');
+  box.innerHTML = '';
 
-    let score = 0;
+  currentBook.quiz.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-block';
 
-    currentBook.quiz.forEach((q, i) => {
-      const selected = document.querySelector(`input[name="q${i}"]:checked`);
-      if (selected && Number(selected.value) === q.correct) {
-        score++;
+    const optsHtml = q.options.map((opt, idx) => `
+      <label style="display:block;margin:.2rem 0">
+        <input type="radio" name="q${i}" value="${idx}">
+        ${opt}
+      </label>
+    `).join('');
+
+    div.innerHTML = `
+      <p><b>${i + 1}.</b> ${q.q}</p>
+      ${optsHtml}
+    `;
+
+    box.appendChild(div);
+  });
+
+  // إظهار نافذة الاختبار
+  $('#modalQuiz').classList.remove('hidden');
+
+  // ✅ ربط زر الإنهاء بعد ظهور المودال
+  setTimeout(() => {
+    const btn = document.getElementById("submitQuiz");
+    if (!btn) return;
+
+    btn.onclick = () => {
+      if (!currentBook || !currentBook.quiz) {
+        toast("لا توجد أنشطة لهذه القصة");
+        return;
       }
-    });
 
-    addActivity();
-    renderAvgProgressChart();
+      let score = 0;
 
-    $('#modalQuiz').classList.add('hidden');
-    toast("✓ تم إنهاء النشاط. نتيجتك: " + score + "/" + currentBook.quiz.length);
-  });
+      currentBook.quiz.forEach((q, i) => {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if (selected && Number(selected.value) === q.correct) {
+          score++;
+        }
+      });
 
-  // زر فتح الأنشطة للقصة الحالية
-  document.getElementById("openActivitiesBtn")?.addEventListener("click", () => {
-    if (!currentBook || !currentBook.quiz || !currentBook.quiz.length) {
-      toast("لا توجد أنشطة لهذه القصة");
-      return;
-    }
+      // تسجيل النشاط
+      addActivity();
 
-    const box = $('#quizContent');
-    box.innerHTML = '';
+      // إغلاق النافذة
+      document.getElementById("modalQuiz").classList.add('hidden');
 
-    currentBook.quiz.forEach((q, i) => {
-      const div = document.createElement('div');
-      div.className = 'quiz-block';
-      const optsHtml = q.options.map((opt, idx) => `
-        <label style="display:block;margin:.2rem 0">
-          <input type="radio" name="q${i}" value="${idx}">
-          ${opt}
-        </label>
-      `).join('');
-      div.innerHTML = `
-        <p><b>${i + 1}.</b> ${q.q}</p>
-        ${optsHtml}
-      `;
-      box.appendChild(div);
-    });
+      toast(`✓ تم إنهاء النشاط. نتيجتك: ${score}/${currentBook.quiz.length}`);
+    };
+  }, 0);
+});
 
-    $('#modalQuiz').classList.remove('hidden');
-  });
 
 // 🔔 فتح / إغلاق لوحة الإشعارات
 document.getElementById("notifyBtn")?.addEventListener("click", (e) => {
