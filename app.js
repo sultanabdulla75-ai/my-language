@@ -1734,6 +1734,16 @@ async function updateReadStats(bookId, minutesSpent = 0) {
 
   const bookTitle = BOOKS.find(b => b.id === bookId)?.title || prev.lastBook;
 
+    // 🔴 🔴 🔴 أضِف الشرط هنا بالضبط
+  if (
+    prev.lastBook === bookTitle &&
+    prev.updatedAt &&
+    Date.now() - prev.updatedAt < 5 * 60 * 1000
+  ) {
+    console.log("⏭️ تجاهل قراءة مكررة خلال 5 دقائق");
+    return;
+  }
+
   await setDoc(ref, {
     reads: prev.reads + 1,
     minutes: prev.minutes + minutesSpent,
@@ -1741,8 +1751,6 @@ async function updateReadStats(bookId, minutesSpent = 0) {
     updatedAt: Date.now()
   }, { merge: true });
 }
-
-
 
 
 // حفظ قصة جديدة — Firestore + تحديث المكتبة
