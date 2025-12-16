@@ -689,7 +689,7 @@ async function renderBooks(level = 'ALL') {
     return;
   }
 
-  const books = await loadBooksFromFirestore(classId);
+const books = BOOKS;
   const q = $('#searchBooks')?.value.trim() || '';
 
   const filtered = books.filter(b =>
@@ -2062,6 +2062,12 @@ setUnifiedAvatar(current.role);
   $('#appShell').classList.remove('hidden');
   $('#readerView').classList.add('hidden');
 
+  buildNav(current.role);
+  renderLevels();
+  renderBooks('ALL');
+  renderStudentAssignments('required');
+  
+
   // 7) تحميل بيانات الواجبات من Firestore (للطلاب فقط)
   if (current.role === 'student') {
     let classId = current.classId || null;
@@ -2074,9 +2080,9 @@ setUnifiedAvatar(current.role);
     if (classId) {
       writeJSON(LS.CURRENT, { ...current, classId });
 
-      await syncAssignmentsFromFirestore(classId);
-      await loadStudentAnswersFromFirestore(classId, current.id);
-      await syncBooksWithFirestore(classId);
+       syncAssignmentsFromFirestore(classId);
+       loadStudentAnswersFromFirestore(classId, current.id);
+       syncBooksWithFirestore(classId);
     } else {
       console.warn("⚠️ لم يتم العثور على فصل مرتبط بهذا الطالب.");
     }
@@ -2102,10 +2108,7 @@ setUnifiedAvatar(current.role);
   }
 
   // 8) بناء أجزاء الصفحة
-  buildNav(current.role);
-  renderLevels();
-  renderBooks('ALL');
-  renderStudentAssignments('required');
+
   await renderTeacherStudents();
   await renderTeacherView();
 
