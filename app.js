@@ -2127,13 +2127,13 @@ if (current.role === 'teacher') {
 
     renderBooks('ALL');
   }
-}
-
-// 9) إشعارات (للجميع)
+  // 9) إشعارات (للجميع)
 listenToNotifications();
 
+}
 
-// ⭐⭐⭐ مهم: تعريف startApp على window ⭐⭐⭐
+
+  // ⭐⭐⭐ مهم: تعريف startApp على window ⭐⭐⭐
 window.startApp = startApp;
 
 // =============================
