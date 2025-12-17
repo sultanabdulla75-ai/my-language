@@ -1,12 +1,11 @@
-// ------------------------------------------------------
 // منصة لغتي - ملف app.js
 // ------------------------------------------------------
 
 // ===== متغير عام للقصة الحالية في القارئ =====
 let currentBook = null;
+
 // وقت بدء القراءة الحالي (بالمللي ثانية)
 let readingStartAt = null;
-
 let readingStartTime = null;
 let hasInteractedWithStory = false;
 
@@ -25,7 +24,6 @@ import {
   where,
   orderBy,
   onSnapshot
-
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
 // ملاحظة: سنستخدم window.db الذي تم ضبطه في index.html
@@ -37,7 +35,7 @@ const LS = {
   ROLE: 'arp.role',
   CLASSES: 'arp.classes',
   ASSIGN: 'arp.assignments',
-// =====STATS: uid => `arp.stats.${uid}` =====
+  // =====STATS: uid => arp.stats.${uid} =====
 };
 
 // ===== Data =====
@@ -112,6 +110,8 @@ const BOOKS = [
   }
 ];
 
+
+
 // ===== Utils =====
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -124,7 +124,6 @@ const readJSON = (k, def) => {
     return JSON.parse(raw);
   } catch (e) {
     console.warn('readJSON error for', k, e);
-    // إذا كانت القيمة تالفة نمسحها حتى لا تكرّر الخطأ
     localStorage.removeItem(k);
     return def;
   }
@@ -146,8 +145,6 @@ function setUnifiedAvatar(role){
     ? "./img/avatar-teacher-omani.png"
     : "./img/avatar-student-omani.png";
 }
-
-
 
 // ============================================
 // 🔔 إنشاء إشعار
@@ -181,8 +178,9 @@ async function createNotification({
   }
 }
 
-
-function toast(msg) { alert(msg); }
+function toast(msg) {
+  alert(msg);
+}
 
 // ------------------------------------------------------
 // Firestore Helpers (كتب + واجبات + طلاب)
@@ -191,7 +189,9 @@ function toast(msg) { alert(msg); }
 // 📌 تحميل الطلاب من Firestore للصف الخاص بالمعلم
 export async function getTeacherStudents(classId) {
   const students = [];
-  const stuSnap = await getDocs(collection(window.db, "classes", classId, "students"));
+  const stuSnap = await getDocs(
+    collection(window.db, "classes", classId, "students")
+  );
 
   stuSnap.forEach(docSnap => {
     const d = docSnap.data();
@@ -234,7 +234,6 @@ export async function syncBooks(classId) {
   const cloudBooks = [];
   snap.forEach(d => cloudBooks.push(d.data()));
 
-  // الطالب: تحميل فقط
   if (current.role === "student") {
     BOOKS.length = 0;
     cloudBooks.forEach(b => BOOKS.push(b));
@@ -242,7 +241,6 @@ export async function syncBooks(classId) {
     return;
   }
 
-  // المعلم: مزامنة (إن احتجت لها)
   cloudBooks.forEach(b => {
     if (!BOOKS.some(x => x.id === b.id)) {
       BOOKS.push(b);
@@ -252,7 +250,10 @@ export async function syncBooks(classId) {
   for (const b of BOOKS) {
     const exists = cloudBooks.some(x => x.id === b.id);
     if (!exists) {
-      await setDoc(doc(window.db, "classes", classId, "books", b.id), b);
+      await setDoc(
+        doc(window.db, "classes", classId, "books", b.id),
+        b
+      );
       console.log("⬆️ رفع قصة جديدة:", b.title);
     }
   }
@@ -260,150 +261,23 @@ export async function syncBooks(classId) {
   console.log("🔄 تمت المزامنة بنجاح");
 }
 
-// 🔹 حفظ حل الطالب في Firestore (answers + perStudent في assignment)
-async function saveAssignmentAnswerToFirestore(classId, assignId, studentId, answerData) {
-  if (!window.db) return;
-try {
-  const ansRef = doc(
-    window.db,
-    "classes", classId,
-    "assignments", assignId,
-    "answers", studentId
-  );
-
-  await setDoc(ansRef, answerData, { merge: true });
-
-  // تحديث الحقل في وثيقة الواجب نفسها (perStudent)
-  const assignRef = doc(window.db, "classes", classId, "assignments", assignId);
-  const snap = await getDoc(assignRef);
-
-  if (!snap.exists()) {
-    console.error("❌ الواجب غير موجود!");
-    return;
-  }
-
-  const data = snap.data();
-  data.perStudent = data.perStudent || {};
-  data.perStudent[studentId] = {
-    ...(data.perStudent[studentId] || {}),
-    ...answerData
-  };
-
-  await setDoc(assignRef, data, { merge: true });
-
-  console.log("✔ تم حفظ إجابة الطالب في Firestore");
-
-  } catch (e) {
-    console.error("❌ خطأ في حفظ الواجب في Firestore:", e);
-    toast("⚠ خطأ في حفظ الإجابة");
-  }
-}
-
-// 🔹 تحميل القصص من Firestore
-async function loadBooksFromFirestore(classId) {
-  if (!window.db) {
-    console.warn("⚠ لا يوجد window.db، سيتم استخدام القصص المحلية.");
-    return BOOKS;
-  }
-
-  const snap = await getDocs(collection(window.db, "classes", classId, "books"));
-  const arr = [];
-  snap.forEach(d => arr.push(d.data()));
-
-  if (arr.length === 0) {
-    console.warn("⚠ لا توجد قصص في السحابة. سيتم استخدام القصص المحلية.");
-    return BOOKS;
-  }
-
-  return arr;
-}
-
-// 🔹 استبدال محتوى BOOKS بقصص السحابة عند الحاجة
-async function syncBooksWithFirestore(classId) {
-  const books = await loadBooksFromFirestore(classId);
-  if (books && books.length > 0) {
-    BOOKS.length = 0;
-    books.forEach(b => BOOKS.push(b));
-  }
-}
-
-// 🔹 تحميل إجابات الطالب من Firestore ودمجها في الواجبات المحلية
-export async function loadStudentAnswersFromFirestore(classId, studentId) {
-  if (!window.db) return;
-
-  const snap = await getDocs(
-    collection(window.db, "classes", classId, "assignments")
-  );
-
-  const localAssignments = getAssignments();
-
-  for (const docA of snap.docs) {
-    const assignId = docA.id;
-
-    const ansRef = doc(
-      window.db,
-      "classes", classId,
-      "assignments", assignId,
-      "answers", studentId
-    );
-
-    const ansSnap = await getDoc(ansRef);
-
-    if (ansSnap.exists()) {
-      const data = ansSnap.data();
-      let idx = localAssignments.findIndex(x => x.id === assignId);
-      if (idx !== -1) {
-        localAssignments[idx].perStudent = localAssignments[idx].perStudent || {};
-        localAssignments[idx].perStudent[studentId] = {
-          ...localAssignments[idx].perStudent[studentId],
-          ...data
-        };
-      }
-    }
-  }
-
-  setAssignments(localAssignments);
-}
-
-// ===============================
-//  🔥 مزامنة الواجبات من Firestore إلى الذاكرة المحلية
-// ===============================
-export async function syncAssignmentsFromFirestore(classId) {
-  if (!window.db) return;
-
-  const snap = await getDocs(
-    collection(window.db, "classes", classId, "assignments")
-  );
-
-  const list = [];
-
-  snap.forEach(docA => {
-    const data = docA.data();
-    list.push({
-      id: docA.id,
-      title: data.title || "",
-      desc: data.desc || "",
-      level: data.level || "",
-      due: data.due || "",
-      teacherId: data.teacherId || "",
-      classId: classId,
-      studentIds: data.studentIds || [],
-      perStudent: data.perStudent || {}
-    });
-  });
-
-  setAssignments(list);
-  console.log("✔ تمت مزامنة الواجبات من Firestore");
-}
-
-// 🔹 إيجاد classId للطالب من Firestore (للاحتياط إذا لم يُحفظ في الجلسة)
+// 🔹 إيجاد classId للطالب من Firestore
 async function findClassIdForStudent(studentEmail) {
   if (!window.db || !studentEmail) return null;
 
   try {
-    const classesSnap = await getDocs(collection(window.db, "classes"));
+    const classesSnap = await getDocs(
+      collection(window.db, "classes")
+    );
+
     for (const c of classesSnap.docs) {
-      const stuRef = doc(window.db, "classes", c.id, "students", studentEmail);
+      const stuRef = doc(
+        window.db,
+        "classes",
+        c.id,
+        "students",
+        studentEmail
+      );
       const stuSnap = await getDoc(stuRef);
       if (stuSnap.exists()) {
         return c.id;
@@ -416,10 +290,10 @@ async function findClassIdForStudent(studentEmail) {
   return null;
 }
 
+
 // ------------------------------------------------------
 // التنقل والتبويبات + لوحة الجانب الأيمن
 // ------------------------------------------------------
-
 function showOnly(selector) {
   $$('.view').forEach(v => v.classList.add('hidden'));
   $('#readerView')?.classList.add('hidden');
@@ -459,7 +333,7 @@ function buildNav(role) {
         ['#tab-reports', 'تقاريري']
       ];
 
-  items.forEach(([target, label, i]) => {
+  items.forEach(([target, label], i) => {
     const b = document.createElement('button');
     b.className = 'pill' + (i === 0 ? ' active' : '');
     b.dataset.target = target;
@@ -471,189 +345,14 @@ function buildNav(role) {
   showOnly(items[0][0]);
 }
 
-function updateRail() {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current) return;
-
-  // ✅ المعلم فقط
-  if (current.role === 'teacher') {
-    renderTeacherDashboard();
-
-    $('#railBooks').textContent = 0;
-    $('#railTime').textContent = '0 د';
-    $('#railBadges').textContent = 0;
-    $('#railAvg').textContent = '0 د';
-    $('#railLastBook').textContent = '—';
-    $('#railActs').textContent = 0;
-  }
-}
-
-function updateRailFromStats(s) {
-  const booksBox = document.getElementById("railBooks");
-  if (booksBox) booksBox.textContent = s.reads || 0;
-
-  const timeBox = document.getElementById("railTime");
-  if (timeBox) timeBox.textContent = (s.minutes || 0) + " د";
-
-  const lastBox = document.getElementById("railLastBook");
-  if (lastBox) lastBox.textContent = s.lastBook || "—";
-
-  const actBox = document.getElementById("railActs");
-  if (actBox) actBox.textContent = s.activities || 0;
-
-  const avgBox = document.getElementById("railAvg");
-  if (avgBox) {
-    const avg = s.reads > 0
-      ? (s.minutes / s.reads).toFixed(1)
-      : 0;
-    avgBox.textContent = avg + " د";
-  }
-}
-
-
-
-function renderStaticNoorBadges(){
-  const el = document.getElementById("railBadges");
-  if (!el) return;
-
-  const raw = el.textContent.trim();
-  const count = parseInt(raw, 10) || 0;
-
-  el.innerHTML = `
-    <div class="noor-badge gold" title="إنجاز عالٍ">
-      <span class="icon">🏅</span>
-      <small>${Math.floor(count / 4)}</small>
-    </div>
-
-    <div class="noor-badge silver" title="إنجاز متوسط">
-      <span class="icon">🏅</span>
-      <small>${Math.floor(count / 2)}</small>
-    </div>
-
-    <div class="noor-badge bronze" title="بداية مميزة">
-      <span class="icon">🏅</span>
-      <small>${count}</small>
-    </div>
-  `;
-}
-
-
-async function addActivity() {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current || !window.db) return;
-
-  const ref = doc(window.db, "readingStats", current.email);
-  const snap = await getDoc(ref);
-  const s = snap.exists() ? snap.data() : { activities: 0 };
-
-  await setDoc(ref, {
-    activities: (s.activities || 0) + 1,
-    updatedAt: Date.now()
-  }, { merge: true });
-}
-
-
-// ------------------------------------------------------
-// حساب متوسط إنجاز الفصل ومخطط الدائرة
-// ------------------------------------------------------
-
-function getAssignments() { return readJSON(LS.ASSIGN, []); }
-function setAssignments(x) { writeJSON(LS.ASSIGN, x); }
-function getClasses() { return readJSON(LS.CLASSES, []); }
-function setClasses(x) { writeJSON(LS.CLASSES, x); }
-function getUsers() { return readJSON(LS.USERS, []); }
-function setUsers(x) { writeJSON(LS.USERS, x); }
-
-
-// ------------------------------------------------------
-// Auth (تسجيل وإنشاء حساب + تسجيل خروج) — محلي للتجربة
-// ------------------------------------------------------
-
-function registerUser(e) {
-  e.preventDefault();
-  const name = $('#regName').value.trim();
-  const email = $('#regEmail').value.trim().toLowerCase();
-  const pass = $('#regPass').value;
-  const role = $('#regRole').value;
-  const users = readJSON(LS.USERS, []);
-  if (users.some(u => u.email === email)) { $('#regMsg').textContent = 'البريد مستخدم بالفعل.'; return; }
-  const id = uid('U');
-  users.push({ id, name, email, pass, role, created: Date.now() });
-  writeJSON(LS.USERS, users);
-  if (role === 'teacher') {
-    const classes = readJSON(LS.CLASSES, []);
-    classes.push({ id: uid('C'), teacherId: id, name: 'فصلي', students: [] });
-    writeJSON(LS.CLASSES, classes);
-  }
-  $('#regMsg').style.color = '#16a34a';
-  $('#regMsg').textContent = 'تم إنشاء الحساب! يمكنك تسجيل الدخول الآن.';
-  $$('[data-auth]').forEach(p => p.classList.remove('active'));
-  $$('[data-auth]')[0].classList.add('active');
-  $('#regForm').classList.add('hidden');
-  $('#loginForm').classList.remove('hidden');
-}
-
-function loginUser(e) {
-  e.preventDefault();
-  const email = $('#loginEmail').value.trim().toLowerCase();
-  const pass = $('#loginPass').value;
-  const users = readJSON(LS.USERS, []);
-  const user = users.find(u => u.email === email && u.pass === pass);
-  if (!user) { $('#loginMsg').textContent = 'بيانات الدخول غير صحيحة.'; return; }
-  writeJSON(LS.CURRENT, { id: user.id, name: user.name, email: user.email, role: user.role });
-
-  // ⭐⭐ إضافة الطالب إلى فصل المعلم تلقائيًا (محلي للتجربة فقط) ⭐⭐
-  const classes = readJSON(LS.CLASSES, []);
-  let classObj = classes[0]; // نفترض معلم واحد = فصل واحد
-  if (classObj && !classObj.students.includes(user.id)) {
-    classObj.students.push(user.id);
-    writeJSON(LS.CLASSES, classes);
-  }
-  startApp();
-}
-
-function logoutUser() {
-  localStorage.removeItem(LS.CURRENT);
-  $('#authView').classList.remove('hidden');
-  $('#appShell').classList.add('hidden');
-  $('#readerView').classList.add('hidden');
-
-  $('#loginMsg').textContent = '';
-  $('#regMsg').textContent = '';
-  $('#loginForm').reset();
-  $('#regForm').reset();
-  $('#navLinks').innerHTML = '';
-}
-
-function confirmLogout() {
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-  modal.innerHTML = `
-    <div class="modal-card" style="max-width:400px;text-align:center">
-      <h3>🚪 هل تريد تسجيل الخروج؟</h3>
-      <p style="margin:10px 0;color:#555">يمكنك العودة لاحقًا بتسجيل الدخول من جديد.</p>
-      <div style="display:flex;justify-content:center;gap:.5rem;margin-top:1rem">
-        <button id="confirmLogoutBtn" class="btn danger small">نعم، أريد الخروج</button>
-        <button id="cancelLogoutBtn" class="btn ghost small">إلغاء</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  document.getElementById('cancelLogoutBtn').onclick = () => modal.remove();
-  document.getElementById('confirmLogoutBtn').onclick = () => {
-    modal.remove();
-    logoutUser();
-  };
-}
-
 // ------------------------------------------------------
 // Student: المستويات + المكتبة + الواجبات
 // ------------------------------------------------------
-
 function renderLevels() {
-  const w = $('#levelsGrid'); if (!w) return;
+  const w = $('#levelsGrid');
+  if (!w) return;
   w.innerHTML = '';
+
   LEVELS.forEach(L => {
     const d = document.createElement('div');
     d.className = 'level-card';
@@ -672,33 +371,23 @@ async function renderBooks(level = 'ALL') {
   if (!g) return;
 
   g.innerHTML = '<div style="padding:10px">⏳ جاري تحميل القصص...</div>';
-
   const current = readJSON(LS.CURRENT, null);
   if (!current) return;
 
-  let classId = null;
-  if (current.role === 'teacher') {
-    const c = getTeacherClass(current.id);
-    classId = c ? c.id : current.classId;
-  } else {
-    classId = current.classId || null;
-  }
-
+  let classId = current.classId || null;
   if (!classId) {
     g.innerHTML = "<p>🚫 لا يوجد فصل مرتبط بك</p>";
     return;
   }
 
-const books = BOOKS;
+  const books = BOOKS;
   const q = $('#searchBooks')?.value.trim() || '';
-
   const filtered = books.filter(b =>
     (level === 'ALL' || b.level === level) &&
     (!q || b.title.includes(q))
   );
 
   g.innerHTML = '';
-
   if (!filtered.length) {
     g.innerHTML = "<p>لا توجد قصص مطابقة.</p>";
     return;
@@ -712,239 +401,20 @@ const books = BOOKS;
       <h4>${b.title}</h4>
       <div class="badge ok">مستوى ${b.level}</div>
     `;
-
-    // ✅ التصحيح الحاسم هنا
     c.onclick = () => window.openReader(b);
-
     g.appendChild(c);
   });
 }
 
-
-function getStudentAssignments(uid) {
-  return getAssignments().filter(a => a.studentIds.includes(uid));
-}
-
-function renderStudentAssignments(filter = 'required') {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current) return;
-
-  const host = $('#assignList');
-  if (!host) return;
-  host.innerHTML = '';
-
-  const arr = getStudentAssignments(current.id);
-
-  let list = arr.map(a => {
-    const ps = a.perStudent?.[current.id] || { status: 'required', progress: 0, notes: '-', answer: '', file: '' };
-
-    let statusLabel, statusClass, filterTag;
-
-    if (ps.status === 'done') {
-      statusLabel = 'تم الحل ✅';
-      statusClass = 'ok';
-      filterTag = 'done';
-    } else if (ps.status === 'overdue') {
-      statusLabel = 'متأخر ⏰';
-      statusClass = 'err';
-      filterTag = 'overdue';
-    } else if (ps.status === 'submitted') {
-      statusLabel = 'الإجابة قيد المراجعة ⏳';
-      statusClass = 'warn';
-      filterTag = 'required';
-    } else {
-      statusLabel = 'مطلوب 📘';
-      statusClass = 'warn';
-      filterTag = 'required';
-    }
-
-    return {
-      ...a,
-      ps,
-      statusLabel,
-      statusClass,
-      progress: ps.progress || 0,
-      filter: filterTag,
-      answer: ps.answer || '',
-      file: ps.file || '',
-      notes: ps.notes || ''
-    };
-  }).filter(x => x.filter === filter);
-
-  if (!list.length) {
-    host.innerHTML = `<div class="assign-card">لا توجد واجبات في هذه الفئة.</div>`;
-    return;
-  }
-
-  list.forEach(a => {
-    const el = document.createElement('div');
-    el.className = 'assign-card';
-
-    let buttons = '';
-    if (a.ps.status === 'done') {
-      buttons = `<button class="btn small primary" data-view="${a.id}">عرض الحل ✅</button>`;
-    } else if (a.ps.status === 'submitted') {
-      buttons = `<div class="badge warn">📌 الإجابة قيد المراجعة</div>`;
-    } else {
-      buttons = `
-        <button class="btn small" data-open="${a.id}">فتح</button>
-        <button class="btn ghost small" data-submit="${a.id}">إرسال الحل</button>
-      `;
-    }
-
-    el.innerHTML = `
-      <h4>${a.title}</h4>
-      <div class="meta">
-        <span>${LEVELS.find(l => l.id === a.level)?.name || '—'}</span>
-        <span>${a.due || '-'}</span>
-      </div>
-      <p class="muted" style="margin:.3rem 0">${a.desc || ''}</p>
-      <div class="meta"><span class="badge ${a.statusClass}">${a.statusLabel}</span></div>
-      <div class="progress" aria-label="progress"><i style="width:${a.progress || 0}%"></i></div>
-      <div class="row" style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
-        ${buttons}
-      </div>
-    `;
-
-    // فتح القصة حسب مستوى الواجب
-    el.querySelector('[data-open]')?.addEventListener('click', () => {
-      const levelId = a.level.startsWith('L') ? a.level : LEVELS.find(l => a.level.includes(l.name))?.id || 'L1';
-      const book = BOOKS.find(b => b.level === levelId);
-      if (book) openReader(book);
-      else toast('🚫 لا توجد قصة متاحة لهذا المستوى حالياً');
-    });
-
-    // نافذة إرسال الحل
-    el.querySelector('[data-submit]')?.addEventListener('click', () => {
-      if (a.ps.status === 'submitted' || a.ps.status === 'done') {
-        toast('📌 لا يمكنك تعديل الإجابة بعد إرسالها.');
-        return;
-      }
-
-      const modal = document.createElement('div');
-      modal.className = 'modal';
-     modal.innerHTML = `
-  <div class="modal-card">
-    <button class="modal-close" id="closeAns">✖</button>
-    <h3 id="taskTitle"></h3>
-
-    ${
-      a.notes && a.notes.trim() !== ''
-        ? `
-        <div class="teacher-note">
-          <strong>📝 ملحوظات المعلم:</strong>
-          <p>${a.notes}</p>
-        </div>
-        `
-        : ''
-    }
-
-    <div class="form-row">
-      <label>إجابتك</label>
-      <textarea id="ansText" rows="4"
-        style="width:100%;border:1px solid #ddd;border-radius:8px;padding:.6rem;">
-        ${a.answer || ''}
-      </textarea>
-    </div>
-
-    <div class="form-row">
-      <label>أرفق ملفًا (اختياري)</label>
-      <input type="file" id="ansFile" />
-    </div>
-
-    <button id="sendAnsBtn" class="btn primary small full">إرسال الحل</button>
-  </div>
-`;
-
-      document.body.appendChild(modal);
-
-      document.getElementById("taskTitle").textContent = "إرسال حل الواجب: " + a.title;
-
-      $('#closeAns').onclick = () => modal.remove();
-
-      $('#sendAnsBtn').onclick = async () => {
-        const ok = confirm('هل أنت متأكد من إرسال الحل؟ لن تتمكن من تعديله حتى يراجعه المعلم.');
-        if (!ok) return;
-
-        const text = $('#ansText').value.trim();
-        const fileInput = $('#ansFile');
-        const file = fileInput.files[0]?.name || '';
-
-        const all = getAssignments();
-        const idx = all.findIndex(x => x.id === a.id);
-
-        if (idx > -1) {
-          all[idx].perStudent = all[idx].perStudent || {};
-          all[idx].perStudent[current.id] = {
-            ...a.ps,
-            answer: text,
-            file,
-            status: 'submitted',
-            progress: 50
-          };
-
-          setAssignments(all);
-
-          await saveAssignmentAnswerToFirestore(a.classId, a.id, current.email, {
-            answer: text,
-            file: file,
-            status: "submitted",
-            progress: 50
-          });
-
-          modal.remove();
-          toast('✅ تم إرسال الحل، والإجابة الآن قيد المراجعة');
-          renderStudentAssignments(filter);
-          renderTeacherView();
-        }
-      };
-    });
-
-    // نافذة عرض الحل
-    el.querySelector('[data-view]')?.addEventListener('click', () => {
-      const modal = document.createElement('div');
-      modal.className = 'modal';
-      modal.innerHTML = `
-        <div class="modal-card" style="max-width:600px">
-          <button class="modal-close" id="closeView">✖</button>
-          <h3>عرض الحل والملاحظات</h3>
-          <p><b>عنوان الواجب:</b> ${a.title}</p>
-          <p><b>إجابتك:</b></p>
-          <div style="background:#f8fafc;padding:.7rem;border-radius:10px">
-            ${a.answer || '— لا توجد إجابة نصية —'}
-          </div>
-          ${a.file ? `<p><b>الملف المرفق:</b> ${a.file}</p>` : ''}
-          ${a.correctAnswer ? `
-            <p><b>الإجابة الصحيحة:</b></p>
-            <div style="background:#eef8ee;padding:.7rem;border-radius:10px">${a.correctAnswer}</div>` : ''}
-          ${a.notes && a.notes !== '-' ? `
-            <p><b>ملاحظة المعلم:</b></p>
-            <div style="background:#fff7e6;padding:.7rem;border-radius:10px">${a.notes}</div>` : ''}
-          <div style="text-align:center;margin-top:1rem">
-            <button class="btn primary" id="closeViewBtn">إغلاق</button>
-          </div>
-        </div>`;
-      document.body.appendChild(modal);
-      $('#closeView').onclick = () => modal.remove();
-      $('#closeViewBtn').onclick = () => modal.remove();
-    });
-
-    host.appendChild(el);
-  });
-}
-
 // ------------------------------------------------------
-// Teacher: إدارة الطلاب والواجبات
+// Teacher: إدارة الطلاب
 // ------------------------------------------------------
-
-// ✅ تعديل مهم: نربط الفصل دائمًا بـ classId القادم من Google/Firestore
 function getTeacherClass(teacherId) {
   const current = readJSON(LS.CURRENT, null);
   const classes = getClasses();
   let c = null;
 
   if (current && current.classId) {
-    // نبحث في المحلي عن هذا الـ id، وإن لم يوجد ننشئه بنفس id
     c = classes.find(x => x.id === current.classId);
     if (!c) {
       c = { id: current.classId, teacherId, name: 'فصلي', students: [] };
@@ -959,10 +429,10 @@ function getTeacherClass(teacherId) {
       setClasses(classes);
     }
   }
+
   return c;
 }
 
-// ✅ إعادة كتابة إدارة الطلاب لتعمل بالكامل من Firestore
 async function renderTeacherStudents() {
   const current = readJSON(LS.CURRENT, null);
   if (!current || current.role !== 'teacher') return;
@@ -971,38 +441,20 @@ async function renderTeacherStudents() {
   if (!rows) return;
 
   rows.innerHTML = '⏳ جاري تحميل الطلاب...';
-
   const classId = current.classId;
-  if (!classId) {
-    rows.innerHTML = `
-      <div class="row">
-        <div>لا يوجد صف مرتبط بهذا المعلم.</div>
-        <div>—</div>
-        <div>—</div>
-        <div>—</div>
-      </div>
-    `;
-    return;
-  }
-
-  if (!window.db) {
-    rows.innerHTML = `<div class="row"><div>⚠ لا يوجد اتصال بقاعدة البيانات.</div></div>`;
+  if (!classId || !window.db) {
+    rows.innerHTML = '<div class="row"><div>لا يوجد صف مرتبط.</div></div>';
     return;
   }
 
   try {
-    const stuSnap = await getDocs(collection(window.db, "classes", classId, "students"));
-    rows.innerHTML = '';
+    const stuSnap = await getDocs(
+      collection(window.db, "classes", classId, "students")
+    );
 
+    rows.innerHTML = '';
     if (stuSnap.empty) {
-      rows.innerHTML = `
-        <div class="row">
-          <div>لا يوجد طلاب بعد.</div>
-          <div>—</div>
-          <div>—</div>
-          <div>—</div>
-        </div>
-      `;
+      rows.innerHTML = '<div class="row"><div>لا يوجد طلاب بعد.</div></div>';
       return;
     }
 
@@ -1010,656 +462,93 @@ async function renderTeacherStudents() {
       const st = d.data();
       const r = document.createElement('div');
       r.className = 'row';
-
-      const name = st.name || st.email;
-      const email = st.email;
-      const className = st.className || '—';
-
       r.innerHTML = `
-        <div>${name}</div>
-        <div>${email}</div>
-        <div>${className}</div>
+        <div>${st.name || st.email}</div>
+        <div>${st.email}</div>
+        <div>${st.className || '—'}</div>
         <div class="actions">
-          <button class="btn mini" data-edit="${email}">تعديل</button>
-          <button class="btn mini ghost" data-del="${email}">حذف</button>
+          <button class="btn mini ghost" data-del="${st.email}">حذف</button>
         </div>
       `;
-
-      // 🗑 حذف الطالب من Firestore
-      r.querySelector('[data-del]').onclick = async () => {
-        if (!confirm(`هل تريد حذف الطالب ${name}؟`)) return;
-        try {
-          await deleteDoc(doc(window.db, "classes", classId, "students", email));
-          toast('❌ تم حذف الطالب بنجاح');
-          renderTeacherStudents();
-
-        } catch (e) {
-          console.error(e);
-          toast('⚠ حدث خطأ أثناء الحذف');
-        }
-      };
-
-      // ✏️ تعديل بيانات الطالب (الاسم والصف فقط، البريد ثابت)
-      r.querySelector('[data-edit]').onclick = () => {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-
-        modal.innerHTML = `
-          <div class="modal-card" style="max-width:500px">
-            <button class="modal-close" id="closeEdit">✖</button>
-            <h3>تعديل بيانات الطالب</h3>
-
-            <div class="form-row">
-              <label>الاسم الكامل</label>
-              <input type="text" id="editName" value="${name}">
-            </div>
-
-            <div class="form-row">
-              <label>البريد الإلكتروني (لا يمكن تعديله)</label>
-              <input type="email" id="editEmail" value="${email}" disabled>
-            </div>
-
-            <div class="form-row">
-              <label>الصف</label>
-              <input type="text" id="editClass" value="${className === '—' ? '' : className}" placeholder="مثلاً: الصف السادس">
-            </div>
-
-            <button class="btn primary full" id="saveEdit">حفظ التعديلات ✅</button>
-          </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        $('#closeEdit').onclick = () => modal.remove();
-
-        $('#saveEdit').onclick = async () => {
-          const newName = $('#editName').value.trim();
-          const newClass = $('#editClass').value.trim();
-
-          if (!newName) {
-            return toast('يرجى إدخال الاسم');
-          }
-
-          try {
-            await setDoc(
-              doc(window.db, "classes", classId, "students", email),
-              {
-                name: newName,
-                email,
-                className: newClass || ''
-              },
-              { merge: true }
-            );
-
-            toast('✅ تم حفظ التعديلات بنجاح');
-            modal.remove();
-            renderTeacherStudents();
-          } catch (e) {
-            console.error(e);
-            toast('⚠ حدث خطأ أثناء حفظ التعديلات');
-          }
-        };
-      };
-
       rows.appendChild(r);
     });
-
   } catch (e) {
-    console.error(e);
-    rows.innerHTML = `<div class="row"><div>⚠ خطأ في تحميل الطلاب</div></div>`;
+    rows.innerHTML = '<div class="row"><div>⚠ خطأ في تحميل الطلاب</div></div>';
   }
-}
-
-function openAddStudentModal() {
-  $('#sName').value = '';
-  $('#sEmail').value = '';
-  $('#sPass').value = '123456';
-  $('#modalStudent').classList.remove('hidden');
-}
-
-// ✅ حفظ الطالب في Firestore مباشرة
-async function saveStudent() {
-  const name = $('#sName').value.trim();
-  const email = $('#sEmail').value.trim().toLowerCase();
-  const className = $('#sClass').value.trim();
-  const pass = $('#sPass').value.trim() || "123456";
-
-  if (!name || !email || !className) {
-    toast("❗ يرجى تعبئة الاسم والبريد والصف");
-    return;
-  }
-
-  const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== 'teacher') {
-    toast("⚠ لا يوجد معلم مسجل حاليًا");
-    return;
-  }
-
-  const classId = current.classId;
-  if (!classId) {
-    toast("⚠ لا يوجد فصل مرتبط بالمعلم!");
-    return;
-  }
-
-  if (!window.db) {
-    toast("⚠ قاعدة البيانات غير متاحة");
-    return;
-  }
-
-  try {
-    await setDoc(
-      doc(window.db, "classes", classId, "students", email),
-      { name, email, className, uid: email, pass },
-      { merge: true }
-    );
-  } catch (e) {
-    console.error("⚠ لم يتم الحفظ في Firestore:", e);
-    toast("⚠ حدث خطأ أثناء حفظ الطالب في السحابة");
-    return;
-  }
-
-  $('#modalStudent').classList.add('hidden');
-  toast("✔ تم إضافة الطالب بنجاح");
-
-  // تحديث الواجهة فورًا
-  renderTeacherStudents();
-  renderTeacherView();
-  renderTeacherDashboard();
-
-}
-
-async function openCreateAssignment() {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current) return;
-
-  const classId = current.classId;
-  if (!classId) {
-    toast("⚠ لا يوجد فصل مرتبط بالمعلم!");
-    return;
-  }
-
-  // تعبئة مستويات القراءة
-  const sel = $('#aLevel');
-  sel.innerHTML = '';
-  LEVELS.forEach(l => {
-    const o = document.createElement('option');
-    o.value = l.id;
-    o.textContent = l.name;
-    sel.appendChild(o);
-  });
-
-  // تحميل الطلاب من Firestore
-  const box = $('#studentsChecklist');
-  box.innerHTML = `<div style="padding:10px;color:#777">⏳ جاري تحميل الطلاب...</div>`;
-
-  try {
-    const stuSnap = await getDocs(
-      collection(window.db, "classes", classId, "students")
-    );
-
-    box.innerHTML = '';
-
-    if (stuSnap.empty) {
-      box.innerHTML = `<div style="padding:10px;color:#777">لا يوجد طلاب في هذا الفصل.</div>`;
-      return;
-    }
-
-    // إضافة الطلاب إلى القائمة
-    stuSnap.forEach(d => {
-      const st = d.data();
-      const idc = uid("CHK");
-      const label = document.createElement('label');
-      label.innerHTML = `
-        <input type="checkbox" id="${idc}" value="${st.email}">
-        ${st.name} (${st.email})
-      `;
-      box.appendChild(label);
-    });
-
-  } catch (e) {
-    console.error("❌ خطأ في تحميل الطلاب:", e);
-    box.innerHTML = `<div style="padding:10px;color:red">خطأ في تحميل الطلاب</div>`;
-  }
-
-  // إعادة تعيين الحقول
-  $('#aTitle').value = '';
-  $('#aDue').value = '';
-  $('#aDesc').value = '';
-
-  // عرض النافذة
-  $('#modalAssign').classList.remove('hidden');
-}
-
-async function saveAssignment() {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current) return;
-
-  const title = $('#aTitle').value.trim() || 'واجب جديد';
-  const level = $('#aLevel').value;
-  const due = $('#aDue').value;
-  const desc = $('#aDesc').value.trim();
-
-  const students = [...document.querySelectorAll('#studentsChecklist input[type=checkbox]:checked')]
-    .map(i => i.value);
-
-  if (!students.length) {
-    toast('اختر طالبًا واحدًا على الأقل');
-    return;
-  }
-
-  const classId = current.classId;
-  if (!classId) {
-    toast("⚠ لا يوجد فصل مرتبط بالمعلم!");
-    return;
-  }
-
-  const a = {
-    id: uid('A'),
-    title,
-    level,
-    due,
-    desc,
-    teacherId: current.id,
-    classId,
-    studentIds: students,
-    perStudent: students.reduce((acc, id) => {
-      acc[id] = { status: 'required', progress: 0, notes: '' };
-      return acc;
-    }, {})
-  };
-
-  // 1) حفظ محليًا
-  const all = getAssignments();
-  all.push(a);
-  setAssignments(all);
-
- // 2) حفظ في Firestore
-try {
-  await setDoc(
-    doc(window.db, "classes", classId, "assignments", a.id),
-    {
-      title: a.title,
-      level: a.level,
-      due: a.due,
-      desc: a.desc,
-      teacherId: a.teacherId,
-      studentIds: a.studentIds,
-      perStudent: a.perStudent
-    }
-  );
-
-  console.log("✔ تم حفظ الواجب في Firestore");
-
-  // ✅ ✅ ✅ التحديث هنا بالضبط (بعد الحفظ مباشرة)
-  // 🔔 إرسال إشعار لكل طالب
-  for (const email of students) {
-    await createNotification({
-      studentId: email,
-      title: "📘 واجب جديد",
-      message: `تم إضافة واجب جديد: ${title}`,
-      icon: "📝",
-      type: "assignment",
-      refId: a.id
-    });
-  }
-
-} catch (e) {
-  console.error("❌ خطأ في حفظ الواجب في Firestore:", e);
-  toast("⚠ تم إنشاء الواجب محليًا فقط (تأكد من الاتصال بالإنترنت)");
-}
-
-
-  $('#modalAssign').classList.add('hidden');
-  renderTeacherView();
-  renderTeacherDashboard();
-
-  toast('تم إنشاء الواجب وإرساله للطلاب المحددين');
-}
-
-async function renderTeacherView() {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== 'teacher') return;
-
-  const classId = current.classId;
-  if (!classId) return;
-
-  const rows = $('#teacherRows');
-  if (!rows) return;
-
-  rows.innerHTML = "⏳ جاري التحميل...";
-
-  const assSnap = await getDocs(collection(window.db, "classes", classId, "assignments"));
-
-  const stuSnap = await getDocs(collection(window.db, "classes", classId, "students"));
- const students = {};
-stuSnap.forEach(d => {
-  const s = d.data();
-  students[s.email] = s;
-});
-
-
-  rows.innerHTML = '';
-
-  assSnap.forEach(async aDoc => {
-    const a = { id: aDoc.id, ...aDoc.data(), classId };
-
-    for (let sid of a.studentIds) {
-
-      // ⭐ تحميل إجابة الطالب من Firestore
-      const ansRef = doc(window.db,
-        "classes", classId,
-        "assignments", a.id,
-        "answers", sid
-      );
-
-      const ansSnap = await getDoc(ansRef);
-
-      let ps = a.perStudent?.[sid] || {
-        status: "required",
-        progress: 0,
-        notes: "",
-        answer: "",
-        file: ""
-      };
-
-      if (ansSnap.exists()) {
-        const data = ansSnap.data();
-        ps = { ...ps, ...data };   // ← دمج بيانات Firestore
-      }
-
-      const stu = students[sid];
-
-      const r = document.createElement('div');
-      r.className = "row";
-
-      r.innerHTML = `
-        <div>${stu?.name || sid}</div>
-        <div>${a.title}</div>
-        <div>
-          <span class="badge ${
-            ps.status === 'done' ? 'ok' :
-            ps.status === 'submitted' ? 'warn' : 'err'
-          }">${ps.status}</span>
-        </div>
-        <div><div class="progress"><i style="width:${ps.progress}%"></i></div></div>
-        <div>${ps.notes || "—"}</div>
-        <div class="actions">
-          <button class="btn mini ghost" data-review="${a.id}:${sid}">👁 مراجعة</button>
-        </div>
-      `;
-
-      rows.appendChild(r);
-
-      r.querySelector('[data-review]').onclick =
-        () => openReviewModal(a, sid, ps, stu);
-    }
-  });
-}
-
-
-// ------------------------------------------------------
-// لوحة المعلم (إحصاءات الطلاب / الواجبات / الإنجاز)
-// ------------------------------------------------------
-async function renderTeacherDashboard() {
-  const current = readJSON(LS.CURRENT, null);
-
-  const elStu  = document.getElementById('tc-stu');
-  const elAsg  = document.getElementById('tc-asg');
-  const elDone = document.getElementById('tc-done');
-
-  if (!elStu || !elAsg || !elDone) return;
-
-  elStu.textContent  = '0';
-  elAsg.textContent  = '0';
-  elDone.textContent = '0';
-
-  if (!current || current.role !== 'teacher' || !window.db || !current.classId) return;
-
-  try {
-    // عدد الطلاب
-    const stuSnap = await getDocs(
-      collection(window.db, "classes", current.classId, "students")
-    );
-    let totalStudents = 0;
-    stuSnap.forEach(() => totalStudents++);
-
-    // الواجبات والمنجز
-    const asgSnap = await getDocs(
-      collection(window.db, "classes", current.classId, "assignments")
-    );
-    let totalAssignments = 0;
-    let totalDone = 0;
-
-    asgSnap.forEach(docSnap => {
-      totalAssignments++;
-      const data = docSnap.data() || {};
-      const per  = data.perStudent || {};
-      Object.values(per).forEach(ps => {
-        if (!ps) return;
-        if (ps.status === 'done' || ps.progress === 100) totalDone++;
-      });
-    });
-
-    elStu.textContent  = String(totalStudents);
-    elAsg.textContent  = String(totalAssignments);
-    elDone.textContent = String(totalDone);
-
-  } catch (err) {
-    console.error("⚠ خطأ في تحميل إحصاءات لوحة المعلم:", err);
-  }
-}
-
-
-async function openReviewModal(a, sid, ps, stu) {
-
-  // 📌 1) تحميل إجابة الطالب من Firestore
-  const ansRef = doc(
-    window.db,
-    "classes", a.classId,
-    "assignments", a.id,
-    "answers", sid
-  );
-
-  const ansSnap = await getDoc(ansRef);
-  let ansData = ansSnap.exists() ? ansSnap.data() : null;
-
-  const answerText = ansData?.answer || ps.answer || "— لم يُرسل إجابة —";
-  const answerFile = ansData?.file || ps.file || "";
-
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-
-  modal.innerHTML = `
-    <div class="modal-card" style="max-width:600px">
-      <button class="modal-close" id="closeReview">✖</button>
-
-      <h3>مراجعة حل الطالب</h3>
-
-      <div class="form-row"><b>الطالب:</b> ${stu?.name || sid}</div>
-      <div class="form-row"><b>عنوان الواجب:</b> ${a.title}</div>
-
-      <div class="form-row"><b>إجابة الطالب:</b>
-        <p style="background:#f8fafc;padding:.7rem;border-radius:10px">
-          ${answerText}
-        </p>
-      </div>
-
-      ${answerFile ? `
-        <div class="form-row">
-          <b>الملف المرفق:</b>
-          <a href="${answerFile}" target="_blank" class="btn sky small">فتح الملف</a>
-        </div>
-      ` : ''}
-
-      <div class="form-row">
-        <label>ملاحظة للطالب (اختياري)</label>
-        <textarea id="teacherNote" rows="3">${ps.notes || ''}</textarea>
-      </div>
-
-      <div class="row" style="display:flex;justify-content:flex-end;gap:.5rem">
-        <button id="rejectAns" class="btn warn small">رفض ❌</button>
-        <button id="approveAns" class="btn primary small">قبول ✅</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-  $('#closeReview').onclick = () => modal.remove();
-
-// ⭐ 3) قبول الحل
-$('#approveAns').onclick = async () => {
-  const note = $('#teacherNote').value.trim();
-
-  await setDoc(
-    ansRef,
-    {
-      ...ansData,
-      status: "done",
-      progress: 100,
-      notes: note
-    },
-    { merge: true }
-  );
-
-  // 🔔 إشعار للطالب (تم قبول الحل)
-  await createNotification({
-    studentId: sid,
-    title: "✅ تم تصحيح واجبك",
-    message: `تم قبول واجب: ${a.title}`,
-    icon: "🎉",
-    type: "review",
-    refId: a.id
-  });
-
-  modal.remove();
-  toast("✨ تم قبول حل الطالب");
-  renderTeacherView();
-};
-
-
- // ⭐ 4) رفض الحل
-$('#rejectAns').onclick = async () => {
-  const note = $('#teacherNote').value.trim() || "يرجى تحسين الإجابة";
-
-  await setDoc(
-    ansRef,
-    {
-      ...ansData,
-      status: "required",
-      progress: 0,
-      notes: note
-    },
-    { merge: true }
-  );
-
-  // 🔔 إشعار للطالب (تم رفض الحل)
-  await createNotification({
-    studentId: sid,
-    title: "❌ تم رفض الحل",
-    message: `يرجى مراجعة واجب: ${a.title}`,
-    icon: "📝",
-    type: "review",
-    refId: a.id
-  });
-
-  modal.remove();
-  toast("❌ تم رفض الحل");
-  renderTeacherView();
-};
-
 }
 
 // ------------------------------------------------------
-// Reports
+// Boot
 // ------------------------------------------------------
+async function startApp() {
+  let current = JSON.parse(localStorage.getItem("arp.current") || "null");
+  console.log("DEBUG CURRENT =", current);
 
-function updateReportsFromStats(s) {
-  const percent = Math.min(100, Math.floor((s.reads / BOOKS.length) * 100));
-  $('#repPercent').textContent = percent + '%';
-  $('#repReads').textContent = s.reads || 0;
-  $('#repTime').textContent = (s.minutes || 0) + ' دقيقة';
+  if (!current || !current.email) {
+    localStorage.removeItem("arp.current");
+    $('#authView').classList.remove('hidden');
+    $('#appShell').classList.add('hidden');
+    return;
+  }
+
+  if (current.role === 'teacher') {
+    $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
+  } else {
+    $$('.only-teacher').forEach(btn => btn.style.display = 'none');
+  }
+
+  $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
+  $('#userName').textContent = current.name;
+  $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
+
+  setUnifiedAvatar(current.role);
+
+  $('#authView').classList.add('hidden');
+  $('#appShell').classList.remove('hidden');
+  $('#readerView').classList.add('hidden');
+
+  buildNav(current.role);
+  renderLevels();
+  renderBooks('ALL');
+
+  if (current.role === 'teacher') {
+    await renderTeacherStudents();
+  }
 }
 
-function updateReportsChart(s) {
-  const ctx = $('#chartReads');
-  if (!ctx) return;
+// ⭐ مهم: إتاحة startApp عالميًا
+window.startApp = startApp;
 
-  if (window._cr) window._cr.destroy();
-
-  window._cr = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: BOOKS.map(b => b.title),
-      datasets: [{
-        label: 'القراءات',
-        data: BOOKS.map((_, i) => i < (s.reads || 0) ? 1 : 0)
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { precision: 0, maxTicksLimit: 4 }
-        }
-      }
-    }
-  });
-}
-
-  
 // ------------------------------------------------------
-// Reader + تسجيل الصوت + تحديث الإحصاءات
+// Reader
 // ------------------------------------------------------
-
-let mediaRecorder, chunks = [], timerInt, startTime, audioBlob = null;
-
 function openReader(book) {
   currentBook = book;
-
-  // تسجيل وقت بدء القراءة
   readingStartAt = Date.now();
   hasInteractedWithStory = false;
 
-  // إظهار القارئ
   $('#appShell').classList.add('hidden');
   $('#readerView').classList.remove('hidden');
 
-  // ===============================
-  // ✅ عرض نص القصة
-  // ===============================
   const host = document.getElementById("storyContent");
   if (host) {
     host.innerHTML = "";
-
     book.text.forEach(p => {
       const para = document.createElement("p");
-// تقسيم الفقرة إلى كلمات قابلة للنقر
-para.innerHTML = p.split(' ').map(word =>
-  `<span class="word">${word}</span>`
-).join(' ');
+      para.innerHTML = p.split(' ')
+        .map(word => `<span class="word">${word}</span>`)
+        .join(' ');
 
-// تفعيل التظليل عند الضغط
-para.querySelectorAll('.word').forEach(span => {
-  span.onclick = () => {
-    span.classList.toggle('word-selected');
-    hasInteractedWithStory = true;
-  };
-});
+      para.querySelectorAll('.word').forEach(span => {
+        span.onclick = () => {
+          span.classList.toggle('word-selected');
+          hasInteractedWithStory = true;
+        };
+      });
 
-host.appendChild(para);
-
+      host.appendChild(para);
     });
   }
-
-  // ===============================
-  // تهيئة عناصر التسجيل
-  // ===============================
-  $('#recordTime').textContent = '⏱️ 00:00';
-  $('#playRec').classList.add('hidden');
-  $('#stopRec').classList.add('hidden');
-  $('#startRec').classList.remove('hidden');
 }
 
 window.openReader = openReader;
@@ -1667,279 +556,25 @@ window.openReader = openReader;
 function backToApp() {
   $('#readerView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
-   if (readingStartAt && currentBook) {
-    const diffMs = Date.now() - readingStartAt;
-    const secondsSpent = Math.round(diffMs / 1000);
-    const MIN_SECONDS = 30;
-
-    if (hasInteractedWithStory && secondsSpent >= MIN_SECONDS) {
-      const minutesSpent = Math.max(1, Math.round(secondsSpent / 60));
-      updateReadStats(currentBook.id, minutesSpent);
-    } else {
-      console.log("⏭️ قراءة لم تُحتسب");
-    }
-  }
-
   readingStartAt = null;
   hasInteractedWithStory = false;
 }
 
-async function startRecording() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
-  } catch (e) {
-    alert('المتصفح منع الميكروفون. فعّل الأذونات.');
-    return;
-  }
-  chunks = []; audioBlob = null;
-  mediaRecorder.ondataavailable = e => chunks.push(e.data);
-  mediaRecorder.onstop = () => {
-    audioBlob = new Blob(chunks, { type: 'audio/ogg;codecs=opus' });
-    $('#playRec').classList.remove('hidden');
-  };
-  mediaRecorder.start();
-  $('#startRec').classList.add('hidden');
-  $('#stopRec').classList.remove('hidden');
-  startTime = Date.now();
-  timerInt = setInterval(() => {
-    const s = Math.floor((Date.now() - startTime) / 1000);
-    const mm = String(Math.floor(s / 60)).padStart(2, '0');
-    const ss = String(s % 60).padStart(2, '0');
-    $('#recordTime').textContent = `⏱️ ${mm}:${ss}`;
-  }, 1000);
-}
-
-function stopRecording() {
-  if (mediaRecorder) { mediaRecorder.stop(); }
-  clearInterval(timerInt);
-  $('#stopRec').classList.add('hidden');
-  $('#startRec').classList.remove('hidden');
-}
-
-function playRecording() {
-  if (!audioBlob) return;
-  new Audio(URL.createObjectURL(audioBlob)).play();
-}
-
-async function updateReadStats(bookId, minutesSpent = 0) {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== 'student' || !window.db) return;
-
-  const ref = doc(window.db, "readingStats", current.email);
-  const snap = await getDoc(ref);
-
-  const prev = snap.exists() ? snap.data() : {
-    reads: 0,
-    minutes: 0,
-    lastBook: '—',
-    activities: 0
-  };
-
-  const bookTitle = BOOKS.find(b => b.id === bookId)?.title || prev.lastBook;
-
-    // 🔴 🔴 🔴 أضِف الشرط هنا بالضبط
-  if (
-    prev.lastBook === bookTitle &&
-    prev.updatedAt &&
-    Date.now() - prev.updatedAt < 5 * 60 * 1000
-  ) {
-    console.log("⏭️ تجاهل قراءة مكررة خلال 5 دقائق");
-    return;
-  }
-
-  await setDoc(ref, {
-    reads: prev.reads + 1,
-    minutes: prev.minutes + minutesSpent,
-    lastBook: bookTitle,
-    updatedAt: Date.now()
-  }, { merge: true });
-}
-
-
-// حفظ قصة جديدة — Firestore + تحديث المكتبة
-async function saveBook() {
-  const title = $('#bTitle').value.trim();
-  const level = $('#bLevel').value;
-  let cover = $('#bCover').value.trim();
-  const textRaw = $('#bText').value.trim();
-
-  if (!title || !level || !textRaw) {
-    toast("❗ يرجى تعبئة العنوان والمستوى والنص");
-    return;
-  }
-
-  const text = textRaw.split('\n').map(t => t.trim()).filter(t => t);
-  const upload = $('#bFile')?.files?.[0];
-  if (upload) cover = URL.createObjectURL(upload);
-
-  if (!cover) {
-    cover = `https://picsum.photos/seed/${encodeURIComponent(title)}/400/550`;
-  }
-
-  if (!cover.startsWith("http") && !cover.startsWith("blob:")) {
-    toast("⚠ رابط الصورة غير صالح");
-    return;
-  }
-
-  const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== 'teacher') {
-    toast("⚠ لا يوجد معلم مسجل حاليًا");
-    return;
-  }
-
-  const classId = current.classId || (getTeacherClass(current.id)?.id);
-  if (!classId) {
-    toast("⚠ لا يوجد فصل مرتبط بالمعلم!");
-    return;
-  }
-
-  const id = uid("B");
-
-  const bookData = {
-    id,
-    title,
-    level,
-    cover,
-    text,
-    quiz: []
-  };
-
-  if (window.db) {
-    await setDoc(
-      doc(window.db, "classes", classId, "books", id),
-      bookData
-    );
-  }
-
-  BOOKS.push(bookData);
-  $('#modalBook').classList.add('hidden');
-  renderBooks("ALL");
-  toast("✓ تمت إضافة القصة (سحابة + محلي) 🎉");
-}
-
-// حفظ سؤال اختبار (quiz) داخل نفس وثيقة القصة في Firestore
-async function saveQuiz() {
-  const bookId = $('#qBookSelect').value;
-  const question = $('#qText').value.trim();
-  const optionsRaw = $('#qOptions').value.trim();
-  const correct = Number($('#qCorrect').value);
-
-  if (!bookId || !question || !optionsRaw || isNaN(correct)) {
-    toast("❗ يرجى تعبئة جميع الحقول");
-    return;
-  }
-
-  const options = optionsRaw.split('\n').map(t => t.trim()).filter(t => t);
-  if (options.length < 2) {
-    toast("⚠ يجب إدخال خيارين على الأقل");
-    return;
-  }
-
-  const bookIndex = BOOKS.findIndex(b => b.id === bookId);
-  let book = BOOKS[bookIndex];
-
-  if (!book) {
-    toast("❌ لم يتم العثور على القصة");
-    return;
-  }
-
-  if (!book.quiz) book.quiz = [];
-  book.quiz.push({ q: question, options, correct });
-
-  // تحديث المصفوفة في الذاكرة
-  BOOKS[bookIndex] = book;
-
-  // تحديث القصة في Firestore — حقل quiz داخل وثيقة الكتاب
-  const current = readJSON(LS.CURRENT, null);
-  if (current && current.classId && window.db) {
-    await setDoc(
-      doc(window.db, "classes", current.classId, "books", book.id),
-      { quiz: book.quiz },
-      { merge: true }
-    );
-  }
-
-  $('#modalQuizEditor').classList.add('hidden');
-  toast("✓ تمت إضافة السؤال بنجاح (تم حفظه في القصة نفسها)");
-}
-
-function confirmSubmitModal(callback) {
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-  modal.innerHTML = `
-    <div class="modal-card" style="max-width:400px;text-align:center">
-      <h3>📤 تأكيد إرسال الحل</h3>
-      <p style="margin:10px 0;color:#555">بعد الإرسال لن تتمكن من تعديل إجابتك.</p>
-      <div style="display:flex;justify-content:center;gap:.5rem;margin-top:1rem">
-        <button id="confirmSendBtn" class="btn primary small">إرسال</button>
-        <button id="cancelSendBtn" class="btn ghost small">إلغاء</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  $('#cancelSendBtn').onclick = () => modal.remove();
-  $('#confirmSendBtn').onclick = () => {
-    modal.remove();
-    callback();
-  };
-}
-
-// ===============================================
-//  🛠 إصلاح تلقائي للواجبات لتعمل في كل المتصفحات
-// ===============================================
-
-function autoFixAssignments() {
-  let assigns = JSON.parse(localStorage.getItem("arp.assignments") || "[]");
-  const current = JSON.parse(localStorage.getItem("arp.current") || "{}");
-
-  if (!current || !current.email) return;
-
-  const studentEmail = current.email;
-
-  let changed = false;
-
-  assigns = assigns.map(a => {
-    if (!a.studentIds) return a;
-
-    if (a.studentIds.includes(studentEmail)) return a;
-
-    const newPer = {};
-    for (const oldId in a.perStudent || {}) {
-      newPer[studentEmail] = a.perStudent[oldId];
-      changed = true;
-    }
-
-    return {
-      ...a,
-      studentIds: [studentEmail],
-      perStudent: newPer
-    };
-  });
-
-  if (changed) {
-    localStorage.setItem("arp.assignments", JSON.stringify(assigns));
-    console.log("✔ تم إصلاح الواجبات تلقائيًا باستخدام البريد");
-  }
-}
-
-
-
+// ------------------------------------------------------
+// Notifications
+// ------------------------------------------------------
 function listenToNotifications() {
   const current = JSON.parse(localStorage.getItem("arp.current") || "null");
   if (!current || !current.email || !window.db) return;
 
-const q = query(
-  collection(window.db, "notifications"),
-  where("studentId", "==", current.email)
-);
-
+  const q = query(
+    collection(window.db, "notifications"),
+    where("studentId", "==", current.email)
+  );
 
   onSnapshot(q, snap => {
-    const list  = document.getElementById("notifyList");
+    const list = document.getElementById("notifyList");
     const count = document.getElementById("notifyCount");
-
     if (!list || !count) return;
 
     list.innerHTML = "";
@@ -1951,205 +586,29 @@ const q = query(
       return;
     }
 
-   const NOTIFY_TTL = 12 * 60 * 60 * 1000; // 12 ساعة
+    snap.forEach(docSnap => {
+      const n = docSnap.data();
+      if (!n.isRead) unread++;
 
-snap.forEach(docSnap => {
-  const n = docSnap.data();
-
-  // ⏳ تجاهل الإشعار المقروء القديم (أكثر من 12 ساعة)
-  if (
-    n.isRead &&
-    n.readAt &&
-    Date.now() - n.readAt > NOTIFY_TTL
-  ) {
-    return;
-  }
-
-  // 🔢 عدّ غير المقروء
-  if (!n.isRead) unread++;
-
-  const item = document.createElement("div");
-  item.className = "notify-item" + (!n.isRead ? " unread" : "");
-
-  item.innerHTML = `
-    <div><strong>${n.icon || "🔔"} ${n.title}</strong></div>
-    <div>${n.message}</div>
-  `;
-
-  list.appendChild(item);
-});
-
+      const item = document.createElement("div");
+      item.className = "notify-item" + (!n.isRead ? " unread" : "");
+      item.innerHTML = `
+        <div><strong>${n.icon || "🔔"} ${n.title}</strong></div>
+        <div>${n.message}</div>
+      `;
+      list.appendChild(item);
+    });
 
     count.textContent = unread;
     count.classList.toggle("hidden", unread === 0);
   });
 }
 
-async function markNotificationsAsRead() {
-  const current = JSON.parse(localStorage.getItem("arp.current") || "null");
-  if (!current || !current.email || !window.db) return;
-
-  const q = query(
-    collection(window.db, "notifications"),
-    where("studentId", "==", current.email),
-    where("isRead", "==", false)
-  );
-
-  const snap = await getDocs(q);
-
-  snap.forEach(docSnap => {
-    updateDoc(doc(window.db, "notifications", docSnap.id), {
-      isRead: true,
-  readAt: Date.now()   // ⭐ مهم للخطوة القادمة
-    });
-  });
-}
-
-
-function listenToReadingStats() {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== "student" || !window.db) return;
-
-  const ref = doc(window.db, "readingStats", current.email);
-
-  onSnapshot(ref, snap => {
-    if (!snap.exists()) return;
-
-    const s = snap.data();
-
-    // السكة اليمنى
-    updateRailFromStats(s);   // (أنت أنشأتها سابقًا)
-    renderStaticNoorBadges();   // ✅ أضف هذا السطر
-
-    // التقارير
-    updateReportsFromStats(s);
-    updateReportsChart(s);
-  });
-}
-
-
 // ------------------------------------------------------
-// Boot
+// DOM Ready
 // ------------------------------------------------------
-
-async function startApp() {
-  // 1) قراءة المستخدم الحالي
- let current = JSON.parse(localStorage.getItem("arp.current") || "null");
-
- 
-if (!current || !current.email) {
-  localStorage.removeItem("arp.current");
-  $('#authView').classList.remove('hidden');
-  $('#appShell').classList.add('hidden');
-  return;
-}
-
-// 🔴 الآن فقط آمن استخدام current.role
-  if (current.role === "teacher" && !current.classId) {
-    const c = getTeacherClass(current.id);
-    if (c && c.id) {
-      current.classId = c.id;
-      writeJSON(LS.CURRENT, current);
-      console.log("✅ classId ثبت للمعلم:", c.id);
-    }
-  }
-
-  console.log("DEBUG CURRENT =", current);
-  
-
-  // 3) إصلاح الواجبات القديمة (يعمل فقط عند وجود مستخدم)
-// autoFixAssignments();
-
-  // 4) التحكم في أزرار المعلم
-  if (current.role === 'teacher') {
-    $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
-  } else {
-    $$('.only-teacher').forEach(btn => btn.style.display = 'none');
-  }
-
-  // 5) تعبئة بيانات المستخدم في الواجهة
-  $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
-  $('#userName').textContent = current.name;
-  $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
-setUnifiedAvatar(current.role);
-
-  // 6) إخفاء شاشة الدخول وإظهار التطبيق
-  $('#authView').classList.add('hidden');
-  $('#appShell').classList.remove('hidden');
-  $('#readerView').classList.add('hidden');
-
-  buildNav(current.role);
-  renderLevels();
-  renderBooks('ALL');
-  renderStudentAssignments('required');
-  
-
- // 7) منطق الطالب
-if (current.role === 'student') {
-  let classId = current.classId || null;
-
-  if (!classId) {
-    classId = await findClassIdForStudent(current.email || current.id);
-  }
-
-  if (classId) {
-    writeJSON(LS.CURRENT, { ...current, classId });
-
-    await syncAssignmentsFromFirestore(classId);
-    await loadStudentAnswersFromFirestore(classId, current.id);
-    await syncBooksWithFirestore(classId);
-  }
-
-  listenToReadingStats();
-}
-
-// 8) منطق المعلم (نسخة واحدة فقط ✅)
-if (current.role === 'teacher') {
-  let classId = current.classId;
-
-  if (!classId) {
-    const c = getTeacherClass(current.id);
-    if (c?.id) {
-      classId = c.id;
-      current = { ...current, classId };
-      writeJSON(LS.CURRENT, current);
-    }
-  }
-
-  if (classId) {
-    await syncAssignmentsFromFirestore(classId);
-    await syncBooksWithFirestore(classId);
-
-    // ⚠️ هذه الدوال تعتمد على البيانات
-    await renderTeacherStudents();
-    await renderTeacherView();
-    await renderTeacherDashboard();
-
-    renderBooks('ALL');
-  }
-  // 9) إشعارات (للجميع)
-listenToNotifications();
-
-}
-
-
-  // ⭐⭐⭐ مهم: تعريف startApp على window ⭐⭐⭐
-window.startApp = startApp;
-
-// =============================
-// أحداث عامة
-// =============================
-document.addEventListener('click', (e) => {
-  const go = e.target.closest('.go');
-  if (go) showOnly(go.dataset.go);
-
-  const closeId = e.target.dataset?.close;
-  if (closeId) document.getElementById(closeId).classList.add('hidden');
-});
-
 document.addEventListener('DOMContentLoaded', () => {
 
-  // تبويب auth
   $$('[data-auth]').forEach(btn => btn.onclick = () => {
     $$('[data-auth]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -2163,156 +622,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-
-  $('#loginForm').addEventListener('submit', loginUser);
-  $('#regForm').addEventListener('submit', registerUser);
-
+  $('#loginForm')?.addEventListener('submit', loginUser);
+  $('#regForm')?.addEventListener('submit', registerUser);
   $('#searchBooks')?.addEventListener('input', () => renderBooks('ALL'));
 
-  // تبديل تبويبات الواجبات للطالب
-  $$('#tab-assign .pill').forEach(p => p.onclick = () => {
-    $$('#tab-assign .pill').forEach(x => x.classList.remove('active'));
-    p.classList.add('active');
-    renderStudentAssignments(p.dataset.filter);
+  $('#backToApp')?.addEventListener('click', backToApp);
+
+  document.getElementById("notifyBtn")?.addEventListener("click", e => {
+    e.stopPropagation();
+    document.getElementById("notifyPanel")?.classList.toggle("hidden");
   });
 
-  // أزرار إدارة المنصة
-  document.addEventListener('click', (e) => {
-
-    if (e.target.id === 'addStudentBtn') openAddStudentModal();
-    if (e.target.id === 'saveStudent') saveStudent();
-
-    if (e.target.id === 'newAssignBtn') openCreateAssignment();
-    if (e.target.id === 'saveAssign') saveAssignment();
-
-    if (e.target.id === 'saveBook') saveBook();
-
-    if (e.target.id === "addBookBtn") {
-      $('#bTitle').value = '';
-      $('#bCover').value = '';
-      $('#bText').value = '';
-      $('#modalBook').classList.remove('hidden');
-    }
-
-    if (e.target.id === "addQuizBtn") {
-      const sel = $('#qBookSelect');
-      sel.innerHTML = '';
-      BOOKS.forEach(b => {
-        const op = document.createElement('option');
-        op.value = b.id;
-        op.textContent = b.title;
-        sel.appendChild(op);
-      });
-      $('#qText').value = '';
-      $('#qOptions').value = '';
-      $('#qCorrect').value = '';
-      $('#modalQuizEditor').classList.remove('hidden');
-    }
-
-    if (e.target.id === "saveQuiz") {
-      saveQuiz();
-    }
+  document.addEventListener("click", () => {
+    document.getElementById("notifyPanel")?.classList.add("hidden");
   });
 
-  // قارئ القصص
-  $('#backToApp').addEventListener('click', backToApp);
-  $('#startRec').addEventListener('click', startRecording);
-  $('#stopRec').addEventListener('click', stopRecording);
-  $('#playRec').addEventListener('click', playRecording);
-
-  $('#closeQuiz')?.addEventListener('click', () => {
-    $('#modalQuiz').classList.add('hidden');
-  });
-
-// زر فتح الأنشطة للقصة الحالية
-document.getElementById("openActivitiesBtn")?.addEventListener("click", () => {
-  if (!currentBook || !currentBook.quiz || !currentBook.quiz.length) {
-    toast("لا توجد أنشطة لهذه القصة");
-    return;
-  }
-
-  const box = $('#quizContent');
-  box.innerHTML = '';
-
-  currentBook.quiz.forEach((q, i) => {
-    const div = document.createElement('div');
-    div.className = 'quiz-block';
-
-    const optsHtml = q.options.map((opt, idx) => `
-      <label style="display:block;margin:.2rem 0">
-        <input type="radio" name="q${i}" value="${idx}">
-        ${opt}
-      </label>
-    `).join('');
-
-    div.innerHTML = `
-      <p><b>${i + 1}.</b> ${q.q}</p>
-      ${optsHtml}
-    `;
-
-    box.appendChild(div);
-  });
-
-  // إظهار نافذة الاختبار
-  $('#modalQuiz').classList.remove('hidden');
-
-  // ✅ ربط زر الإنهاء بعد ظهور المودال
-  setTimeout(() => {
-    const btn = document.getElementById("submitQuiz");
-    if (!btn) return;
-
-    btn.onclick = () => {
-      if (!currentBook || !currentBook.quiz) {
-        toast("لا توجد أنشطة لهذه القصة");
-        return;
-      }
-
-      let score = 0;
-
-      currentBook.quiz.forEach((q, i) => {
-        const selected = document.querySelector(`input[name="q${i}"]:checked`);
-        if (selected && Number(selected.value) === q.correct) {
-          score++;
-        }
-      });
-
-      // تسجيل النشاط
-      addActivity();
-
-      // إغلاق النافذة
-      document.getElementById("modalQuiz").classList.add('hidden');
-
-      toast(`✓ تم إنهاء النشاط. نتيجتك: ${score}/${currentBook.quiz.length}`);
-    };
-  }, 0);
-});
-
-
-// 🔔 فتح / إغلاق لوحة الإشعارات
-document.getElementById("notifyBtn")?.addEventListener("click", async (e) => {
-  e.stopPropagation();
-
-  const panel = document.getElementById("notifyPanel");
-  panel?.classList.toggle("hidden");
-
-  // ✅ إذا فُتحت اللوحة → اعتبر الإشعارات مقروءة
-  if (!panel?.classList.contains("hidden")) {
-    markNotificationsAsRead();
-  }
-});
-
-
-// إغلاقها عند الضغط خارجها
-document.addEventListener("click", () => {
-  document.getElementById("notifyPanel")?.classList.add("hidden");
-});
- 
-
- // ============================================
-// زر الخروج
-$('#logoutBtn')?.addEventListener('click', confirmLogout);
-
-// تشغيل التطبيق فقط عند تحميل الصفحة
-window.addEventListener('load', () => {
   startApp();
 });
