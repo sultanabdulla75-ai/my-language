@@ -2312,7 +2312,7 @@ document.addEventListener("click", () => {
 // زر الخروج
 $('#logoutBtn')?.addEventListener('click', confirmLogout);
 
-// تشغيل التطبيق مباشرة لو فيه مستخدم محفوظ
-startApp();
+// تشغيل التطبيق فقط عند تحميل الصفحة
+window.addEventListener('load', () => {
+  startApp();
 });
-
