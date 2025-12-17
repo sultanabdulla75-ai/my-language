@@ -2036,25 +2036,26 @@ async function startApp() {
   // 1) قراءة المستخدم الحالي
  let current = JSON.parse(localStorage.getItem("arp.current") || "null");
 
-// 🔴 تأكيد classId للمعلم
-if (current.role === "teacher" && !current.classId) {
-  const c = getTeacherClass(current.id);
-  if (c && c.id) {
-    current.classId = c.id;
-    writeJSON(LS.CURRENT, current);
-    console.log("✅ classId ثبت للمعلم:", c.id);
-  }
-}
-
-  
-console.log("DEBUG CURRENT =", current);
-
+ 
 if (!current || !current.email) {
   localStorage.removeItem("arp.current");
   $('#authView').classList.remove('hidden');
   $('#appShell').classList.add('hidden');
   return;
 }
+
+// 🔴 الآن فقط آمن استخدام current.role
+  if (current.role === "teacher" && !current.classId) {
+    const c = getTeacherClass(current.id);
+    if (c && c.id) {
+      current.classId = c.id;
+      writeJSON(LS.CURRENT, current);
+      console.log("✅ classId ثبت للمعلم:", c.id);
+    }
+  }
+
+  console.log("DEBUG CURRENT =", current);
+  
 
   // 3) إصلاح الواجبات القديمة (يعمل فقط عند وجود مستخدم)
 // autoFixAssignments();
