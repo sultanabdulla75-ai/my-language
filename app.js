@@ -1331,8 +1331,12 @@ async function renderTeacherView() {
   const assSnap = await getDocs(collection(window.db, "classes", classId, "assignments"));
 
   const stuSnap = await getDocs(collection(window.db, "classes", classId, "students"));
-  const students = {};
-  stuSnap.forEach(d => students[d.id] = d.data());
+ const students = {};
+stuSnap.forEach(d => {
+  const s = d.data();
+  students[s.email] = s;
+});
+
 
   rows.innerHTML = '';
 
@@ -2032,6 +2036,17 @@ async function startApp() {
   // 1) قراءة المستخدم الحالي
  let current = JSON.parse(localStorage.getItem("arp.current") || "null");
 
+// 🔴 تأكيد classId للمعلم
+if (current.role === "teacher" && !current.classId) {
+  const c = getTeacherClass(current.id);
+  if (c && c.id) {
+    current.classId = c.id;
+    writeJSON(LS.CURRENT, current);
+    console.log("✅ classId ثبت للمعلم:", c.id);
+  }
+}
+
+  
 console.log("DEBUG CURRENT =", current);
 
 if (!current || !current.email) {
@@ -2068,53 +2083,54 @@ setUnifiedAvatar(current.role);
   renderStudentAssignments('required');
   
 
-  // 7) تحميل بيانات الواجبات من Firestore (للطلاب فقط)
-  if (current.role === 'student') {
-    let classId = current.classId || null;
+ // 7) منطق الطالب
+if (current.role === 'student') {
+  let classId = current.classId || null;
 
-    if (!classId) {
-      classId = await findClassIdForStudent(current.email || current.id);
+  if (!classId) {
+    classId = await findClassIdForStudent(current.email || current.id);
+  }
 
-    }
+  if (classId) {
+    writeJSON(LS.CURRENT, { ...current, classId });
 
-    if (classId) {
-      writeJSON(LS.CURRENT, { ...current, classId });
+    await syncAssignmentsFromFirestore(classId);
+    await loadStudentAnswersFromFirestore(classId, current.id);
+    await syncBooksWithFirestore(classId);
+  }
 
-       syncAssignmentsFromFirestore(classId);
-       loadStudentAnswersFromFirestore(classId, current.id);
-       syncBooksWithFirestore(classId);
-    } else {
-      console.warn("⚠️ لم يتم العثور على فصل مرتبط بهذا الطالب.");
-    }
-
-    // ✅ هنا المكان الصحيح (خارج if)
   listenToReadingStats();
-  
-  }
-
-  // 7 مكرر) مزامنة الواجبات للمعلم أيضًا من Firestore
-  if (current.role === 'teacher') {
-    let classId = current.classId || null;
-
-    if (!classId) {
-      const c = getTeacherClass(current.id);
-      if (c) classId = c.id;
-    }
-
-    if (classId) {
-      await syncAssignmentsFromFirestore(classId);
-      await syncBooksWithFirestore(classId);
-    }
-  }
-
-  // 8) بناء أجزاء الصفحة
-
-  await renderTeacherStudents();
-  await renderTeacherView();
-
-// بعد buildNav و updateRail
-listenToNotifications();
 }
+
+// 8) منطق المعلم (نسخة واحدة فقط ✅)
+if (current.role === 'teacher') {
+  let classId = current.classId;
+
+  if (!classId) {
+    const c = getTeacherClass(current.id);
+    if (c?.id) {
+      classId = c.id;
+      current = { ...current, classId };
+      writeJSON(LS.CURRENT, current);
+    }
+  }
+
+  if (classId) {
+    await syncAssignmentsFromFirestore(classId);
+    await syncBooksWithFirestore(classId);
+
+    // ⚠️ هذه الدوال تعتمد على البيانات
+    await renderTeacherStudents();
+    await renderTeacherView();
+    await renderTeacherDashboard();
+
+    renderBooks('ALL');
+  }
+}
+
+// 9) إشعارات (للجميع)
+listenToNotifications();
+
 
 // ⭐⭐⭐ مهم: تعريف startApp على window ⭐⭐⭐
 window.startApp = startApp;
