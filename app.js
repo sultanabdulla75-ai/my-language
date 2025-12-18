@@ -1,9 +1,9 @@
+// ------------------------------------------------------
 // منصة لغتي - ملف app.js
 // ------------------------------------------------------
 
 // ===== متغير عام للقصة الحالية في القارئ =====
 let currentBook = null;
-
 // وقت بدء القراءة الحالي (بالمللي ثانية)
 let readingStartAt = null;
 let readingStartTime = null;
@@ -57,16 +57,8 @@ const BOOKS = [
       'تحدّثا عن معنى الصداقة، ووعدا أن يساعد كلُّ واحدٍ منهما الآخر.'
     ],
     quiz: [
-      {
-        q: "أين التقى سالم وراشد؟",
-        options: ["في السوق", "في الحديقة", "في المدرسة"],
-        correct: 1
-      },
-      {
-        q: "ماذا وعد الصديقان؟",
-        options: ["ألا يتكلما", "أن يساعد كل واحد الآخر", "أن يذهبا للبيت"],
-        correct: 1
-      }
+      { q: "أين التقى سالم وراشد؟", options: ["في السوق", "في الحديقة", "في المدرسة"], correct: 1 },
+      { q: "ماذا وعد الصديقان؟", options: ["ألا يتكلما", "أن يساعد كل واحد الآخر", "أن يذهبا للبيت"], correct: 1 }
     ]
   },
   {
@@ -79,16 +71,8 @@ const BOOKS = [
       'المعرفةُ نورٌ، والقارئُ يجد المتعة في الكتب.'
     ],
     quiz: [
-      {
-        q: "كيف وصف الكاتب السماء؟",
-        options: ["غائمة", "صافية", "ماطرة"],
-        correct: 1
-      },
-      {
-        q: "ماذا يجد القارئ في الكتب؟",
-        options: ["الملل", "المتعة", "الحيرة"],
-        correct: 1
-      }
+      { q: "كيف وصف الكاتب السماء؟", options: ["غائمة", "صافية", "ماطرة"], correct: 1 },
+      { q: "ماذا يجد القارئ في الكتب؟", options: ["الملل", "المتعة", "الحيرة"], correct: 1 }
     ]
   },
   {
@@ -101,11 +85,7 @@ const BOOKS = [
       'من يستمعْ بتأنٍّ يفهمْ العبرةَ ويشاركْ رفاقَه.'
     ],
     quiz: [
-      {
-        q: "لماذا اجتمع الأطفال حول الجد؟",
-        options: ["للعب", "ليستمعوا للحكايات", "للذهاب إلى المدرسة"],
-        correct: 1
-      }
+      { q: "لماذا اجتمع الأطفال حول الجد؟", options: ["للعب", "ليستمعوا للحكايات", "للذهاب إلى المدرسة"], correct: 1 }
     ]
   }
 ];
@@ -122,7 +102,6 @@ const readJSON = (k, def) => {
     return JSON.parse(raw);
   } catch (e) {
     console.warn('readJSON error for', k, e);
-    // إذا كانت القيمة تالفة نمسحها حتى لا تكرّر الخطأ
     localStorage.removeItem(k);
     return def;
   }
@@ -148,16 +127,8 @@ function setUnifiedAvatar(role){
 // ============================================
 // 🔔 إنشاء إشعار
 // ============================================
-async function createNotification({
-  studentId,
-  title,
-  message,
-  icon = "🔔",
-  type = "",
-  refId = ""
-}) {
+async function createNotification({ studentId, title, message, icon = "🔔", type = "", refId = "" }) {
   if (!window.db || !studentId) return;
-
   try {
     await setDoc(
       doc(collection(window.db, "notifications")),
@@ -188,10 +159,7 @@ function toast(msg) {
 // 📌 تحميل الطلاب من Firestore للصف الخاص بالمعلم
 export async function getTeacherStudents(classId) {
   const students = [];
-  const stuSnap = await getDocs(
-    collection(window.db, "classes", classId, "students")
-  );
-
+  const stuSnap = await getDocs(collection(window.db, "classes", classId, "students"));
   stuSnap.forEach(docSnap => {
     const d = docSnap.data();
     students.push({
@@ -201,7 +169,6 @@ export async function getTeacherStudents(classId) {
       className: d.className || ''
     });
   });
-
   return students;
 }
 
@@ -241,7 +208,7 @@ export async function syncBooks(classId) {
     return;
   }
 
-  // المعلم: مزامنة (إن احتجت لها)
+  // المعلم: مزامنة
   cloudBooks.forEach(b => {
     if (!BOOKS.some(x => x.id === b.id)) {
       BOOKS.push(b);
@@ -262,13 +229,8 @@ export async function syncBooks(classId) {
   console.log("🔄 تمت المزامنة بنجاح");
 }
 
-// 🔹 حفظ حل الطالب في Firestore (answers + perStudent في assignment)
-async function saveAssignmentAnswerToFirestore(
-  classId,
-  assignId,
-  studentId,
-  answerData
-) {
+// 🔹 حفظ حل الطالب في Firestore
+async function saveAssignmentAnswerToFirestore(classId, assignId, studentId, answerData) {
   if (!window.db) return;
 
   try {
@@ -284,16 +246,9 @@ async function saveAssignmentAnswerToFirestore(
 
     await setDoc(ansRef, answerData, { merge: true });
 
-    // تحديث الحقل في وثيقة الواجب نفسها (perStudent)
-    const assignRef = doc(
-      window.db,
-      "classes",
-      classId,
-      "assignments",
-      assignId
-    );
-
+    const assignRef = doc(window.db, "classes", classId, "assignments", assignId);
     const snap = await getDoc(assignRef);
+
     if (!snap.exists()) {
       console.error("❌ الواجب غير موجود!");
       return;
@@ -307,8 +262,8 @@ async function saveAssignmentAnswerToFirestore(
     };
 
     await setDoc(assignRef, data, { merge: true });
-
     console.log("✔ تم حفظ إجابة الطالب في Firestore");
+
   } catch (e) {
     console.error("❌ خطأ في حفظ الواجب في Firestore:", e);
     toast("⚠ خطأ في حفظ الإجابة");
@@ -337,7 +292,7 @@ async function loadBooksFromFirestore(classId) {
   return arr;
 }
 
-// 🔹 استبدال محتوى BOOKS بقصص السحابة عند الحاجة
+// 🔹 استبدال محتوى BOOKS بقصص السحابة
 async function syncBooksWithFirestore(classId) {
   const books = await loadBooksFromFirestore(classId);
   if (books && books.length > 0) {
@@ -346,11 +301,8 @@ async function syncBooksWithFirestore(classId) {
   }
 }
 
-// 🔹 تحميل إجابات الطالب من Firestore ودمجها في الواجبات المحلية
-export async function loadStudentAnswersFromFirestore(
-  classId,
-  studentId
-) {
+// 🔹 تحميل إجابات الطالب من Firestore
+export async function loadStudentAnswersFromFirestore(classId, studentId) {
   if (!window.db) return;
 
   const snap = await getDocs(
@@ -361,7 +313,6 @@ export async function loadStudentAnswersFromFirestore(
 
   for (const docA of snap.docs) {
     const assignId = docA.id;
-
     const ansRef = doc(
       window.db,
       "classes",
@@ -381,6 +332,7 @@ export async function loadStudentAnswersFromFirestore(
       if (idx !== -1) {
         localAssignments[idx].perStudent =
           localAssignments[idx].perStudent || {};
+
         localAssignments[idx].perStudent[studentId] = {
           ...localAssignments[idx].perStudent[studentId],
           ...data
@@ -392,9 +344,7 @@ export async function loadStudentAnswersFromFirestore(
   setAssignments(localAssignments);
 }
 
-// ===============================
-// 🔥 مزامنة الواجبات من Firestore إلى الذاكرة المحلية
-// ===============================
+// 🔥 مزامنة الواجبات من Firestore
 export async function syncAssignmentsFromFirestore(classId) {
   if (!window.db) return;
 
@@ -403,7 +353,6 @@ export async function syncAssignmentsFromFirestore(classId) {
   );
 
   const list = [];
-
   snap.forEach(docA => {
     const data = docA.data();
     list.push({
@@ -423,37 +372,10 @@ export async function syncAssignmentsFromFirestore(classId) {
   console.log("✔ تمت مزامنة الواجبات من Firestore");
 }
 
-// 🔹 إيجاد classId للطالب من Firestore
-async function findClassIdForStudent(studentEmail) {
-  if (!window.db || !studentEmail) return null;
-
-  try {
-    const classesSnap = await getDocs(collection(window.db, "classes"));
-
-    for (const c of classesSnap.docs) {
-      const stuRef = doc(
-        window.db,
-        "classes",
-        c.id,
-        "students",
-        studentEmail
-      );
-
-      const stuSnap = await getDoc(stuRef);
-      if (stuSnap.exists()) {
-        return c.id;
-      }
-    }
-  } catch (e) {
-    console.error("❌ خطأ في findClassIdForStudent:", e);
-  }
-
-  return null;
-}
-
 // ------------------------------------------------------
 // التنقل والتبويبات + لوحة الجانب الأيمن
 // ------------------------------------------------------
+
 function showOnly(selector) {
   $$('.view').forEach(v => v.classList.add('hidden'));
   $('#readerView')?.classList.add('hidden');
@@ -475,7 +397,6 @@ function showOnly(selector) {
 function buildNav(role) {
   const nav = document.querySelector('#navLinks');
   if (!nav) return;
-
   nav.innerHTML = '';
 
   const items = role === 'teacher'
@@ -522,50 +443,385 @@ function updateRail() {
 }
 
 function updateRailFromStats(s) {
-  const booksBox = document.getElementById("railBooks");
-  if (booksBox) booksBox.textContent = s.reads || 0;
+  $('#railBooks').textContent = s.reads || 0;
+  $('#railTime').textContent = (s.minutes || 0) + " د";
+  $('#railLastBook').textContent = s.lastBook || "—";
+  $('#railActs').textContent = s.activities || 0;
 
-  const timeBox = document.getElementById("railTime");
-  if (timeBox) timeBox.textContent = (s.minutes || 0) + " د";
-
-  const lastBox = document.getElementById("railLastBook");
-  if (lastBox) lastBox.textContent = s.lastBook || "—";
-
-  const actBox = document.getElementById("railActs");
-  if (actBox) actBox.textContent = s.activities || 0;
-
-  const avgBox = document.getElementById("railAvg");
-  if (avgBox) {
-    const avg = s.reads > 0 ? (s.minutes / s.reads).toFixed(1) : 0;
-    avgBox.textContent = avg + " د";
-  }
+  const avg = s.reads > 0 ? (s.minutes / s.reads).toFixed(1) : 0;
+  $('#railAvg').textContent = avg + " د";
 }
 
 // ------------------------------------------------------
+// Auth (تسجيل وإنشاء حساب + تسجيل خروج)
+// ------------------------------------------------------
+
+function registerUser(e) {
+  e.preventDefault();
+
+  const name = $('#regName').value.trim();
+  const email = $('#regEmail').value.trim().toLowerCase();
+  const pass = $('#regPass').value;
+  const role = $('#regRole').value;
+
+  const users = readJSON(LS.USERS, []);
+  if (users.some(u => u.email === email)) {
+    $('#regMsg').textContent = 'البريد مستخدم بالفعل.';
+    return;
+  }
+
+  const id = uid('U');
+  users.push({ id, name, email, pass, role, created: Date.now() });
+  writeJSON(LS.USERS, users);
+
+  if (role === 'teacher') {
+    const classes = readJSON(LS.CLASSES, []);
+    classes.push({ id: uid('C'), teacherId: id, name: 'فصلي', students: [] });
+    writeJSON(LS.CLASSES, classes);
+  }
+
+  $('#regMsg').style.color = '#16a34a';
+  $('#regMsg').textContent = 'تم إنشاء الحساب! يمكنك تسجيل الدخول الآن.';
+  $('#regForm').classList.add('hidden');
+  $('#loginForm').classList.remove('hidden');
+}
+
+function loginUser(e) {
+  e.preventDefault();
+
+  const email = $('#loginEmail').value.trim().toLowerCase();
+  const pass = $('#loginPass').value;
+
+  const users = readJSON(LS.USERS, []);
+  const user = users.find(u => u.email === email && u.pass === pass);
+
+  if (!user) {
+    $('#loginMsg').textContent = 'بيانات الدخول غير صحيحة.';
+    return;
+  }
+
+  writeJSON(LS.CURRENT, {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role
+  });
+
+  startApp();
+}
+
+function logoutUser() {
+  localStorage.removeItem(LS.CURRENT);
+  $('#authView').classList.remove('hidden');
+  $('#appShell').classList.add('hidden');
+  $('#readerView').classList.add('hidden');
+  $('#navLinks').innerHTML = '';
+}
+
+function confirmLogout() {
+  if (!confirm("هل تريد تسجيل الخروج؟")) return;
+  logoutUser();
+}
+
+// ------------------------------------------------------
+// Student: المستويات + المكتبة + الواجبات
+// ------------------------------------------------------
+
+function renderLevels() {
+  const w = $('#levelsGrid');
+  if (!w) return;
+  w.innerHTML = '';
+
+  LEVELS.forEach(L => {
+    const d = document.createElement('div');
+    d.className = 'level-card';
+    d.innerHTML = `<h3>${L.name}</h3><div class="badge warn">+ قصص</div>`;
+    d.onclick = () => {
+      $('#searchBooks').value = '';
+      renderBooks(L.id);
+      showOnly('#tab-library');
+    };
+    w.appendChild(d);
+  });
+}
+
+async function renderBooks(level = 'ALL') {
+  const g = $('#booksGrid');
+  if (!g) return;
+
+  g.innerHTML = '⏳ جاري تحميل القصص...';
+
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return;
+
+  let classId = current.classId || null;
+  if (!classId) {
+    g.innerHTML = "🚫 لا يوجد فصل مرتبط بك";
+    return;
+  }
+
+  const books = await loadBooksFromFirestore(classId);
+  const q = $('#searchBooks')?.value.trim() || '';
+
+  const filtered = books.filter(b =>
+    (level === 'ALL' || b.level === level) &&
+    (!q || b.title.includes(q))
+  );
+
+  g.innerHTML = '';
+  filtered.forEach(b => {
+    const c = document.createElement('div');
+    c.className = 'book-card';
+    c.innerHTML = `
+      <img src="${b.cover}">
+      <h4>${b.title}</h4>
+      <div class="badge ok">${b.level}</div>
+    `;
+    c.onclick = () => openReader(b);
+    g.appendChild(c);
+  });
+}
+
+// ------------------------------------------------------
+// Teacher: إدارة الطلاب والواجبات
+// ------------------------------------------------------
+
+function getTeacherClass(teacherId) {
+  const current = readJSON(LS.CURRENT, null);
+  const classes = getClasses();
+  let c = null;
+
+  if (current && current.classId) {
+    c = classes.find(x => x.id === current.classId);
+    if (!c) {
+      c = { id: current.classId, teacherId, name: 'فصلي', students: [] };
+      classes.push(c);
+      setClasses(classes);
+    }
+  } else {
+    c = classes.find(x => x.teacherId === teacherId);
+    if (!c) {
+      c = { id: uid('C'), teacherId, name: 'فصلي', students: [] };
+      classes.push(c);
+      setClasses(classes);
+    }
+  }
+  return c;
+}
+
+async function renderTeacherStudents() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || current.role !== 'teacher') return;
+
+  const rows = $('#studentsRows');
+  if (!rows) return;
+
+  rows.innerHTML = '⏳ جاري تحميل الطلاب...';
+
+  const classId = current.classId;
+  if (!classId || !window.db) return;
+
+  const snap = await getDocs(
+    collection(window.db, "classes", classId, "students")
+  );
+
+  rows.innerHTML = '';
+  if (snap.empty) {
+    rows.innerHTML = '<div class="row">لا يوجد طلاب بعد.</div>';
+    return;
+  }
+
+  snap.forEach(d => {
+    const st = d.data();
+    const r = document.createElement('div');
+    r.className = 'row';
+    r.innerHTML = `
+      <div>${st.name || st.email}</div>
+      <div>${st.email}</div>
+      <div>${st.className || '—'}</div>
+    `;
+    rows.appendChild(r);
+  });
+}
+
+async function renderTeacherView() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || current.role !== 'teacher') return;
+
+  const classId = current.classId;
+  if (!classId || !window.db) return;
+
+  const rows = $('#teacherRows');
+  if (!rows) return;
+
+  rows.innerHTML = '⏳ جاري التحميل...';
+
+  const assSnap = await getDocs(
+    collection(window.db, "classes", classId, "assignments")
+  );
+
+  rows.innerHTML = '';
+  assSnap.forEach(docSnap => {
+    const a = docSnap.data();
+    const r = document.createElement('div');
+    r.className = 'row';
+    r.innerHTML = `
+      <div>${a.title}</div>
+      <div>${a.level}</div>
+      <div>${a.due || '—'}</div>
+    `;
+    rows.appendChild(r);
+  });
+}
+
+// ------------------------------------------------------
+// Reader
+// ------------------------------------------------------
+
+function openReader(book) {
+  currentBook = book;
+  readingStartAt = Date.now();
+  hasInteractedWithStory = false;
+
+  $('#appShell').classList.add('hidden');
+  $('#readerView').classList.remove('hidden');
+
+  const host = document.getElementById("storyContent");
+  if (!host) return;
+
+  host.innerHTML = '';
+  book.text.forEach(p => {
+    const para = document.createElement("p");
+    para.innerHTML = p.split(' ')
+      .map(w => `<span class="word">${w}</span>`)
+      .join(' ');
+
+    para.querySelectorAll('.word').forEach(span => {
+      span.onclick = () => {
+        span.classList.toggle('word-selected');
+        hasInteractedWithStory = true;
+      };
+    });
+
+    host.appendChild(para);
+  });
+}
+
+function backToApp() {
+  $('#readerView').classList.add('hidden');
+  $('#appShell').classList.remove('hidden');
+
+  if (readingStartAt && currentBook) {
+    const seconds = Math.round((Date.now() - readingStartAt) / 1000);
+    if (hasInteractedWithStory && seconds >= 30) {
+      updateReadStats(currentBook.id, Math.max(1, Math.round(seconds / 60)));
+    }
+  }
+
+  readingStartAt = null;
+  hasInteractedWithStory = false;
+}
+
+window.openReader = openReader;
+
+// ------------------------------------------------------
+// تسجيل الصوت
+// ------------------------------------------------------
+
+let mediaRecorder, chunks = [], timerInt, startTime, audioBlob = null;
+
+async function startRecording() {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  mediaRecorder = new MediaRecorder(stream);
+  chunks = [];
+
+  mediaRecorder.ondataavailable = e => chunks.push(e.data);
+  mediaRecorder.onstop = () => {
+    audioBlob = new Blob(chunks, { type: 'audio/ogg' });
+    $('#playRec').classList.remove('hidden');
+  };
+
+  mediaRecorder.start();
+  startTime = Date.now();
+}
+
+function stopRecording() {
+  if (mediaRecorder) mediaRecorder.stop();
+  clearInterval(timerInt);
+}
+
+function playRecording() {
+  if (!audioBlob) return;
+  new Audio(URL.createObjectURL(audioBlob)).play();
+}
+
+// ------------------------------------------------------
+// Notifications
+// ------------------------------------------------------
+
+function listenToNotifications() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || !window.db) return;
+
+  const qy = query(
+    collection(window.db, "notifications"),
+    where("studentId", "==", current.email)
+  );
+
+  onSnapshot(qy, snap => {
+    const list = $('#notifyList');
+    const count = $('#notifyCount');
+    if (!list || !count) return;
+
+    list.innerHTML = '';
+    let unread = 0;
+
+    snap.forEach(docSnap => {
+      const n = docSnap.data();
+      if (!n.isRead) unread++;
+
+      const item = document.createElement('div');
+      item.className = 'notify-item' + (!n.isRead ? ' unread' : '');
+      item.innerHTML = `<b>${n.title}</b><div>${n.message}</div>`;
+      list.appendChild(item);
+    });
+
+    count.textContent = unread;
+    count.classList.toggle('hidden', unread === 0);
+  });
+}
+
+async function markNotificationsAsRead() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || !window.db) return;
+
+  const qy = query(
+    collection(window.db, "notifications"),
+    where("studentId", "==", current.email),
+    where("isRead", "==", false)
+  );
+
+  const snap = await getDocs(qy);
+  snap.forEach(d =>
+    updateDoc(doc(window.db, "notifications", d.id), {
+      isRead: true,
+      readAt: Date.now()
+    })
+  );
+}
+// ------------------------------------------------------
 // Boot
 // ------------------------------------------------------
-async function startApp() {
-  let current = JSON.parse(localStorage.getItem("arp.current") || "null");
-  console.log("DEBUG CURRENT =", current);
 
+async function startApp() {
+  let current = readJSON(LS.CURRENT, null);
   if (!current || !current.email) {
-    localStorage.removeItem("arp.current");
     $('#authView').classList.remove('hidden');
     $('#appShell').classList.add('hidden');
     return;
   }
 
-  if (current.role === 'teacher') {
-    $$('.only-teacher').forEach(btn => btn.style.display = 'inline-block');
-  } else {
-    $$('.only-teacher').forEach(btn => btn.style.display = 'none');
-  }
-
-  $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
-  $('#userName').textContent = current.name;
-  $('#userRoleLabel').textContent =
-    current.role === 'teacher' ? 'معلم' : 'طالب';
-
+  $('#helloName').textContent = 'مرحبًا ' + current.name;
   setUnifiedAvatar(current.role);
 
   $('#authView').classList.add('hidden');
@@ -577,70 +833,23 @@ async function startApp() {
   renderBooks('ALL');
   renderStudentAssignments('required');
 
-  if (current.role === 'student') {
-    let classId = current.classId || null;
-
-    if (!classId) {
-      classId = await findClassIdForStudent(current.email || current.id);
-    }
-
-    if (classId) {
-      writeJSON(LS.CURRENT, { ...current, classId });
-      syncAssignmentsFromFirestore(classId);
-      loadStudentAnswersFromFirestore(classId, current.id);
-      syncBooksWithFirestore(classId);
-    } else {
-      console.warn("⚠️ لم يتم العثور على فصل مرتبط بهذا الطالب.");
-    }
-
-    listenToReadingStats();
-  }
-
   if (current.role === 'teacher') {
-    let classId = current.classId || null;
-
-    if (!classId) {
-      const c = getTeacherClass(current.id);
-      if (c) classId = c.id;
-    }
-
-    if (classId) {
-      await syncAssignmentsFromFirestore(classId);
-      await syncBooksWithFirestore(classId);
-    }
+    await renderTeacherStudents();
+    await renderTeacherView();
   }
-
-  await renderTeacherStudents();
-  await renderTeacherView();
 
   listenToNotifications();
 }
 
 window.startApp = startApp;
 
-// ------------------------------------------------------
-// DOM Ready
-// ------------------------------------------------------
+// أحداث عامة
 document.addEventListener('DOMContentLoaded', () => {
-  $$('[data-auth]').forEach(btn => btn.onclick = () => {
-    $$('[data-auth]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    if (btn.dataset.auth === 'login') {
-      $('#loginForm').classList.remove('hidden');
-      $('#regForm').classList.add('hidden');
-    } else {
-      $('#regForm').classList.remove('hidden');
-      $('#loginForm').classList.add('hidden');
-    }
-  });
-
-  $('#loginForm').addEventListener('submit', loginUser);
-  $('#regForm').addEventListener('submit', registerUser);
-
-  $('#searchBooks')?.addEventListener('input', () => renderBooks('ALL'));
+  $('#loginForm')?.addEventListener('submit', loginUser);
+  $('#regForm')?.addEventListener('submit', registerUser);
 
   $('#logoutBtn')?.addEventListener('click', confirmLogout);
+  $('#backToApp')?.addEventListener('click', backToApp);
 
   startApp();
 });
