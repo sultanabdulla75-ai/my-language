@@ -2291,8 +2291,10 @@ function listenToNotifications() {
 
 const q = query(
   collection(window.db, "notifications"),
-  where("studentId", "==", current.email)
+  where("studentId", "==", current.email),
+  orderBy("createdAt", "desc")
 );
+
 
 
   onSnapshot(q, snap => {
@@ -2442,7 +2444,9 @@ setUnifiedAvatar(current.role);
   }
 
 // بعد buildNav و updateRail
-listenToNotifications();
+// 🔔 تشغيل الإشعارات (للطلاب فقط)
+if (current.role === "student") {
+  listenToNotifications();
 }
 
 
