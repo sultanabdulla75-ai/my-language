@@ -2445,6 +2445,8 @@ setUnifiedAvatar(current.role);
     listenToNotifications(); // ✅ هنا فقط
   }
 
+  }   // ← هنا تنتهي الدالة
+
 // ⭐⭐⭐ مهم: تعريف startApp على window ⭐⭐⭐
 window.startApp = startApp;
 
