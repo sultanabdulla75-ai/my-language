@@ -667,6 +667,24 @@ async function findClassIdForStudent(studentEmail) {
   return null;
 }
 
+// 🔹 إيجاد classId للمعلم من Firestore
+async function findClassIdForTeacher(teacherId) {
+  if (!window.db || !teacherId) return null;
+
+  const snap = await getDocs(collection(window.db, "classes"));
+
+  for (const d of snap.docs) {
+    const data = d.data();
+    if (data.teacherId === teacherId) {
+      return d.id;
+    }
+  }
+  return null;
+}
+
+
+
+
 // ------------------------------------------------------
 // التنقل والتبويبات + لوحة الجانب الأيمن
 // ------------------------------------------------------
@@ -2407,20 +2425,27 @@ setUnifiedAvatar(current.role);
 }
 
 
-  // 7 مكرر) مزامنة الواجبات للمعلم أيضًا من Firestore
-  if (current.role === 'teacher') {
-    let classId = current.classId || null;
+// 7 مكرر) مزامنة الواجبات للمعلم أيضًا من Firestore
+if (current.role === 'teacher') {
+  let classId = current.classId || null;
 
-    if (!classId) {
-      const c = getTeacherClass(current.id);
-      if (c) classId = c.id;
-    }
-
-    if (classId) {
-      await syncAssignmentsFromFirestore(classId);
-      await syncBooksWithFirestore(classId);
-    }
+  // 🔥 جلب classId الحقيقي من Firestore
+  if (!classId) {
+    classId = await findClassIdForTeacher(current.id);
   }
+
+  if (!classId) {
+    console.warn("⚠ لا يوجد فصل مرتبط بهذا المعلم في Firestore");
+    return;
+  }
+
+  // ⭐ حفظ classId في الجلسة
+  writeJSON(LS.CURRENT, { ...current, classId });
+
+  await syncAssignmentsFromFirestore(classId);
+  await syncBooksWithFirestore(classId);
+}
+
 
   // 8) بناء أجزاء الصفحة
   buildNav(current.role);
