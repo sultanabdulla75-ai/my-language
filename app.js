@@ -486,6 +486,55 @@ export async function getTeacherStudents(classId) {
   return students;
 }
 
+// ============================================
+// ☁️ إحصاءات لوحة المعلم (من Firestore فقط)
+// ============================================
+async function loadTeacherStatsFromFirestore() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || current.role !== "teacher" || !window.db || !current.classId) {
+    return { students: 0, assignments: 0, done: 0 };
+  }
+
+  try {
+    const classId = current.classId;
+
+    // عدد الطلاب
+    const stuSnap = await getDocs(
+      collection(window.db, "classes", classId, "students")
+    );
+
+    // الواجبات
+    const asgSnap = await getDocs(
+      collection(window.db, "classes", classId, "assignments")
+    );
+
+    let totalDone = 0;
+
+    asgSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      const per = data.perStudent || {};
+      Object.values(per).forEach(ps => {
+        if (ps && (ps.status === "done" || ps.progress === 100)) {
+          totalDone++;
+        }
+      });
+    });
+
+    return {
+      students: stuSnap.size,
+      assignments: asgSnap.size,
+      done: totalDone
+    };
+
+  } catch (e) {
+    console.error("⚠ فشل تحميل إحصاءات المعلم:", e);
+    return { students: 0, assignments: 0, done: 0 };
+  }
+}
+
+
+
+
 // 🔹 مزامنة القصص (محلي ↔ سحابة)
 export async function syncBooks(classId) {
   if (!classId) {
@@ -1756,57 +1805,28 @@ async function renderTeacherView() {
 }
 
 
-// ------------------------------------------------------
-// لوحة المعلم (إحصاءات الطلاب / الواجبات / الإنجاز)
-// ------------------------------------------------------
+// ============================================
+// 📊 لوحة المعلم (Firestore فقط)
+// ============================================
 async function renderTeacherDashboard() {
-  const current = readJSON(LS.CURRENT, null);
-
   const elStu  = document.getElementById('tc-stu');
   const elAsg  = document.getElementById('tc-asg');
   const elDone = document.getElementById('tc-done');
 
   if (!elStu || !elAsg || !elDone) return;
 
-  elStu.textContent  = '0';
-  elAsg.textContent  = '0';
-  elDone.textContent = '0';
+  // حالة تحميل
+  elStu.textContent  = '…';
+  elAsg.textContent  = '…';
+  elDone.textContent = '…';
 
-  if (!current || current.role !== 'teacher' || !window.db || !current.classId) return;
+  const stats = await loadTeacherStatsFromFirestore();
 
-  try {
-    // عدد الطلاب
-    const stuSnap = await getDocs(
-      collection(window.db, "classes", current.classId, "students")
-    );
-    let totalStudents = 0;
-    stuSnap.forEach(() => totalStudents++);
-
-    // الواجبات والمنجز
-    const asgSnap = await getDocs(
-      collection(window.db, "classes", current.classId, "assignments")
-    );
-    let totalAssignments = 0;
-    let totalDone = 0;
-
-    asgSnap.forEach(docSnap => {
-      totalAssignments++;
-      const data = docSnap.data() || {};
-      const per  = data.perStudent || {};
-      Object.values(per).forEach(ps => {
-        if (!ps) return;
-        if (ps.status === 'done' || ps.progress === 100) totalDone++;
-      });
-    });
-
-    elStu.textContent  = String(totalStudents);
-    elAsg.textContent  = String(totalAssignments);
-    elDone.textContent = String(totalDone);
-
-  } catch (err) {
-    console.error("⚠ خطأ في تحميل إحصاءات لوحة المعلم:", err);
-  }
+  elStu.textContent  = stats.students;
+  elAsg.textContent  = stats.assignments;
+  elDone.textContent = stats.done;
 }
+
 
 
 async function openReviewModal(a, sid, ps, stu) {
