@@ -2441,6 +2441,7 @@ if (current.role === 'teacher') {
 
   // ⭐ حفظ classId في الجلسة
   writeJSON(LS.CURRENT, { ...current, classId });
+current.classId = classId;
 
   await syncAssignmentsFromFirestore(classId);
   await syncBooksWithFirestore(classId);
