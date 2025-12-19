@@ -30,6 +30,15 @@ import {
 
 // ملاحظة: سنستخدم window.db الذي تم ضبطه في index.html
 
+
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+
+
+
 // ===== Storage keys =====
 const LS = {
   USERS: 'arp.users',
@@ -1114,13 +1123,8 @@ async function renderBooks(level = 'ALL') {
   const current = readJSON(LS.CURRENT, null);
   if (!current) return;
 
-  let classId = null;
-  if (current.role === 'teacher') {
-    const c = getTeacherClass(current.id);
-    classId = c ? c.id : current.classId;
-  } else {
-    classId = current.classId || null;
-  }
+ // ✅ المصدر الوحيد للفصل
+  const classId = current.classId || null;
 
   if (!classId) {
     g.innerHTML = "<p>🚫 لا يوجد فصل مرتبط بك</p>";
