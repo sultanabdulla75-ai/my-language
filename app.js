@@ -2436,19 +2436,14 @@ setUnifiedAvatar(current.role);
   renderStaticNoorBadges(); // ← أضفه هنا
 
 // ============================================
+   // ============================================
   // 🎯 التحدي اليومي (للطلاب فقط)
   // ============================================
   if (current.role === "student") {
-    loadDailyChallenge();     // تحميل / إعادة تعيين تحدي اليوم
-    renderAchievements();     // عرض جدار الإنجازات
+    loadDailyChallenge();
+    renderAchievements();
+    listenToNotifications(); // ✅ هنا فقط
   }
-
-// بعد buildNav و updateRail
-// 🔔 تشغيل الإشعارات (للطلاب فقط)
-if (current.role === "student") {
-  listenToNotifications();
-}
-
 
 // ⭐⭐⭐ مهم: تعريف startApp على window ⭐⭐⭐
 window.startApp = startApp;
