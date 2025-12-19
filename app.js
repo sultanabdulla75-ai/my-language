@@ -1464,7 +1464,37 @@ async function renderTeacherStudents() {
 
   rows.innerHTML = '⏳ جاري تحميل الطلاب...';
 
-  const classId = current.classId;
+let classId = current.classId;
+
+// 🔥 في حال لم يكن classId محفوظًا بعد
+if (!classId && window.db) {
+  try {
+    const classesSnap = await getDocs(collection(window.db, "classes"));
+
+    classesSnap.forEach(docSnap => {
+      const data = docSnap.data();
+
+      // نربط الصف بالمعلم (UID أو البريد)
+      if (
+        data.teacherId === current.id ||
+        data.teacherEmail === current.email
+      ) {
+        classId = docSnap.id;
+      }
+    });
+
+    // حفظه في الجلسة حتى لا نبحث مرة أخرى
+    if (classId) {
+      writeJSON(LS.CURRENT, { ...current, classId });
+      current.classId = classId;
+    }
+
+  } catch (e) {
+    console.error("❌ فشل جلب classId للمعلم:", e);
+  }
+}
+
+
   if (!classId) {
     rows.innerHTML = `
       <div class="row">
@@ -1595,6 +1625,10 @@ async function renderTeacherStudents() {
 
       rows.appendChild(r);
     });
+
+// ✅✅✅ أضف هذا السطر هنا بالضبط
+    console.log("✔ تم تحميل الطلاب:", stuSnap.size);
+
 
   } catch (e) {
     console.error(e);
