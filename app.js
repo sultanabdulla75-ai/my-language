@@ -1038,12 +1038,62 @@ async function loginWithGoogle() {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    // 🔥 الهوية الموحدة مع Firestore
+    const email = user.email;
+    let role = "student";
+    let classId = null;
+
+    // ============================
+    // 1️⃣ هل هو معلم؟
+    // ============================
+    const classesSnap = await getDocs(collection(window.db, "classes"));
+
+    for (const c of classesSnap.docs) {
+      const data = c.data();
+
+      // شرط المعلم (بريد أو UID)
+      if (
+        data.teacherEmail === email ||
+        data.teacherId === user.uid
+      ) {
+        role = "teacher";
+        classId = c.id;
+        break;
+      }
+    }
+
+    // ============================
+    // 2️⃣ إن لم يكن معلمًا → طالب
+    // ============================
+    if (role === "student") {
+      for (const c of classesSnap.docs) {
+        const stuRef = doc(
+          window.db,
+          "classes", c.id,
+          "students", email
+        );
+        const stuSnap = await getDoc(stuRef);
+
+        if (stuSnap.exists()) {
+          classId = c.id;
+          break;
+        }
+      }
+    }
+
+    if (!classId) {
+      alert("⚠ هذا الحساب غير مرتبط بأي فصل");
+      return;
+    }
+
+    // ============================
+    // 3️⃣ حفظ الجلسة
+    // ============================
     writeJSON(LS.CURRENT, {
-      id: user.uid,               // Firebase UID (مهم جدًا)
-      name: user.displayName || "معلم",
-      email: user.email,
-      role: "teacher"
+      id: role === "teacher" ? user.uid : email,
+      name: user.displayName || "مستخدم",
+      email,
+      role,
+      classId
     });
 
     toast("✔ تم تسجيل الدخول بنجاح");
