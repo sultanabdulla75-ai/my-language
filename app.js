@@ -162,6 +162,35 @@ const uid = (p = 'U') => p + Math.random().toString(36).slice(2, 8);
 
 
 // ============================================
+// ☁️ تحميل إحصائيات الطالب من Firestore
+// ============================================
+async function loadStudentStatsFromFirestore() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || current.role !== 'student' || !window.db) return;
+
+  try {
+    const ref = doc(window.db, "readingStats", current.email);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+
+    const s = snap.data();
+
+    writeJSON(LS.STATS(current.id), {
+      reads: s.reads || 0,
+      minutes: s.minutes || 0,
+      lastBook: s.lastBook || '—',
+      activities: s.activities || 0
+    });
+
+    console.log("☁️ تم تحميل إحصائيات الطالب من السحابة");
+
+  } catch (e) {
+    console.error("⚠ فشل تحميل إحصائيات الطالب:", e);
+  }
+}
+
+
+// ============================================
 // 🎯 Daily Challenge Logic
 // ============================================
 
@@ -2364,6 +2393,12 @@ if (!current || !current.email) {
   return;
 }
 
+
+// ✅ هنا بالضبط
+if (current.role === 'student') {
+  await loadStudentStatsFromFirestore();
+}
+
   // 3) إصلاح الواجبات القديمة (يعمل فقط عند وجود مستخدم)
 // autoFixAssignments();
 
@@ -2625,9 +2660,7 @@ document.getElementById("notifyBtn")?.addEventListener("click", (e) => {
 document.addEventListener("click", () => {
   document.getElementById("notifyPanel")?.classList.add("hidden");
 });
-
-
-  
+ 
 
  // ============================================
 // زر الخروج
