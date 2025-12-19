@@ -996,51 +996,59 @@ function renderAvgProgressChart() {
 }
 */
 // ------------------------------------------------------
-// Auth (تسجيل وإنشاء حساب + تسجيل خروج) — محلي للتجربة
+// Auth (تسجيل وإنشاء حساب + تسجيل خروج) — 
 // ------------------------------------------------------
 
+// ------------------------------------------------------
+// ❌ تعطيل التسجيل المحلي (المعلم والطالب)
+// ------------------------------------------------------
 function registerUser(e) {
   e.preventDefault();
-  const name = $('#regName').value.trim();
-  const email = $('#regEmail').value.trim().toLowerCase();
-  const pass = $('#regPass').value;
-  const role = $('#regRole').value;
-  const users = readJSON(LS.USERS, []);
-  if (users.some(u => u.email === email)) { $('#regMsg').textContent = 'البريد مستخدم بالفعل.'; return; }
-  const id = uid('U');
-  users.push({ id, name, email, pass, role, created: Date.now() });
-  writeJSON(LS.USERS, users);
-  if (role === 'teacher') {
-    const classes = readJSON(LS.CLASSES, []);
-    classes.push({ id: uid('C'), teacherId: id, name: 'فصلي', students: [] });
-    writeJSON(LS.CLASSES, classes);
-  }
-  $('#regMsg').style.color = '#16a34a';
-  $('#regMsg').textContent = 'تم إنشاء الحساب! يمكنك تسجيل الدخول الآن.';
-  $$('[data-auth]').forEach(p => p.classList.remove('active'));
-  $$('[data-auth]')[0].classList.add('active');
-  $('#regForm').classList.add('hidden');
-  $('#loginForm').classList.remove('hidden');
+
+  toast("❌ تم تعطيل التسجيل المحلي. يرجى استخدام تسجيل الدخول عبر Google.");
+  return;
 }
 
+
+// ------------------------------------------------------
+// ❌ تعطيل تسجيل الدخول المحلي
+// ------------------------------------------------------
 function loginUser(e) {
   e.preventDefault();
-  const email = $('#loginEmail').value.trim().toLowerCase();
-  const pass = $('#loginPass').value;
-  const users = readJSON(LS.USERS, []);
-  const user = users.find(u => u.email === email && u.pass === pass);
-  if (!user) { $('#loginMsg').textContent = 'بيانات الدخول غير صحيحة.'; return; }
-  writeJSON(LS.CURRENT, { id: user.id, name: user.name, email: user.email, role: user.role });
 
-  // ⭐⭐ إضافة الطالب إلى فصل المعلم تلقائيًا (محلي للتجربة فقط) ⭐⭐
-  const classes = readJSON(LS.CLASSES, []);
-  let classObj = classes[0]; // نفترض معلم واحد = فصل واحد
-  if (classObj && !classObj.students.includes(user.id)) {
-    classObj.students.push(user.id);
-    writeJSON(LS.CLASSES, classes);
-  }
-  startApp();
+  toast("❌ تم تعطيل تسجيل الدخول المحلي. استخدم تسجيل الدخول عبر Google.");
+  return;
 }
+
+
+// ------------------------------------------------------
+// ✅ تسجيل الدخول عبر Google (المسار الرسمي)
+// ------------------------------------------------------
+async function loginWithGoogle() {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+
+    // 🔥 الهوية الموحدة مع Firestore
+    writeJSON(LS.CURRENT, {
+      id: user.uid,               // Firebase UID (مهم جدًا)
+      name: user.displayName || "معلم",
+      email: user.email,
+      role: "teacher"
+    });
+
+    toast("✔ تم تسجيل الدخول بنجاح");
+    startApp();
+
+  } catch (e) {
+    console.error("Google Login Error:", e);
+    toast("⚠ فشل تسجيل الدخول عبر Google");
+  }
+}
+
+
+
+
 
 function logoutUser() {
   localStorage.removeItem(LS.CURRENT);
@@ -2560,23 +2568,8 @@ document.addEventListener('click', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // تبويب auth
-  $$('[data-auth]').forEach(btn => btn.onclick = () => {
-    $$('[data-auth]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    if (btn.dataset.auth === 'login') {
-      $('#loginForm').classList.remove('hidden');
-      $('#regForm').classList.add('hidden');
-    } else {
-      $('#regForm').classList.remove('hidden');
-      $('#loginForm').classList.add('hidden');
-    }
-  });
-
-
-  $('#loginForm').addEventListener('submit', loginUser);
-  $('#regForm').addEventListener('submit', registerUser);
+document.getElementById("googleLogin")
+  ?.addEventListener("click", loginWithGoogle);
 
   $('#searchBooks')?.addEventListener('input', () => renderBooks('ALL'));
 
@@ -2586,6 +2579,7 @@ document.addEventListener('DOMContentLoaded', () => {
     p.classList.add('active');
     renderStudentAssignments(p.dataset.filter);
   });
+
 
   // أزرار إدارة المنصة
   document.addEventListener('click', (e) => {
@@ -2697,7 +2691,6 @@ document.getElementById("notifyBtn")?.addEventListener("click", (e) => {
 document.addEventListener("click", () => {
   document.getElementById("notifyPanel")?.classList.add("hidden");
 });
-
 
  // ============================================
 // زر الخروج
