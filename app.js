@@ -2422,7 +2422,7 @@ setUnifiedAvatar(current.role);
   } else {
     console.warn("⚠️ لم يتم العثور على فصل مرتبط بهذا الطالب.");
   }
-}
+    }
 
 
 // 7 مكرر) مزامنة الواجبات للمعلم أيضًا من Firestore
@@ -2445,7 +2445,6 @@ if (current.role === 'teacher') {
   await syncAssignmentsFromFirestore(classId);
   await syncBooksWithFirestore(classId);
 }
-
 
   // 8) بناء أجزاء الصفحة
   buildNav(current.role);
