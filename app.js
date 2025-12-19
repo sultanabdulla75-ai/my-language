@@ -781,7 +781,6 @@ function showOnly(selector) {
 
   if (selector === '#tab-teacher') {
     renderTeacherDashboard();
-    renderAvgProgressChart();
   }
 }
 
@@ -904,6 +903,17 @@ function setClasses(x) { writeJSON(LS.CLASSES, x); }
 function getUsers() { return readJSON(LS.USERS, []); }
 function setUsers(x) { writeJSON(LS.USERS, x); }
 
+// =====================================================
+// ❌ تم تعطيل حساب متوسط الإنجاز (محلي)
+// =====================================================
+// السبب:
+// - يعتمد على LocalStorage (LS.STATS)
+// - يعتمد على getTeacherClass المحلي
+// - لوحة المعلم الآن تعتمد 100٪ على Firestore
+// - سيُعاد بناؤه لاحقًا بنسخة Firestore صافية
+// =====================================================
+
+/*
 function computeAverageProgress() {
   const current = readJSON(LS.CURRENT, null);
   if (!current || current.role !== 'teacher') return 0;
@@ -943,7 +953,15 @@ function computeAverageProgress() {
   if (count === 0) return 0;
   return Math.round((totalRead + totalQuiz + totalAssign) / (count * 3));
 }
+*/
 
+// =====================================================
+// ❌ تم تعطيل مخطط متوسط الإنجاز
+// =====================================================
+// يعتمد على computeAverageProgress (المعطّلة أعلاه)
+// =====================================================
+
+/*
 let avgChart = null;
 
 function renderAvgProgressChart() {
@@ -976,7 +994,7 @@ function renderAvgProgressChart() {
     }
   });
 }
-
+*/
 // ------------------------------------------------------
 // Auth (تسجيل وإنشاء حساب + تسجيل خروج) — محلي للتجربة
 // ------------------------------------------------------
@@ -2635,7 +2653,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     addActivity();
-    renderAvgProgressChart();
 
     $('#modalQuiz').classList.add('hidden');
     toast("✓ تم إنهاء النشاط. نتيجتك: " + score + "/" + currentBook.quiz.length);
@@ -2680,7 +2697,7 @@ document.getElementById("notifyBtn")?.addEventListener("click", (e) => {
 document.addEventListener("click", () => {
   document.getElementById("notifyPanel")?.classList.add("hidden");
 });
- 
+
 
  // ============================================
 // زر الخروج
