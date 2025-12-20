@@ -468,13 +468,13 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
 .notify-panel {
   position: absolute;
   top: 140%;
-  left: 0;
+  inset-inline-end: 0;   /* ✔ RTL + LTR */
   width: 280px;
   background: #ffffff;
   border-radius: 14px;
   box-shadow: 0 12px 30px rgba(0,0,0,.15);
   overflow: hidden;
-  z-index: 999;
+  z-index: 9999;
 }
 
 /* رأس اللوحة */
@@ -551,10 +551,7 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
   font-size: .85rem;
 }
 
-/* إخفاء */
-.hidden {
-  display: none !important;
-}
+
 
 @media (max-width: 640px) {
   .notify-panel {
