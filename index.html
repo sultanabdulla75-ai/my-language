@@ -231,11 +231,19 @@
         <div class="cards-3">
           <div class="card stat"><h4>الطلاب</h4><div class="big" id="tc-stu">0</div></div>
           <div class="card stat"><h4>الواجبات</h4><div class="big" id="tc-asg">0</div></div>
-          <div class="card stat"><h4>المنجزة</h4><div class="big" id="tc-done">0</div></div>
+          <div class="card stat"><h4>المنجزة</h4><div class="big" id="statCompleted">0</div>
+</div>
         </div>
 
         <div class="card donut-card">
           <h4 style="text-align:center;margin-bottom:10px">متوسط إنجاز الطلبة</h4>
+
+
+ <!-- 🔥 هذا هو السطر الجديد -->
+  <div class="big" style="text-align:center;margin-bottom:6px">
+    <span id="statAvgProgress">0%</span>
+  </div>
+
           <canvas id="chartAvgProgress" height="180"></canvas>
         </div>
       </section>
