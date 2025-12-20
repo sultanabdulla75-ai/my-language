@@ -540,9 +540,13 @@ export async function getTeacherStudents(classId) {
 // ============================================
 // ☁️ إحصاءات لوحة المعلم (من Firestore فقط)
 // ============================================
+// ☁️ إحصاءات لوحة المعلم (Firestore فقط)
 async function loadTeacherStatsFromFirestore() {
   const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== "teacher" || !current.classId) return null;
+  if (!current || current.role !== "teacher" || !current.classId || !window.db) {
+    console.warn("⚠️ Teacher stats: missing context");
+    return null;
+  }
 
   const classId = current.classId;
 
@@ -558,27 +562,36 @@ async function loadTeacherStatsFromFirestore() {
   );
   const assignmentsCount = assignmentsSnap.size;
 
-  // 3️⃣ submissions (المنجزة + المتوسط)
-  const subsSnap = await getDocs(
-    query(
-      collection(window.db, "classes", classId, "submissions"),
-      where("countInStats", "==", true)
-    )
-  );
-
+  // 3️⃣ حساب الإنجاز والمتوسط
   let done = 0;
   let totalProgress = 0;
+  let count = 0;
 
-  subsSnap.forEach(doc => {
-    const d = doc.data();
-    if (d.status === "submitted") done++;
-    totalProgress += Number(d.progress || 0);
+  assignmentsSnap.forEach(docSnap => {
+    const a = docSnap.data();
+    const perStudent = a.perStudent || {};
+
+    Object.values(perStudent).forEach(ps => {
+      // ✅ المنجزة فعليًا
+      if (ps.status === "done") {
+        done++;
+      }
+
+      if (typeof ps.progress === "number") {
+        totalProgress += ps.progress;
+        count++;
+      }
+    });
   });
 
-  const avg =
-    subsSnap.size > 0
-      ? Math.round(totalProgress / subsSnap.size)
-      : 0;
+  const avg = count ? Math.round(totalProgress / count) : 0;
+
+  console.log("📊 Teacher Stats", {
+    students: studentsCount,
+    assignments: assignmentsCount,
+    done,
+    avg
+  });
 
   return {
     students: studentsCount,
@@ -587,7 +600,6 @@ async function loadTeacherStatsFromFirestore() {
     avg
   };
 }
-
 
 // 🔹 مزامنة القصص (محلي ↔ سحابة)
 export async function syncBooks(classId) {
@@ -1979,10 +1991,12 @@ async function renderTeacherView() {
 // ============================================
 // 📊 لوحة المعلم (Firestore فقط)
 // ============================================
+// 📊 لوحة المعلم (Firestore فقط)
+// ============================================
 async function renderTeacherDashboard() {
   const elStu  = document.getElementById('tc-stu');
   const elAsg  = document.getElementById('tc-asg');
-  const elDone = document.getElementById('tc-done');
+  const elDone = document.getElementById('statCompleted');
 
   if (!elStu || !elAsg || !elDone) return;
 
@@ -1991,14 +2005,29 @@ async function renderTeacherDashboard() {
   elAsg.textContent  = '…';
   elDone.textContent = '…';
 
-  const stats = await loadTeacherStatsFromFirestore();
+  let stats;
+  try {
+    stats = await loadTeacherStatsFromFirestore();
+  } catch (err) {
+    console.error('🔥 Firestore error in teacher stats:', err);
+    elStu.textContent  = '0';
+    elAsg.textContent  = '0';
+    elDone.textContent = '0';
+    return;
+  }
+
+  if (!stats) {
+    console.warn('❌ Teacher stats returned null');
+    elStu.textContent  = '0';
+    elAsg.textContent  = '0';
+    elDone.textContent = '0';
+    return;
+  }
 
   elStu.textContent  = stats.students;
   elAsg.textContent  = stats.assignments;
   elDone.textContent = stats.done;
 }
-
-
 
 async function openReviewModal(a, sid, ps, stu) {
 
