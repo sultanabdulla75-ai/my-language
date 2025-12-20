@@ -572,6 +572,7 @@ async function loadTeacherStatsFromFirestore() {
     const perStudent = a.perStudent || {};
 
     Object.values(perStudent).forEach(ps => {
+        console.log("📌 perStudent status:", ps.status);
       // ✅ المنجزة فعليًا
       if (ps.status === "done") {
         done++;
