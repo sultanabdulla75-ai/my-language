@@ -493,19 +493,54 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
 
 /* عنصر إشعار واحد */
 .notify-item {
+  display: flex;
+  gap: .6rem;
   padding: .7rem .8rem;
   font-size: .9rem;
   border-bottom: 1px solid #f1f1f1;
   cursor: pointer;
-  transition: background .15s;
+  transition: background .15s ease, opacity .15s ease;
 }
 
+/* إشعار غير مقروء */
+.notify-item.unread {
+  background: #eef6ff;
+  border-inline-start: 4px solid #3b82f6;
+}
+
+/* إشعار مقروء */
+.notify-item.read {
+  opacity: .5;
+}
+
+/* تحويم */
 .notify-item:hover {
-  background: #f9fafb;
+  background: #f1f5f9;
 }
 
 .notify-item:last-child {
   border-bottom: none;
+}
+
+/* أيقونة الإشعار */
+.notify-icon {
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+
+/* محتوى الإشعار */
+.notify-body {
+  flex: 1;
+}
+
+.notify-body strong {
+  display: block;
+  font-size: .9rem;
+}
+
+.notify-body .muted {
+  font-size: .8rem;
+  color: #6b7280;
 }
 
 /* لا توجد إشعارات */
