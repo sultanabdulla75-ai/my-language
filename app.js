@@ -2495,65 +2495,61 @@ function listenToNotifications() {
  const q = query(
   collection(window.db, "notifications"),
   where("studentId", "==", current.email),
-  where("isRead", "==", false),
   orderBy("createdAt", "desc")
 );
 
 
-  onSnapshot(q, async (snap) => {
-    const list  = document.getElementById("notifyList");
-    const count = document.getElementById("notifyCount");
 
-    if (!list || !count) return;
+onSnapshot(q, async (snap) => {
+  const list  = document.getElementById("notifyList");
+  const count = document.getElementById("notifyCount");
 
-    list.innerHTML = "";
-    let unread = 0;
-    const now = Date.now();
+  if (!list || !count) return;
 
-    snap.forEach(docSnap => {
-      const n = docSnap.data();
-      const id = docSnap.id;
+  list.innerHTML = "";
+  let unread = 0;
 
-     
+  if (snap.empty) {
+    list.innerHTML = `<div class="notify-empty">لا توجد إشعارات</div>`;
+    count.classList.add("hidden");
+    return;
+  }
 
-      // 🔴 عدّ غير المقروء فقط
-      if (!n.isRead) unread++;
+  snap.forEach(docSnap => {
+    const n = docSnap.data();
+    const id = docSnap.id;
 
-      // 🧱 عنصر الإشعار
-      const item = document.createElement("div");
-      item.className = `notify-item ${n.isRead ? "read" : "unread"}`;
-      item.innerHTML = `
-        <div class="notify-icon">${n.icon || "🔔"}</div>
-        <div class="notify-body">
-          <strong>${n.title}</strong>
-          <div class="muted">${n.message}</div>
-        </div>
-      `;
+    if (!n.isRead) unread++;
 
-      // 👆 عند الضغط: تعليم كمقروء
-      item.onclick = async () => {
-        if (!n.isRead) {
-          await setDoc(
-            doc(window.db, "notifications", id),
-            { isRead: true, readAt: Date.now() },
-            { merge: true }
-          );
-        }
-      };
+    const item = document.createElement("div");
+    item.className = `notify-item ${n.isRead ? "read" : "unread"}`;
 
-      list.appendChild(item);
-    });
+    item.innerHTML = `
+      <div class="notify-icon">${n.icon || "🔔"}</div>
+      <div class="notify-body">
+        <strong>${n.title}</strong>
+        <div class="muted">${n.message}</div>
+      </div>
+    `;
 
- // 🔔 تحديث العدّاد (عدد الإشعارات الجديدة فقط)
-count.textContent = snap.size;
-count.classList.toggle("hidden", snap.size === 0);
+    item.onclick = async () => {
+      if (!n.isRead) {
+        await setDoc(
+          doc(window.db, "notifications", id),
+          { isRead: true, readAt: Date.now() },
+          { merge: true }
+        );
+      }
+    };
 
-// 💤 لا توجد إشعارات جديدة
-if (snap.empty) {
-  list.innerHTML = `<div class="notify-empty">لا توجد إشعارات جديدة</div>`;
-}
-
+    list.appendChild(item);
   });
+
+  // 🔴 العدّاد الأحمر (غير المقروء فقط)
+  count.textContent = unread;
+  count.classList.toggle("hidden", unread === 0);
+});
+
 }
 
 // ------------------------------------------------------
