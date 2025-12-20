@@ -542,70 +542,51 @@ export async function getTeacherStudents(classId) {
 // ============================================
 async function loadTeacherStatsFromFirestore() {
   const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== "teacher") return;
-  if (!current.classId || !window.db) return;
+  if (!current || current.role !== "teacher" || !current.classId) return null;
 
   const classId = current.classId;
 
-  // =========================
   // 1️⃣ عدد الطلاب
-  // =========================
   const studentsSnap = await getDocs(
- collection(window.db, "classes", classId, "students")
+    collection(window.db, "classes", classId, "students")
   );
   const studentsCount = studentsSnap.size;
 
-  // =========================
-  // 2️⃣ الواجبات
-  // =========================
+  // 2️⃣ عدد الواجبات
   const assignmentsSnap = await getDocs(
-  collection(window.db, "classes", classId, "assignments")
+    collection(window.db, "classes", classId, "assignments")
   );
-
   const assignmentsCount = assignmentsSnap.size;
 
-  // =========================
-  // 3️⃣ حساب المنجزة + المتوسط
-  // =========================
-  let doneCount = 0;
-  let progressSum = 0;
-  let progressItems = 0;
+  // 3️⃣ submissions (المنجزة + المتوسط)
+  const subsSnap = await getDocs(
+    query(
+      collection(window.db, "classes", classId, "submissions"),
+      where("countInStats", "==", true)
+    )
+  );
 
-  assignmentsSnap.forEach(docSnap => {
-    const a = docSnap.data();
-    const perStudent = a.perStudent || {};
+  let done = 0;
+  let totalProgress = 0;
 
-    Object.values(perStudent).forEach(s => {
-      if (s.status === "submitted" || s.status === "done") {
-        doneCount++;
-      }
-      if (typeof s.progress === "number") {
-        progressSum += s.progress;
-        progressItems++;
-      }
-    });
+  subsSnap.forEach(doc => {
+    const d = doc.data();
+    if (d.status === "submitted") done++;
+    totalProgress += Number(d.progress || 0);
   });
 
-  const avgProgress = progressItems
-    ? Math.round(progressSum / progressItems)
-    : 0;
+  const avg =
+    subsSnap.size > 0
+      ? Math.round(totalProgress / subsSnap.size)
+      : 0;
 
-  // =========================
-  // 4️⃣ ضخ النتائج في الواجهة
-  // =========================
- 
-  // (اختياري) رسم الدونات
-  drawTeacherDonut(avgProgress);
-
-return {
-  students: studentsCount,
-  assignments: assignmentsCount,
-  done: doneCount,
-  avg: avgProgress
-};
-
+  return {
+    students: studentsCount,
+    assignments: assignmentsCount,
+    done,
+    avg
+  };
 }
-
 
 
 // 🔹 مزامنة القصص (محلي ↔ سحابة)
