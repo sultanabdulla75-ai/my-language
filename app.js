@@ -1987,50 +1987,39 @@ async function renderTeacherView() {
   });
 }
 
-
 // ============================================
 // 📊 لوحة المعلم (Firestore فقط)
-// ============================================
-// 📊 لوحة المعلم (Firestore فقط)
-// ============================================
 async function renderTeacherDashboard() {
   const elStu  = document.getElementById('tc-stu');
   const elAsg  = document.getElementById('tc-asg');
   const elDone = document.getElementById('statCompleted');
+  const elAvg  = document.getElementById('statAvgProgress');
 
-  if (!elStu || !elAsg || !elDone) return;
+  if (!elStu || !elAsg || !elDone || !elAvg) return;
 
   // حالة تحميل
   elStu.textContent  = '…';
   elAsg.textContent  = '…';
   elDone.textContent = '…';
+  elAvg.textContent  = '…';
 
-  let stats;
-  try {
-    stats = await loadTeacherStatsFromFirestore();
-  } catch (err) {
-    console.error('🔥 Firestore error in teacher stats:', err);
-    elStu.textContent  = '0';
-    elAsg.textContent  = '0';
-    elDone.textContent = '0';
-    return;
-  }
-
+  const stats = await loadTeacherStatsFromFirestore();
+  
   if (!stats) {
-    console.warn('❌ Teacher stats returned null');
     elStu.textContent  = '0';
     elAsg.textContent  = '0';
     elDone.textContent = '0';
+    elAvg.textContent  = '0%';
     return;
   }
-
+  // ✅ العرض الصحيح
   elStu.textContent  = stats.students;
   elAsg.textContent  = stats.assignments;
   elDone.textContent = stats.done;
+  elAvg.textContent  = stats.avg + '%';
 }
 
 async function openReviewModal(a, sid, ps, stu) {
-
   // 📌 1) تحميل إجابة الطالب من Firestore
   const ansRef = doc(
     window.db,
