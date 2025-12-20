@@ -76,20 +76,50 @@ async function getClassAverageProgress(classId) {
   return count ? Math.round(total / count) : 0;
 }
 
+// =========================================
+// 📊 Teacher Statistics (Firestore - FINAL)
+// =========================================
 async function renderTeacherStats() {
   const current = readJSON(LS.CURRENT, null);
-  if (!current || !current.classId) return;
+  if (!current || current.role !== "teacher" || !current.classId) return;
 
   const classId = current.classId;
-
-  const completed = await getCompletedCount(classId);
-  const avg = await getClassAverageProgress(classId);
 
   const completedEl = document.getElementById("statCompleted");
   const avgEl = document.getElementById("statAvgProgress");
 
-  if (completedEl) completedEl.textContent = completed;
-  if (avgEl) avgEl.textContent = avg + "%";
+  if (!completedEl || !avgEl) return;
+
+  const q = query(
+    collection(window.db, "classes", classId, "submissions"),
+    where("countInStats", "==", true)
+  );
+
+  const snap = await getDocs(q);
+
+  let completed = 0;
+  let totalProgress = 0;
+  let count = 0;
+
+  snap.forEach(docSnap => {
+    const d = docSnap.data();
+
+    if (typeof d.progress === "number") {
+      totalProgress += d.progress;
+      count++;
+    }
+
+    if (d.status === "submitted") {
+      completed++;
+    }
+  });
+
+  const avg = count ? Math.round(totalProgress / count) : 0;
+
+  completedEl.textContent = completed;
+  avgEl.textContent = avg + "%";
+
+  console.log("📊 Teacher Stats OK:", { completed, avg });
 }
 
 
