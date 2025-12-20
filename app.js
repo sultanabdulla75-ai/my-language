@@ -79,48 +79,6 @@ async function getClassAverageProgress(classId) {
 // =========================================
 // 📊 Teacher Statistics (Firestore - FINAL)
 // =========================================
-async function renderTeacherStats() {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== "teacher" || !current.classId) return;
-
-  const classId = current.classId;
-
-  const completedEl = document.getElementById("statCompleted");
-  const avgEl = document.getElementById("statAvgProgress");
-
-  if (!completedEl || !avgEl) return;
-
-  const q = query(
-    collection(window.db, "classes", classId, "submissions"),
-    where("countInStats", "==", true)
-  );
-
-  const snap = await getDocs(q);
-
-  let completed = 0;
-  let totalProgress = 0;
-  let count = 0;
-
-  snap.forEach(docSnap => {
-    const d = docSnap.data();
-
-    if (typeof d.progress === "number") {
-      totalProgress += d.progress;
-      count++;
-    }
-
-    if (d.status === "submitted") {
-      completed++;
-    }
-  });
-
-  const avg = count ? Math.round(totalProgress / count) : 0;
-
-  completedEl.textContent = completed;
-  avgEl.textContent = avg + "%";
-
-  console.log("📊 Teacher Stats OK:", { completed, avg });
-}
 
 
 // ===== Storage keys =====
@@ -644,6 +602,14 @@ async function loadTeacherStatsFromFirestore() {
 
   // (اختياري) رسم الدونات
   drawTeacherDonut(avgProgress);
+
+return {
+  students: studentsCount,
+  assignments: assignmentsCount,
+  done: doneCount,
+  avg: avgProgress
+};
+
 }
 
 
@@ -2776,10 +2742,17 @@ current.classId = classId;
   renderStudentAssignments('required');
   await renderTeacherStudents();
   await renderTeacherView();
-// 🔥 هنا بالضبط
+// ✅ الإحصائيات (للمعلم فقط)
 if (current.role === "teacher") {
-  await renderTeacherStats();
-}
+  const stats = await loadTeacherStatsFromFirestore();
+  if (stats) {
+    $('#tc-stu').textContent  = stats.students;
+    $('#tc-asg').textContent  = stats.assignments;
+    $('#tc-done').textContent = stats.done;
+
+    const avgEl = $('#tc-avg');
+    if (avgEl) avgEl.textContent = stats.avg + '%';
+  }
 
   updateReports();
   updateRail();
