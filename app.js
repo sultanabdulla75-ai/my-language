@@ -584,39 +584,66 @@ export async function getTeacherStudents(classId) {
 // ============================================
 async function loadTeacherStatsFromFirestore() {
   const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== "teacher" || !window.db || !current.classId) {
-    return { students: 0, assignments: 0, done: 0 };
-  }
+  if (!current || current.role !== "teacher") return;
+  if (!current.classId || !window.db) return;
 
   const classId = current.classId;
 
-  // 1️⃣ جلب جميع الواجبات
-  const asgSnap = await getDocs(
-    collection(window.db, "classes", classId, "assignments")
+  // =========================
+  // 1️⃣ عدد الطلاب
+  // =========================
+  const studentsSnap = await getDocs(
+    collection(db, "classes", classId, "students")
+  );
+  const studentsCount = studentsSnap.size;
+
+  // =========================
+  // 2️⃣ الواجبات
+  // =========================
+  const assignmentsSnap = await getDocs(
+    collection(db, "classes", classId, "assignments")
   );
 
-  let studentsSet = new Set();
-  let totalDone = 0;
+  const assignmentsCount = assignmentsSnap.size;
 
-  asgSnap.forEach(docSnap => {
+  // =========================
+  // 3️⃣ حساب المنجزة + المتوسط
+  // =========================
+  let doneCount = 0;
+  let progressSum = 0;
+  let progressItems = 0;
+
+  assignmentsSnap.forEach(docSnap => {
     const a = docSnap.data();
+    const perStudent = a.perStudent || {};
 
-    // studentIds موجودة في كل واجب
-    (a.studentIds || []).forEach(sid => studentsSet.add(sid));
-
-    // حساب المنجزة من perStudent
-    Object.values(a.perStudent || {}).forEach(ps => {
-      if (ps.status === "done" || ps.progress === 100) {
-        totalDone++;
+    Object.values(perStudent).forEach(s => {
+      if (s.status === "submitted" || s.status === "done") {
+        doneCount++;
+      }
+      if (typeof s.progress === "number") {
+        progressSum += s.progress;
+        progressItems++;
       }
     });
   });
 
-  return {
-    students: studentsSet.size,
-    assignments: asgSnap.size,
-    done: totalDone
-  };
+  const avgProgress = progressItems
+    ? Math.round(progressSum / progressItems)
+    : 0;
+
+  // =========================
+  // 4️⃣ ضخ النتائج في الواجهة
+  // =========================
+  $('#tc-stu').textContent = studentsCount;
+  $('#tc-asg').textContent = assignmentsCount;
+  $('#tc-done').textContent = doneCount;
+
+  const avgEl = document.getElementById("tc-avg");
+  if (avgEl) avgEl.textContent = avgProgress + "%";
+
+  // (اختياري) رسم الدونات
+  drawTeacherDonut(avgProgress);
 }
 
 
