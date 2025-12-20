@@ -571,18 +571,17 @@ async function loadTeacherStatsFromFirestore() {
     const a = docSnap.data();
     const perStudent = a.perStudent || {};
 
-    Object.values(perStudent).forEach(ps => {
-        console.log("📌 perStudent status:", ps.status);
-      // ✅ المنجزة فعليًا
-      if (ps.status === "done") {
-        done++;
-      }
+Object.values(perStudent).forEach(ps => {
+  if (ps.status === "submitted" || ps.progress === 100) {
+    done++;
+  }
 
-      if (typeof ps.progress === "number") {
-        totalProgress += ps.progress;
-        count++;
-      }
-    });
+  if (typeof ps.progress === "number") {
+    totalProgress += ps.progress;
+    count++;
+  }
+});
+
   });
 
   const avg = count ? Math.round(totalProgress / count) : 0;
