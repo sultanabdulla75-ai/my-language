@@ -551,7 +551,7 @@ async function loadTeacherStatsFromFirestore() {
   // 1️⃣ عدد الطلاب
   // =========================
   const studentsSnap = await getDocs(
-    collection(db, "classes", classId, "students")
+ collection(window.db, "classes", classId, "students")
   );
   const studentsCount = studentsSnap.size;
 
@@ -559,7 +559,7 @@ async function loadTeacherStatsFromFirestore() {
   // 2️⃣ الواجبات
   // =========================
   const assignmentsSnap = await getDocs(
-    collection(db, "classes", classId, "assignments")
+  collection(window.db, "classes", classId, "assignments")
   );
 
   const assignmentsCount = assignmentsSnap.size;
@@ -593,13 +593,7 @@ async function loadTeacherStatsFromFirestore() {
   // =========================
   // 4️⃣ ضخ النتائج في الواجهة
   // =========================
-  $('#tc-stu').textContent = studentsCount;
-  $('#tc-asg').textContent = assignmentsCount;
-  $('#tc-done').textContent = doneCount;
-
-  const avgEl = document.getElementById("tc-avg");
-  if (avgEl) avgEl.textContent = avgProgress + "%";
-
+ 
   // (اختياري) رسم الدونات
   drawTeacherDonut(avgProgress);
 
@@ -858,10 +852,8 @@ function showOnly(selector) {
     else p.classList.remove('active');
   });
 
-  if (selector === '#tab-teacher') {
-    renderTeacherDashboard();
-  }
-}
+   }
+
 
 function buildNav(role) {
   const nav = document.querySelector('#navLinks');
@@ -2744,15 +2736,8 @@ current.classId = classId;
   await renderTeacherView();
 // ✅ الإحصائيات (للمعلم فقط)
 if (current.role === "teacher") {
-  const stats = await loadTeacherStatsFromFirestore();
-  if (stats) {
-    $('#tc-stu').textContent  = stats.students;
-    $('#tc-asg').textContent  = stats.assignments;
-    $('#tc-done').textContent = stats.done;
-
-    const avgEl = $('#tc-avg');
-    if (avgEl) avgEl.textContent = stats.avg + '%';
-  }
+  await renderTeacherDashboard();
+}
 
   updateReports();
   updateRail();
