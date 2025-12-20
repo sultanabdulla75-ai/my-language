@@ -784,3 +784,8 @@ body {
 }
 
 
+/* 🚫 إخفاء إحصائيات rail في حالة المعلم فقط */
+body.is-teacher .rail .score-card {
+  display: none !important;
+}
+
