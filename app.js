@@ -2492,11 +2492,13 @@ function listenToNotifications() {
 
   const NOTIFY_TTL = 60 * 60 * 1000; // ⏱ ساعة واحدة
 
-  const q = query(
-    collection(window.db, "notifications"),
-    where("studentId", "==", current.email),
-    orderBy("createdAt", "desc")
-  );
+ const q = query(
+  collection(window.db, "notifications"),
+  where("studentId", "==", current.email),
+  where("isRead", "==", false),
+  orderBy("createdAt", "desc")
+);
+
 
   onSnapshot(q, async (snap) => {
     const list  = document.getElementById("notifyList");
@@ -2512,14 +2514,7 @@ function listenToNotifications() {
       const n = docSnap.data();
       const id = docSnap.id;
 
-      // ⛔ تجاهل الإشعار المقروء القديم (أكثر من ساعة)
-      if (
-        n.isRead &&
-        n.readAt &&
-        now - n.readAt > NOTIFY_TTL
-      ) {
-        return; // لا نعرضه
-      }
+     
 
       // 🔴 عدّ غير المقروء فقط
       if (!n.isRead) unread++;
@@ -2549,14 +2544,15 @@ function listenToNotifications() {
       list.appendChild(item);
     });
 
-    // 🔔 تحديث العدّاد
-    count.textContent = unread;
-    count.classList.toggle("hidden", unread === 0);
+ // 🔔 تحديث العدّاد (عدد الإشعارات الجديدة فقط)
+count.textContent = snap.size;
+count.classList.toggle("hidden", snap.size === 0);
 
-    // 💤 لا يوجد إشعارات حديثة
-    if (!list.children.length) {
-      list.innerHTML = `<div class="notify-empty">لا توجد إشعارات جديدة</div>`;
-    }
+// 💤 لا توجد إشعارات جديدة
+if (snap.empty) {
+  list.innerHTML = `<div class="notify-empty">لا توجد إشعارات جديدة</div>`;
+}
+
   });
 }
 
