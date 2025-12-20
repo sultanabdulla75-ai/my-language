@@ -2490,66 +2490,73 @@ function listenToNotifications() {
   const current = readJSON(LS.CURRENT, null);
   if (!current || !current.email || !window.db) return;
 
-  const NOTIFY_TTL = 60 * 60 * 1000; // ⏱ ساعة واحدة
+  const NOTIFY_TTL = 60 * 60 * 1000; // ساعة
 
- const q = query(
-  collection(window.db, "notifications"),
-  where("studentId", "==", current.email),
-  orderBy("createdAt", "desc")
-);
+  const q = query(
+    collection(window.db, "notifications"),
+    where("studentId", "==", current.email),
+    orderBy("createdAt", "desc")
+  );
 
+  onSnapshot(q, (snap) => {
+    const list  = document.getElementById("notifyList");
+    const count = document.getElementById("notifyCount");
 
+    if (!list || !count) return;
 
-onSnapshot(q, async (snap) => {
-  const list  = document.getElementById("notifyList");
-  const count = document.getElementById("notifyCount");
+    list.innerHTML = "";
+    let unread = 0;
 
-  if (!list || !count) return;
+    if (snap.empty) {
+      list.innerHTML = `<div class="notify-empty">لا توجد إشعارات</div>`;
+      count.classList.add("hidden");
+      return;
+    }
 
-  list.innerHTML = "";
-  let unread = 0;
+    snap.forEach(docSnap => {
+      const n = docSnap.data();
+      const id = docSnap.id;
 
-  if (snap.empty) {
-    list.innerHTML = `<div class="notify-empty">لا توجد إشعارات</div>`;
-    count.classList.add("hidden");
-    return;
-  }
-
-  snap.forEach(docSnap => {
-    const n = docSnap.data();
-    const id = docSnap.id;
-
-    if (!n.isRead) unread++;
-
-    const item = document.createElement("div");
-    item.className = `notify-item ${n.isRead ? "read" : "unread"}`;
-
-    item.innerHTML = `
-      <div class="notify-icon">${n.icon || "🔔"}</div>
-      <div class="notify-body">
-        <strong>${n.title}</strong>
-        <div class="muted">${n.message}</div>
-      </div>
-    `;
-
-    item.onclick = async () => {
-      if (!n.isRead) {
-        await setDoc(
-          doc(window.db, "notifications", id),
-          { isRead: true, readAt: Date.now() },
-          { merge: true }
-        );
+      // ⏳ إخفاء الإشعار المقروء القديم
+      if (
+        n.isRead &&
+        n.readAt &&
+        Date.now() - n.readAt > NOTIFY_TTL
+      ) {
+        return;
       }
-    };
 
-    list.appendChild(item);
+      // 🔴 حساب غير المقروء
+      if (!n.isRead) unread++;
+
+      const item = document.createElement("div");
+      item.className = `notify-item ${n.isRead ? "read" : "unread"}`;
+
+      item.innerHTML = `
+        <div class="notify-icon">${n.icon || "🔔"}</div>
+        <div class="notify-body">
+          <strong>${n.title}</strong>
+          <div class="muted">${n.message}</div>
+        </div>
+      `;
+
+      item.onclick = async () => {
+        if (!n.isRead) {
+          await setDoc(
+            doc(window.db, "notifications", id),
+            { isRead: true, readAt: Date.now() },
+            { merge: true }
+          );
+        }
+      };
+
+      list.appendChild(item);
+    });
+
+    // 🔴 العداد الأحمر
+    count.textContent = unread;
+    count.classList.toggle("hidden", unread === 0);
   });
-
-  // 🔴 العدّاد الأحمر (غير المقروء فقط)
-  count.textContent = unread;
-  count.classList.toggle("hidden", unread === 0);
-});
-
 }
 
 // ------------------------------------------------------
@@ -2817,7 +2824,12 @@ document.getElementById("notifyBtn")?.addEventListener("click", (e) => {
   document.getElementById("notifyPanel")?.classList.toggle("hidden");
 });
 
-// إغلاقها عند الضغط خارجها
+// 🔒 منع إغلاق اللوحة عند الضغط داخلها
+document.getElementById("notifyPanel")?.addEventListener("click", (e) => {
+  e.stopPropagation();
+});
+
+// ❌ إغلاقها فقط عند الضغط خارجها
 document.addEventListener("click", () => {
   document.getElementById("notifyPanel")?.classList.add("hidden");
 });
