@@ -39,6 +39,60 @@ import {
 
 
 
+// =========================================
+// 📊 Teacher Statistics (Firestore)
+// =========================================
+async function getCompletedCount(classId) {
+  const q = query(
+    collection(window.db, "submissions"),
+    where("classId", "==", classId),
+    where("status", "==", "submitted"),
+    where("countInStats", "==", true)
+  );
+  const snap = await getDocs(q);
+  return snap.size;
+}
+
+async function getClassAverageProgress(classId) {
+  const q = query(
+    collection(window.db, "submissions"),
+    where("classId", "==", classId),
+    where("countInStats", "==", true)
+  );
+
+  const snap = await getDocs(q);
+  if (snap.empty) return 0;
+
+  let total = 0;
+  let count = 0;
+  snap.forEach(doc => {
+    const d = doc.data();
+    if (typeof d.progress === "number") {
+      total += d.progress;
+      count++;
+    }
+  });
+
+  return count ? Math.round(total / count) : 0;
+}
+
+async function renderTeacherStats() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || !current.classId) return;
+
+  const classId = current.classId;
+
+  const completed = await getCompletedCount(classId);
+  const avg = await getClassAverageProgress(classId);
+
+  const completedEl = document.getElementById("statCompleted");
+  const avgEl = document.getElementById("statAvgProgress");
+
+  if (completedEl) completedEl.textContent = completed;
+  if (avgEl) avgEl.textContent = avg + "%";
+}
+
+
 // ===== Storage keys =====
 const LS = {
   USERS: 'arp.users',
@@ -2672,6 +2726,11 @@ current.classId = classId;
   renderStudentAssignments('required');
   await renderTeacherStudents();
   await renderTeacherView();
+// 🔥 هنا بالضبط
+if (current.role === "teacher") {
+  await renderTeacherStats();
+}
+
   updateReports();
   updateRail();
   renderStaticNoorBadges(); // ← أضفه هنا
