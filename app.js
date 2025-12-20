@@ -2115,6 +2115,26 @@ function openReader(book) {
   readingStartAt = Date.now();
   hasInteractedWithStory = false;
 
+
+  // ===============================
+  // ✅ ربط عنوان ومستوى القصة الصحيح
+  // ===============================
+  const titleEl = document.getElementById("storyTitle");
+  if (titleEl) titleEl.textContent = book.title || "—";
+
+  const levelEl = document.getElementById("storyLevel");
+  if (levelEl && book.level) {
+    const levelName = LEVELS.find(l => l.id === book.level)?.name || book.level;
+    levelEl.textContent = levelName;
+  }
+
+  const coverEl = document.getElementById("storyCover");
+  if (coverEl && book.cover) {
+    coverEl.src = book.cover;
+  }
+
+
+
   // إظهار القارئ
   $('#appShell').classList.add('hidden');
   $('#readerView').classList.remove('hidden');
