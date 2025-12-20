@@ -828,12 +828,26 @@ function showOnly(selector) {
   const el = document.querySelector(selector);
   if (el) el.classList.remove('hidden');
 
+if (selector === '#tab-teacher') {
+  onTeacherTabShown();
+}
+
+
   $$('#navLinks .pill').forEach(p => {
     if (p.dataset.target === selector) p.classList.add('active');
     else p.classList.remove('active');
   });
 
    }
+
+
+// ============================================
+// 📊 عند فتح تبويب لوحة المعلم
+// ============================================
+function onTeacherTabShown() {
+  renderTeacherDashboard();
+}
+
 
 
 function buildNav(role) {
@@ -2715,10 +2729,6 @@ current.classId = classId;
   renderStudentAssignments('required');
   await renderTeacherStudents();
   await renderTeacherView();
-// ✅ الإحصائيات (للمعلم فقط)
-if (current.role === "teacher") {
-  await renderTeacherDashboard();
-}
 
   updateReports();
   updateRail();
