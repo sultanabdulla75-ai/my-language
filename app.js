@@ -601,6 +601,9 @@ async function loadTeacherStatsFromFirestore() {
   };
 }
 
+// 🔓 إتاحة الدالة للـ Console (Debug only)
+window.loadTeacherStatsFromFirestore = loadTeacherStatsFromFirestore;
+
 // 🔹 مزامنة القصص (محلي ↔ سحابة)
 export async function syncBooks(classId) {
   if (!classId) {
