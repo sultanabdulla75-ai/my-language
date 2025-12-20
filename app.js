@@ -2670,6 +2670,9 @@ if (current.role === 'student') {
     $$('.only-teacher').forEach(btn => btn.style.display = 'none');
   }
 
+  // ⭐ وسم الصفحة بدور المستخدم (لاستخدام CSS)
+document.body.classList.toggle('is-teacher', current.role === 'teacher');
+
   // 5) تعبئة بيانات المستخدم في الواجهة
   $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
   $('#userName').textContent = current.name;
