@@ -588,43 +588,36 @@ async function loadTeacherStatsFromFirestore() {
     return { students: 0, assignments: 0, done: 0 };
   }
 
-  try {
-    const classId = current.classId;
+  const classId = current.classId;
 
-    // عدد الطلاب
-    const stuSnap = await getDocs(
-      collection(window.db, "classes", classId, "students")
-    );
+  // 1️⃣ جلب جميع الواجبات
+  const asgSnap = await getDocs(
+    collection(window.db, "classes", classId, "assignments")
+  );
 
-    // الواجبات
-    const asgSnap = await getDocs(
-      collection(window.db, "classes", classId, "assignments")
-    );
+  let studentsSet = new Set();
+  let totalDone = 0;
 
-    let totalDone = 0;
+  asgSnap.forEach(docSnap => {
+    const a = docSnap.data();
 
-    asgSnap.forEach(docSnap => {
-      const data = docSnap.data();
-      const per = data.perStudent || {};
-      Object.values(per).forEach(ps => {
-        if (ps && (ps.status === "done" || ps.progress === 100)) {
-          totalDone++;
-        }
-      });
+    // studentIds موجودة في كل واجب
+    (a.studentIds || []).forEach(sid => studentsSet.add(sid));
+
+    // حساب المنجزة من perStudent
+    Object.values(a.perStudent || {}).forEach(ps => {
+      if (ps.status === "done" || ps.progress === 100) {
+        totalDone++;
+      }
     });
+  });
 
-    return {
-      students: stuSnap.size,
-      assignments: asgSnap.size,
-      done: totalDone
-    };
-
-  } catch (e) {
-    console.error("⚠ فشل تحميل إحصاءات المعلم:", e);
-    return { students: 0, assignments: 0, done: 0 };
-  }
+  return {
+    students: studentsSet.size,
+    assignments: asgSnap.size,
+    done: totalDone
+  };
 }
-
 
 
 
