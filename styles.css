@@ -799,7 +799,7 @@ body.is-teacher .rail .score-card {
 
 /* الشعارات الثانوية */
 .secondary-logo{
-  height: 44px;
+  height: 48px;
   width: auto;
   object-fit: contain;
   opacity: 1;
@@ -815,8 +815,8 @@ body.is-teacher .rail .score-card {
 
 /* شعار دائري مثل صورة حالة الطالب */
 .brand-logo.avatar-img{
-  width: 52px;
-  height: 52px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   object-fit: cover;     /* ⭐ المفتاح */
   background-color: #fff;
