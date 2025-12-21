@@ -813,7 +813,12 @@ body.is-teacher .rail .score-card {
   white-space: nowrap;
 }
 
+/* شعار دائري مثل صورة حالة الطالب */
 .brand-logo.avatar-img{
   width: 52px;
   height: 52px;
+  border-radius: 50%;
+  object-fit: cover;     /* ⭐ المفتاح */
+  background-color: #fff;
+  border: 2px solid #e5e7eb;
 }
