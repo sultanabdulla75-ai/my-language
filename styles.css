@@ -824,49 +824,52 @@ body.is-teacher .rail .score-card {
 }
 
 
-/* =====================================
-   🏅 Badge as Floating Indicator (PRO)
-   ===================================== */
+/* ===============================
+   🏅 Badge – FINAL FIX (PRO)
+================================ */
 
 /* البطاقة */
 .score-card{
   position: relative;
-  padding-top: 44px;   /* ⬅️ حجز مساحة للوسام */
   overflow: visible;
+}
+
+/* 🔑 هذا هو الحل */
+.badge-spacer{
+  height: 36px; /* يحجز مساحة حقيقية */
 }
 
 /* صف الوسام */
 .score-row.badges-row{
   position: absolute;
-  top: 0;
+  top: 36px;              /* يطابق spacer */
   left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10;
+  transform: translateX(-50%);
+  z-index: 20;
   pointer-events: none;
 }
 
-/* إخفاء عنوان الأوسمة */
+/* إخفاء العنوان */
 .score-row.badges-row > span{
   display: none;
 }
 
-/* حاوية الأوسمة */
+/* الحاوية */
 .noor-badges{
   display: flex;
   justify-content: center;
-  align-items: center;
 }
 
 /* الوسام */
 .noor-badge{
+  width: 56px;
+  height: 56px;
+  padding: 6px;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
-  width: 56px;
-  height: 56px;
-  padding: 6px;
 
   border-radius: 14px;
   background: linear-gradient(135deg,#22c55e,#16a34a);
@@ -874,37 +877,25 @@ body.is-teacher .rail .score-card {
 
   box-shadow:
     0 10px 24px rgba(0,0,0,.18),
-    inset 0 0 0 1px rgba(255,255,255,.15);
+    inset 0 0 0 1px rgba(255,255,255,.18);
 
   animation: badgePop .3s ease-out;
 }
 
-/* الأيقونة */
 .noor-badge .icon{
   font-size: 1.2rem;
-  line-height: 1;
 }
 
-/* النص */
 .noor-badge .badge-label{
   font-size: .6rem;
   font-weight: 600;
   margin-top: 3px;
-  text-align: center;
   white-space: nowrap;
-  opacity: .95;
 }
 
-/* الحركة */
 @keyframes badgePop{
-  from{
-    transform: scale(.85);
-    opacity:0
-  }
-  to{
-    transform: scale(1);
-    opacity:1
-  }
+  from{transform:scale(.85);opacity:0}
+  to{transform:scale(1);opacity:1}
 }
 
 
