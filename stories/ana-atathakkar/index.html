@@ -32,7 +32,7 @@
       border: 1px dashed #999;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 20px;
+      font-size: 18px;
     }
 
     .word.active {
@@ -56,18 +56,20 @@
 
   <script>
     const words = [
-      // السطر الأيمن
-      { text: "أتذكّرُ", top: "7%", left: "62%" },
-      { text: "جدّي", top: "7%", left: "54%" },
-      { text: "وأشتاقُ", top: "7%", left: "43%" },
-      { text: "إليه.", top: "7%", left: "32%" },
+      const words = [
+  // ===== السطر الأيمن =====
+  { text: "أتذكّرُ", top: "6.5%", left: "62%" },
+  { text: "جدّي",    top: "6.5%", left: "54%" },
+  { text: "وأشتاقُ", top: "6.5%", left: "43%" },
+  { text: "إليه.",   top: "6.5%", left: "32%" },
 
-      // السطر الأيسر
-      { text: "أتذكّرُ", top: "7%", left: "22%" },
-      { text: "وجهَه،", top: "7%", left: "14%" },
-      { text: "وضحكتَه،", top: "7%", left: "5%" },
-      { text: "وشاربَيه.", top: "7%", left: "-6%" }
-    ];
+  // ===== السطر الأيسر =====
+  { text: "أتذكّرُ",   top: "8.5%", left: "22%" },
+  { text: "وجهَه،",   top: "8.5%", left: "14%" },
+  { text: "وضحكتَه،", top: "8.5%", left: "5%" },
+  { text: "وشاربَيه.",top: "8.5%", left: "-6%" }
+];
+
 
     const layer = document.getElementById("textLayer");
     let wordEls = [];
