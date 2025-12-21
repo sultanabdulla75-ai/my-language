@@ -824,71 +824,72 @@ body.is-teacher .rail .score-card {
 }
 
 
-/* =====================================================
-   🏅 Noor Badges – مستطيل أنيق متناسق مع منصة كتبي
-   ===================================================== */
+/* =====================================
+   🏅 Badge as Top-Center Indicator (FINAL)
+   ===================================== */
 
-/* تصحيح صف الأوسمة */
-.score-row.badges-row{
-  align-items: center;
+/* بطاقة الإحصاءات تكون مرجعية */
+.score-card{
+  position: relative;
 }
 
+/* صف الأوسمة لا يحجز مساحة */
+.score-row.badges-row{
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0;
+  background: none;
+  border: 0;
+}
+
+/* إخفاء عنوان "الأوسمة" */
 .score-row.badges-row > span{
-  min-width: 70px;
+  display: none;
 }
 
 /* الحاوية */
 .noor-badges{
   display: flex;
-  align-items: center;
+  justify-content: center;
 }
 
-/* الوسام – تمركز مثالي RTL */
+/* الوسام */
 .noor-badge{
-  display: grid;
-  grid-auto-flow: column;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
 
-  padding: 6px 16px;
-  border-radius: 10px;
-  font-size: .75rem;
-  font-weight: 700;
-  white-space: nowrap;
+  width: 56px;
+  height: 56px;
+  padding: 6px;
 
-  box-shadow: 0 4px 10px rgba(0,0,0,.12);
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.15);
   animation: badgePop .25s ease-out;
 }
 
 /* الأيقونة */
 .noor-badge .icon{
-  font-size: 1rem;
+  font-size: 1.1rem;
   line-height: 1;
 }
 
 /* النص */
 .noor-badge .badge-label{
-  font-size: .75rem;
+  font-size: .55rem;
+  font-weight: 600;
+  margin-top: 2px;
   text-align: center;
+  white-space: nowrap;
 }
 
-
-/* 🎨 لون مستوحى من منصة كتبي */
+/* 🎨 لون منصة كتبي */
 .noor-badge.bronze{
   background: linear-gradient(135deg,#22c55e,#16a34a);
-  color:#ffffff;
-}
-
-/* لاحقًا */
-.noor-badge.silver{
-  background: linear-gradient(135deg,#38bdf8,#0ea5e9);
-  color:#ffffff;
-}
-
-.noor-badge.gold{
-  background: linear-gradient(135deg,#8b5cf6,#6366f1);
-  color:#ffffff;
+  color:#fff;
 }
 
 /* حركة خفيفة */
