@@ -238,6 +238,10 @@ async function loadStudentStatsFromFirestore() {
   } catch (e) {
     console.error("⚠ فشل تحميل إحصائيات الطالب:", e);
   }
+
+  // 🔄 تحديث السكة والأوسمة بعد التحميل من Firestore
+updateRail();
+renderStaticNoorBadges();
 }
 
 
@@ -2325,6 +2329,7 @@ function updateReadStats(bookId, minutesSpent = 0) {
 
   // 🔄 تحديث الواجهة
   updateRail();
+  renderStaticNoorBadges(); // ⭐ تحديث الوسام فور القراءة
   updateReports();
 
   // ☁️ حفظ في Firestore (مرة واحدة فقط)
@@ -2749,7 +2754,6 @@ current.classId = classId;
 
   updateReports();
   updateRail();
-  renderStaticNoorBadges(); // ← أضفه هنا
 
 // ============================================
   // 🎯 التحدي اليومي (للطلاب فقط)
