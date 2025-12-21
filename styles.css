@@ -824,3 +824,44 @@ body.is-teacher .rail .score-card {
 }
 
 
+/* ===== تحسين شكل الأوسمة ===== */
+
+.noor-badges{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* شكل الوسام */
+.noor-badge{
+  display: none;               /* مخفي افتراضيًا */
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0,0,0,.08);
+}
+
+/* إخفاء الرقم (مهم جدًا) */
+.noor-badge small{
+  display: none;
+}
+
+/* ألوان أنيقة */
+.noor-badge.gold{
+  background: linear-gradient(135deg,#facc15,#f59e0b);
+  color:#1f2937;
+}
+
+.noor-badge.silver{
+  background: linear-gradient(135deg,#e5e7eb,#9ca3af);
+  color:#111827;
+}
+
+.noor-badge.bronze{
+  background: linear-gradient(135deg,#fbbf24,#92400e);
+  color:#1f2937;
+}
+
