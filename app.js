@@ -924,7 +924,7 @@ function updateRail() {
 
   $('#railBooks').textContent = s.reads;
   $('#railTime').textContent = s.minutes + ' د';
-  $('#railBadges').textContent = Math.floor(s.reads / 5);
+$('#railBadges').dataset.count = Math.floor(s.reads / 5);
 
   const avg = s.reads > 0 ? (s.minutes / s.reads).toFixed(1) : 0;
   const avgBox = $('#railAvg');
@@ -941,25 +941,18 @@ function renderStaticNoorBadges(){
   const el = document.getElementById("railBadges");
   if (!el) return;
 
-  const raw = el.textContent.trim();
-  const count = parseInt(raw, 10) || 0;
+  const count = parseInt(el.dataset.count || 0);
 
-  el.innerHTML = `
-    <div class="noor-badge gold" title="إنجاز عالٍ">
-      <span class="icon">🏅</span>
-      <small>${Math.floor(count / 4)}</small>
-    </div>
+  el.innerHTML = '';
 
-    <div class="noor-badge silver" title="إنجاز متوسط">
-      <span class="icon">🏅</span>
-      <small>${Math.floor(count / 2)}</small>
-    </div>
-
-    <div class="noor-badge bronze" title="بداية مميزة">
-      <span class="icon">🏅</span>
-      <small>${count}</small>
-    </div>
-  `;
+  if (count >= 3) {
+    el.innerHTML = `<div class="noor-badge gold" title="إنجاز عالٍ">🏅 إنجاز ذهبي</div>`;
+  } else if (count >= 2) {
+    el.innerHTML = `<div class="noor-badge silver" title="إنجاز جيد">🏅 إنجاز فضي</div>`;
+  } else if (count >= 1) {
+    el.innerHTML = `<div class="noor-badge bronze" title="بداية موفقة">🏅 بداية موفقة</div>`;
+  }
+  // count = 0 → لا شيء (واجهة نظيفة)
 }
 
 
