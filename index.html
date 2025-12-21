@@ -311,37 +311,56 @@
     </main>
 
     <!-- السكة اليمنى الثابتة -->
-    <aside class="rail">
-      <div class="profile-card glass">
-<img id="userAvatar" class="avatar-img" src="./img/avatar-student-omani.png" alt="avatar">
-        <div class="pname">
-          <strong id="userName">—</strong>
-          <small id="userRoleLabel">—</small>
-        </div>
-      </div>
-      <div class="score-card glass">
-        <div class="score-row"><span>الكتب</span><b id="railBooks">0</b></div>
-        <div class="score-row"><span>الوقت</span><b id="railTime">0د</b></div>
-<div class="score-row badges-row">
-  <span>الأوسمة</span>
+<!-- السكة اليمنى الثابتة -->
+<aside class="rail">
 
-  <!-- الحاوية فقط – تُملأ تلقائيًا من JavaScript -->
-  <div id="railBadges" class="noor-badges"></div>
-</div>
+  <!-- بطاقة الملف الشخصي -->
+  <div class="profile-card glass">
+    <img id="userAvatar" class="avatar-img" src="./img/avatar-student-omani.png" alt="avatar">
+    <div class="pname">
+      <strong id="userName">—</strong>
+      <small id="userRoleLabel">—</small>
+    </div>
+  </div>
 
+  <!-- بطاقة الإحصاءات (واحدة فقط) -->
+  <div class="score-card glass">
 
-</div>
+    <!-- الأوسمة (أعلى البطاقة) -->
+    <div class="score-row badges-row">
+      <span>الأوسمة</span>
+      <div id="railBadges" class="noor-badges"></div>
+    </div>
 
+    <!-- الإحصاءات -->
+    <div class="score-row">
+      <span>الكتب</span>
+      <b id="railBooks">0</b>
+    </div>
+
+    <div class="score-row">
+      <span>الوقت</span>
+      <b id="railTime">0 د</b>
+    </div>
+
+    <div class="score-row">
+      <span>متوسط القراءة</span>
+      <b id="railAvg">0 د</b>
+    </div>
+
+    <div class="score-row">
+      <span>آخر قصة</span>
+      <b id="railLastBook">—</b>
+    </div>
+
+    <div class="score-row">
+      <span>الأنشطة</span>
+      <b id="railActs">0</b>
+    </div>
 
   </div>
-</div>
-      </div>
-      <div class="score-card glass">
-        <div class="score-row"><span>متوسط القراءة</span><b id="railAvg">0 د</b></div>
-        <div class="score-row"><span>آخر قصة</span><b id="railLastBook">—</b></div>
-        <div class="score-row"><span>الأنشطة</span><b id="railActs">0</b></div>
-      </div>
-    </aside>
+</aside>
+
   </div>
 
   <!-- قارئ النص -->
