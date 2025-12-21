@@ -883,41 +883,6 @@ body.is-teacher .rail .score-card {
 }
 
 
-/* ================================
-   Fix: Long text / URLs overflow
-   ================================ */
-
-/* أي نص داخل الكروت/البطاقات يلتف */
-.card, .task-card, .lesson-card, .glass, .panel, .box {
-  max-width: 100%;
-}
-
-/* النصوص داخل محتوى البطاقة */
-.card *, .task-card *, .lesson-card *, .glass *, .panel *, .box *{
-  max-width: 100%;
-}
-
-/* أهم جزء: لفّ النصوص الطويلة جدًا (روابط/سلاسل) */
-.card p, .task-card p, .lesson-card p, .glass p,
-.card .desc, .task-card .desc, .lesson-card .desc,
-.card .content, .task-card .content, .lesson-card .content,
-a, span, div {
-  overflow-wrap: anywhere;   /* الأفضل للروابط */
-  word-break: break-word;    /* دعم إضافي */
-}
-
-/* لو عندك عنصر مخصص لعرض الرابط (مثل .link أو .url) */
-.link, .url, .task-link, .task-text {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  white-space: normal;
-}
-
-/* إن كان عندك سطر واحد لازم يلف بدل ما يطلع */
-.one-line, .truncate-off {
-  white-space: normal !important;
-}
-
 /* رابط طويل داخل كرت بشكل أنيق */
 .task-link, .url, .link {
   display: block;
