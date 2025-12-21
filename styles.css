@@ -799,10 +799,10 @@ body.is-teacher .rail .score-card {
 
 /* الشعارات الثانوية */
 .secondary-logo{
-  height: 32px;
+  height: 44px;
   width: auto;
   object-fit: contain;
-  opacity: .95;
+  opacity: 1;
 }
 
 /* عنوان المنصة */
@@ -811,4 +811,9 @@ body.is-teacher .rail .score-card {
   font-weight: 700;
   color: var(--ink);
   white-space: nowrap;
+}
+
+.brand-logo.avatar-img{
+  width: 52px;
+  height: 52px;
 }
