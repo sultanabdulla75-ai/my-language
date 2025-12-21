@@ -824,96 +824,69 @@ body.is-teacher .rail .score-card {
 }
 
 
-/* ===== تحسين شكل الأوسمة ===== */
-
-.noor-badges{
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-/* شكل الوسام */
-.noor-badge{
-  display: none;               /* مخفي افتراضيًا */
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: .8rem;
-  font-weight: 600;
-  box-shadow: 0 4px 10px rgba(0,0,0,.08);
-}
-
 /* =====================================================
-   🏅 Noor Badges – FINAL (دائري + نص متناسق)
+   🏅 Noor Badges – النسخة النهائية المتناسقة مع منصة نور
    ===================================================== */
 
+/* تصحيح سطر الأوسمة داخل السكة */
+.score-row.badges-row{
+  align-items: center;
+}
+
+.score-row.badges-row > span{
+  min-width: 70px;
+}
+
+/* حاوية الأوسمة */
 .noor-badges{
   display: flex;
-  gap: .75rem;
   align-items: center;
-  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* الوسام */
 .noor-badge{
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  box-shadow: 0 6px 14px rgba(0,0,0,.12);
-  animation: badgePop .3s ease-out;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0,0,0,.12);
+  animation: badgePop .25s ease-out;
 }
 
 /* أيقونة الوسام */
 .noor-badge .icon{
-  font-size: 1.4rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
 /* النص */
 .noor-badge .badge-label{
-  font-size: .65rem;
-  font-weight: 600;
-  color: #1f2937;
-  white-space: nowrap;
-  text-align: center;
+  font-size: .75rem;
 }
 
-/* الألوان */
-.noor-badge.gold{
-  background: linear-gradient(135deg,#fde68a,#f59e0b);
+/* 🎨 ألوان هوية منصة نور */
+.noor-badge.bronze{
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  color:#fff;
 }
 
 .noor-badge.silver{
-  background: linear-gradient(135deg,#e5e7eb,#9ca3af);
+  background: linear-gradient(135deg,#38bdf8,#0ea5e9);
+  color:#fff;
 }
 
-.noor-badge.bronze{
-  background: linear-gradient(135deg,#fdba74,#b45309);
+.noor-badge.gold{
+  background: linear-gradient(135deg,#8b5cf6,#6366f1);
+  color:#fff;
 }
 
-/* حركة خفيفة */
+/* حركة لطيفة */
 @keyframes badgePop{
-  from{
-    transform: scale(.9);
-    opacity: 0;
-  }
-  to{
-    transform: scale(1);
-    opacity: 1;
-  }
+  from{ transform: scale(.9); opacity:0 }
+  to{ transform: scale(1); opacity:1 }
 }
-
-/* موبايل */
-@media (max-width: 768px){
-  .noor-badge{
-    width: 56px;
-    height: 56px;
-  }
-}
-
