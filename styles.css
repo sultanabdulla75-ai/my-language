@@ -824,32 +824,25 @@ body.is-teacher .rail .score-card {
 }
 
 
-/* ===============================
-   🏅 Badge – FINAL FIX (PRO)
-================================ */
+/* =====================================
+   🏅 Badge as Top-Center Indicator (FINAL)
+   ===================================== */
 
-/* البطاقة */
 .score-card{
   position: relative;
+  padding-top: 28px;
   overflow: visible;
 }
 
-/* 🔑 هذا هو الحل */
-.badge-spacer{
-  height: 36px; /* يحجز مساحة حقيقية */
-}
-
-/* صف الوسام */
 .score-row.badges-row{
   position: absolute;
-  top: 36px;              /* يطابق spacer */
+  top: -14px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 20;
-  pointer-events: none;
+  z-index: 5;
 }
 
-/* إخفاء العنوان */
+/* إخفاء عنوان "الأوسمة" */
 .score-row.badges-row > span{
   display: none;
 }
@@ -862,40 +855,43 @@ body.is-teacher .rail .score-card {
 
 /* الوسام */
 .noor-badge{
-  width: 56px;
-  height: 56px;
-  padding: 6px;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
-  border-radius: 14px;
-  background: linear-gradient(135deg,#22c55e,#16a34a);
-  color:#fff;
-
-  box-shadow:
-    0 10px 24px rgba(0,0,0,.18),
-    inset 0 0 0 1px rgba(255,255,255,.18);
-
-  animation: badgePop .3s ease-out;
+  width: 56px;
+  height: 56px;
+  padding: 6px;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.15);
+  animation: badgePop .25s ease-out;
 }
 
+/* الأيقونة */
 .noor-badge .icon{
-  font-size: 1.2rem;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
+/* النص */
 .noor-badge .badge-label{
-  font-size: .6rem;
+  font-size: .55rem;
   font-weight: 600;
-  margin-top: 3px;
+  margin-top: 2px;
+  text-align: center;
   white-space: nowrap;
 }
 
-@keyframes badgePop{
-  from{transform:scale(.85);opacity:0}
-  to{transform:scale(1);opacity:1}
+/* 🎨 لون منصة كتبي */
+.noor-badge.bronze{
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  color:#fff;
 }
+
+@keyframes badgePop{
+  from{ transform: scale(.95); opacity:0 }
+  to{ transform: scale(1); opacity:1 }
+}
+
 
 
