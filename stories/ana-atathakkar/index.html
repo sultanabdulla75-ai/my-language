@@ -1,1 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>أنا أتذكّر – صفحة 1</title>
+
+  <!-- ربط الستايل العام -->
+  <link rel="stylesheet" href="../../styles.css">
+
+  <style>
+    .story-page {
+      position: relative;
+      max-width: 900px;
+      margin: 20px auto;
+    }
+
+    .page-img {
+      width: 100%;
+      display: block;
+    }
+
+    .text-layer {
+      position: absolute;
+      inset: 0;
+      direction: rtl;
+    }
+
+    .word {
+      position: absolute;
+      padding: 4px 8px;
+      background: rgba(255,255,255,0.6);
+      border: 1px dashed #999;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    .word.active {
+      background: rgba(255,235,59,0.9);
+      border-color: #f59e0b;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="story-page">
+    <img src="./page-01.png" class="page-img" alt="صفحة القصة">
+
+    <div class="text-layer" id="textLayer"></div>
+  </div>
+
+  <div style="text-align:center">
+    <button onclick="clearHighlight()">إلغاء التظليل</button>
+  </div>
+
+  <script>
+    const words = [
+      // السطر الأيمن
+      { text: "أتذكّرُ", top: "7%", left: "62%" },
+      { text: "جدّي", top: "7%", left: "54%" },
+      { text: "وأشتاقُ", top: "7%", left: "43%" },
+      { text: "إليه.", top: "7%", left: "32%" },
+
+      // السطر الأيسر
+      { text: "أتذكّرُ", top: "7%", left: "22%" },
+      { text: "وجهَه،", top: "7%", left: "14%" },
+      { text: "وضحكتَه،", top: "7%", left: "5%" },
+      { text: "وشاربَيه.", top: "7%", left: "-6%" }
+    ];
+
+    const layer = document.getElementById("textLayer");
+    let wordEls = [];
+
+    words.forEach(w => {
+      const span = document.createElement("span");
+      span.textContent = w.text;
+      span.className = "word";
+      span.style.top = w.top;
+      span.style.left = w.left;
+
+      span.onclick = () => {
+        clearHighlight();
+        span.classList.add("active");
+      };
+
+      layer.appendChild(span);
+      wordEls.push(span);
+    });
+
+    function clearHighlight() {
+      wordEls.forEach(w => w.classList.remove("active"));
+    }
+  </script>
+
+</body>
+</html>
 
