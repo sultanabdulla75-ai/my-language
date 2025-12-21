@@ -883,15 +883,48 @@ body.is-teacher .rail .score-card {
 }
 
 
-/* رابط طويل داخل كرت بشكل أنيق */
-.task-link, .url, .link {
+/* =========================================
+   Fix overflow in Assignments (صندوق الواجبات)
+   ========================================= */
+
+/* بطاقة الواجب */
+.assign-card{
+  max-width: 100%;
+  overflow: hidden;            /* يمنع خروج المحتوى */
+}
+
+/* نص الوصف داخل الواجب */
+.assign-card p,
+.assign-card .desc,
+.assign-card .content{
+  overflow-wrap: anywhere;     /* أهم سطر */
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* الروابط داخل الواجب */
+.assign-card a{
   display: block;
-  padding: 10px 12px;
-  border: 1px dashed rgba(0,0,0,.12);
-  border-radius: 12px;
-  background: rgba(255,255,255,.55);
-  direction: ltr;            /* مهم للروابط */
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  direction: ltr;              /* للروابط */
   text-align: left;
   font-size: .9rem;
+}
+
+/* إن كان النص داخل div */
+.assign-card div{
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* شكل أنيق للرابط داخل الواجب */
+.assign-card a{
+  padding: 8px 10px;
+  border: 1px dashed rgba(0,0,0,.15);
+  border-radius: 10px;
+  background: #f8fafc;
 }
 
