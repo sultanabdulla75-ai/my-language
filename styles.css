@@ -845,86 +845,46 @@ body.is-teacher .rail .score-card {
 }
 
 /* =====================================================
-   🏅 Noor Badges – تصميم نظيف ومحفّز (نسخة نهائية)
+   🏅 Noor Badges – FINAL (دائري + نص متناسق)
    ===================================================== */
 
-/* حاوية الأوسمة في السكة */
 .noor-badges{
   display: flex;
+  gap: .75rem;
   align-items: center;
-  gap: 8px;
-  min-height: 32px; /* يحافظ على التوازن حتى لو لم يظهر وسم */
+  flex-wrap: wrap;
 }
 
-/* الوسم الأساسي */
+/* الوسام */
 .noor-badge{
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: .8rem;
-  font-weight: 700;
-  white-space: nowrap;
-  line-height: 1;
-  box-shadow: 0 6px 14px rgba(0,0,0,.12);
-  animation: badgePop .35s ease-out;
-}
-
-/* 🥇 إنجاز ذهبي */
-.noor-badge.gold{
-  background: linear-gradient(135deg,#fde047,#f59e0b);
-  color:#1f2937;
-}
-
-/* 🥈 إنجاز فضي */
-.noor-badge.silver{
-  background: linear-gradient(135deg,#f1f5f9,#9ca3af);
-  color:#111827;
-}
-
-/* 🥉 بداية موفقة */
-.noor-badge.bronze{
-  background: linear-gradient(135deg,#fdba74,#92400e);
-  color:#1f2937;
-}
-
-/* ===== Noor Badges (Final Clean Style) ===== */
-
-.noor-badges{
-  display: flex;
-  gap: .5rem;
-  align-items: center;
-}
-
-.noor-badge{
-  min-width: 64px;
+  width: 64px;
   height: 64px;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  gap: 2px;
   box-shadow: 0 6px 14px rgba(0,0,0,.12);
-  position: relative;
+  animation: badgePop .3s ease-out;
 }
 
 /* أيقونة الوسام */
 .noor-badge .icon{
+  font-size: 1.4rem;
   line-height: 1;
 }
 
-/* النص أسفل الوسام */
+/* النص */
 .noor-badge .badge-label{
-  margin-top: 4px;
-  font-size: .7rem;
+  font-size: .65rem;
   font-weight: 600;
   color: #1f2937;
   white-space: nowrap;
+  text-align: center;
 }
 
-/* ألوان */
+/* الألوان */
 .noor-badge.gold{
   background: linear-gradient(135deg,#fde68a,#f59e0b);
 }
@@ -937,9 +897,7 @@ body.is-teacher .rail .score-card {
   background: linear-gradient(135deg,#fdba74,#b45309);
 }
 
-
-
-/* حركة ظهور خفيفة (احترافية وغير مزعجة) */
+/* حركة خفيفة */
 @keyframes badgePop{
   from{
     transform: scale(.9);
@@ -951,11 +909,11 @@ body.is-teacher .rail .score-card {
   }
 }
 
-/* تحسين للجوال */
+/* موبايل */
 @media (max-width: 768px){
   .noor-badge{
-    font-size: .75rem;
-    padding: 5px 12px;
+    width: 56px;
+    height: 56px;
   }
 }
 
