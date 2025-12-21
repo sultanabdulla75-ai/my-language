@@ -825,10 +825,10 @@ body.is-teacher .rail .score-card {
 
 
 /* =====================================================
-   🏅 Noor Badges – النسخة النهائية المتناسقة مع منصة نور
+   🏅 Noor Badges – مستطيل أنيق متناسق مع منصة كتبي
    ===================================================== */
 
-/* تصحيح سطر الأوسمة داخل السكة */
+/* تصحيح صف الأوسمة */
 .score-row.badges-row{
   align-items: center;
 }
@@ -837,20 +837,19 @@ body.is-teacher .rail .score-card {
   min-width: 70px;
 }
 
-/* حاوية الأوسمة */
+/* الحاوية */
 .noor-badges{
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
-/* الوسام */
+/* الوسام (مستطيل أنيق) */
 .noor-badge{
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
+  padding: 6px 14px;
+  border-radius: 10px;           /* مستطيل ناعم */
   font-size: .75rem;
   font-weight: 700;
   white-space: nowrap;
@@ -858,7 +857,7 @@ body.is-teacher .rail .score-card {
   animation: badgePop .25s ease-out;
 }
 
-/* أيقونة الوسام */
+/* الأيقونة */
 .noor-badge .icon{
   font-size: 1rem;
   line-height: 1;
@@ -869,24 +868,26 @@ body.is-teacher .rail .score-card {
   font-size: .75rem;
 }
 
-/* 🎨 ألوان هوية منصة نور */
+/* 🎨 لون مستوحى من منصة كتبي */
 .noor-badge.bronze{
   background: linear-gradient(135deg,#22c55e,#16a34a);
-  color:#fff;
+  color:#ffffff;
 }
 
+/* لاحقًا */
 .noor-badge.silver{
   background: linear-gradient(135deg,#38bdf8,#0ea5e9);
-  color:#fff;
+  color:#ffffff;
 }
 
 .noor-badge.gold{
   background: linear-gradient(135deg,#8b5cf6,#6366f1);
-  color:#fff;
+  color:#ffffff;
 }
 
-/* حركة لطيفة */
+/* حركة خفيفة */
 @keyframes badgePop{
-  from{ transform: scale(.9); opacity:0 }
+  from{ transform: scale(.95); opacity:0 }
   to{ transform: scale(1); opacity:1 }
 }
+
