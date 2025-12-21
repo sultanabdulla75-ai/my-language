@@ -818,9 +818,9 @@ body.is-teacher .rail .score-card {
   width: 58px;
   height: 58px;
   border-radius: 50%;
-  object-fit: contain;      /* 🔑 مهم لهذا الشعار */
-  background-color: #fff;   /* خلفية بيضاء نظيفة */
+  object-fit: cover;
+  background-color: #fff;
   border: 2px solid #e5e7eb;
-  padding: 4px;             /* ⭐ يجعل الشعار متوازنًا داخل الدائرة */
 }
+
 
