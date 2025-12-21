@@ -828,20 +828,22 @@ body.is-teacher .rail .score-card {
    🏅 Badge as Top-Center Indicator (FINAL)
    ===================================== */
 
-/* بطاقة الإحصاءات تكون مرجعية */
+/* =====================================
+   🏅 Badge as Top-Center Indicator (FINAL)
+   ===================================== */
+
 .score-card{
   position: relative;
+  padding-top: 28px;
+  overflow: visible;
 }
 
-/* صف الأوسمة لا يحجز مساحة */
 .score-row.badges-row{
   position: absolute;
   top: -14px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 0;
-  background: none;
-  border: 0;
+  z-index: 5;
 }
 
 /* إخفاء عنوان "الأوسمة" */
@@ -861,11 +863,9 @@ body.is-teacher .rail .score-card {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
   width: 56px;
   height: 56px;
   padding: 6px;
-
   border-radius: 12px;
   box-shadow: 0 6px 16px rgba(0,0,0,.15);
   animation: badgePop .25s ease-out;
@@ -892,7 +892,6 @@ body.is-teacher .rail .score-card {
   color:#fff;
 }
 
-/* حركة خفيفة */
 @keyframes badgePop{
   from{ transform: scale(.95); opacity:0 }
   to{ transform: scale(1); opacity:1 }
