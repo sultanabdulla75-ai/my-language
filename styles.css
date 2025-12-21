@@ -889,6 +889,56 @@ body.is-teacher .rail .score-card {
   color:#1f2937;
 }
 
+/* ===== Noor Badges (Final Clean Style) ===== */
+
+.noor-badges{
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+}
+
+.noor-badge{
+  min-width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+  position: relative;
+}
+
+/* أيقونة الوسام */
+.noor-badge .icon{
+  line-height: 1;
+}
+
+/* النص أسفل الوسام */
+.noor-badge .badge-label{
+  margin-top: 4px;
+  font-size: .7rem;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+}
+
+/* ألوان */
+.noor-badge.gold{
+  background: linear-gradient(135deg,#fde68a,#f59e0b);
+}
+
+.noor-badge.silver{
+  background: linear-gradient(135deg,#e5e7eb,#9ca3af);
+}
+
+.noor-badge.bronze{
+  background: linear-gradient(135deg,#fdba74,#b45309);
+}
+
+
+
 /* حركة ظهور خفيفة (احترافية وغير مزعجة) */
 @keyframes badgePop{
   from{
