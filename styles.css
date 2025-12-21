@@ -825,36 +825,36 @@ body.is-teacher .rail .score-card {
 
 
 /* =====================================
-   🏅 Badge as Top-Center Indicator (FINAL)
+   🏅 Badge as Floating Indicator (PRO)
    ===================================== */
 
-/* =====================================
-   🏅 Badge as Top-Center Indicator (FINAL)
-   ===================================== */
-
+/* البطاقة */
 .score-card{
   position: relative;
-  padding-top: 28px;
+  padding-top: 44px;   /* ⬅️ حجز مساحة للوسام */
   overflow: visible;
 }
 
+/* صف الوسام */
 .score-row.badges-row{
   position: absolute;
-  top: -14px;
+  top: 0;
   left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  pointer-events: none;
 }
 
-/* إخفاء عنوان "الأوسمة" */
+/* إخفاء عنوان الأوسمة */
 .score-row.badges-row > span{
   display: none;
 }
 
-/* الحاوية */
+/* حاوية الأوسمة */
 .noor-badges{
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 /* الوسام */
@@ -863,37 +863,48 @@ body.is-teacher .rail .score-card {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
   width: 56px;
   height: 56px;
   padding: 6px;
-  border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(0,0,0,.15);
-  animation: badgePop .25s ease-out;
+
+  border-radius: 14px;
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  color:#fff;
+
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.18),
+    inset 0 0 0 1px rgba(255,255,255,.15);
+
+  animation: badgePop .3s ease-out;
 }
 
 /* الأيقونة */
 .noor-badge .icon{
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   line-height: 1;
 }
 
 /* النص */
 .noor-badge .badge-label{
-  font-size: .55rem;
+  font-size: .6rem;
   font-weight: 600;
-  margin-top: 2px;
+  margin-top: 3px;
   text-align: center;
   white-space: nowrap;
+  opacity: .95;
 }
 
-/* 🎨 لون منصة كتبي */
-.noor-badge.bronze{
-  background: linear-gradient(135deg,#22c55e,#16a34a);
-  color:#fff;
-}
-
+/* الحركة */
 @keyframes badgePop{
-  from{ transform: scale(.95); opacity:0 }
-  to{ transform: scale(1); opacity:1 }
+  from{
+    transform: scale(.85);
+    opacity:0
+  }
+  to{
+    transform: scale(1);
+    opacity:1
+  }
 }
+
 
