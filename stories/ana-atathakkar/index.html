@@ -4,14 +4,12 @@
   <meta charset="UTF-8">
   <title>أنا أتذكّر – صفحة 1</title>
 
-  <!-- ربط الستايل العام -->
-  <link rel="stylesheet" href="../../styles.css">
-
   <style>
     .story-page {
       position: relative;
       max-width: 900px;
       margin: 20px auto;
+      border: 1px solid #ddd;
     }
 
     .page-img {
@@ -22,25 +20,26 @@
     .text-layer {
       position: absolute;
       inset: 0;
-      direction: rtl;
+      /* نستخدم direction: ltr هنا لأن الإحداثيات محسوبة من اليسار لتناسب CSS position */
+      direction: ltr; 
     }
 
     .word {
       position: absolute;
-      padding: 4px 8px;
-      border-radius: 6px;
       cursor: pointer;
-      color: transparent;
+      color: transparent; /* إخفاء النص الحقيقي لإظهار النص الذي في الصورة */
       background: transparent;
+      transform: translate(-50%, -50%); /* لضمان دقة التمركز */
+      white-space: nowrap;
     }
 
- .word.active {
-background: rgba(255, 245, 200, 0.6);
-  border-radius: 999px;
-  padding: 4px 12px;
-}
-
-
+    /* شكل التظليل */
+    .word.active {
+      background: rgba(255, 235, 59, 0.5); /* أصفر شفاف */
+      box-shadow: 0 0 10px rgba(255, 235, 59, 0.8);
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
   </style>
 </head>
 
@@ -51,40 +50,44 @@ background: rgba(255, 245, 200, 0.6);
     <div class="text-layer" id="textLayer"></div>
   </div>
 
-  <div style="text-align:center; margin-top:10px;">
-    <button onclick="playSequence()">▶ تشغيل القراءة</button>
-    <button onclick="clearHighlight()">إلغاء التظليل</button>
+  <div style="text-align:center; margin-top:20px;">
+    <button onclick="playSequence()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">▶ تشغيل القراءة</button>
+    <button onclick="clearHighlight()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">إلغاء التظليل</button>
   </div>
 
   <script>
-    const words = [
-      // السطر الأيمن
-      { text: "أتذكّرُ", top: "7%", left: "90%", time: 0 },
-      { text: "جدّي", top: "7%", left: "85%", time: 900 },
-      { text: "وأشتاقُ", top: "7%", left: "80%", time: 1800 },
-      { text: "إليه.", top: "7%", left: "75%", time: 2700 },
+    // الإحداثيات الدقيقة بناءً على تحليل الصورة
+    const wordsData = [
+      // السطر الأيمن (من اليمين لليسار)
+      { text: "أَتَذَكَّرُ", top: 6.5, left: 85.5, width: 8, height: 6, time: 0 },
+      { text: "جَدِّي", top: 6.5, left: 77.5, width: 6, height: 6, time: 800 },
+      { text: "وَأَشْتَاقُ", top: 6.5, left: 69.5, width: 9, height: 6, time: 1600 },
+      { text: "إِلَيْهِ", top: 6.5, left: 62.5, width: 6, height: 6, time: 2400 },
 
-      // السطر الأيسر
-      { text: "أتذكّرُ", top: "7%", left: "38%", time: 3800 },
-      { text: "وجهَه،", top: "7%", left: "30%", time: 4700 },
-      { text: "وضحكتَه،", top: "7%", left: "20%", time: 5600 },
-      { text: "وشاربَيه.", top: "7%", left: "10%", time: 6500 }
+      // السطر الأيسر (من اليمين لليسار)
+      { text: "أَتَذَكَّرُ", top: 6.5, left: 42.5, width: 8, height: 6, time: 3400 },
+      { text: "وَجْهَهُ", top: 6.5, left: 34.5, width: 7, height: 6, time: 4200 },
+      { text: "وَضِحْكَتَهُ", top: 6.5, left: 25.5, width: 9, height: 6, time: 5000 },
+      { text: "وَشَارِبَيْهِ", top: 6.5, left: 15.5, width: 10, height: 6, time: 5800 }
     ];
 
     const layer = document.getElementById("textLayer");
     let wordEls = [];
 
-    words.forEach(w => {
+    // إنشاء عناصر التظليل
+    wordsData.forEach(w => {
       const span = document.createElement("span");
       span.textContent = w.text;
       span.className = "word";
-      span.style.top = w.top;
-      span.style.left = w.left;
+      
+      // ضبط الموقع والأبعاد بالنسب المئوية لضمان التجاوب (Responsive)
+      span.style.top = w.top + "%";
+      span.style.left = w.left + "%";
+      span.style.width = w.width + "%";
+      span.style.height = w.height + "%";
 
-      // نحتفظ بالوقت
       span.dataset.time = w.time;
 
-      // النقر اليدوي
       span.onclick = () => {
         clearHighlight();
         span.classList.add("active");
@@ -98,16 +101,21 @@ background: rgba(255, 245, 200, 0.6);
       wordEls.forEach(w => w.classList.remove("active"));
     }
 
+    let timeouts = [];
+
     function playSequence() {
+      // إلغاء أي عمليات قراءة جارية حالياً
+      timeouts.forEach(t => clearTimeout(t));
+      timeouts = [];
       clearHighlight();
 
       wordEls.forEach(word => {
         const t = parseInt(word.dataset.time, 10);
-
-        setTimeout(() => {
+        const timeout = setTimeout(() => {
           clearHighlight();
           word.classList.add("active");
         }, t);
+        timeouts.push(timeout);
       });
     }
   </script>
