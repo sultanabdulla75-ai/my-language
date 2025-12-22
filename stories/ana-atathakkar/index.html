@@ -25,20 +25,22 @@
       direction: rtl;
     }
 
-    .word {
-      position: absolute;
-      padding: 4px 8px;
-      background: rgba(255,255,255,0.6);
-      border: 1px dashed #999;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 18px;
-    }
+  .word {
+  position: absolute;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
 
-    .word.active {
-      background: rgba(255,235,59,0.9);
-      border-color: #f59e0b;
-    }
+  /* إخفاء النص */
+  color: transparent;
+  background: transparent;
+}
+
+.word.active {
+  background: rgba(255,235,59,0.85);
+  color: #000;
+}
+
   </style>
 </head>
 
