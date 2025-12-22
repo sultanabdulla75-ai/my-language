@@ -22,7 +22,7 @@
     .text-layer {
       position: absolute;
       inset: 0;
-      direction: ltr; 
+      direction: ltr; /* لضمان حساب left من اليسار دائماً */
     }
 
     .word {
@@ -34,7 +34,7 @@
     }
 
     .word.active {
-      /* تظليل أصفر شفاف وناعم */
+      /* تظليل أصفر شفاف وناعم كما في لقطة الشاشة */
       background: rgba(255, 235, 59, 0.45); 
       box-shadow: 0 0 5px rgba(255, 235, 59, 0.7);
       border-radius: 8px;
@@ -55,35 +55,37 @@
   </div>
 
   <script>
-    // الإحداثيات المحدثة بدقة لمنع التداخل (بناءً على فحص الصورة)
+    // الإحداثيات المحدثة بناءً على قياسات البوربوينت (النسب المئوية)
     const wordsData = [
-      // الصفحة اليمنى (السطر: أَتَذَكَّرُ جَدِّي وَأَشْتَاقُ إِلَيْهِ)
-{ text: "أَتَذَكَّرُ", top: 6.2, left: 80.5, width: 5.8, height: 7.6, time: 0 },
-      { text: "جَدِّي",    top: 8.2, left: 81.2, width: 5.0, height: 5, time: 1000 },
-      { text: "وَأَشْتَاقُ", top: 8.2, left: 71.5, width: 9.0, height: 5, time: 2000 },
-      { text: "إِلَيْهِ",   top: 8.2, left: 66.2, width: 4.8, height: 5, time: 3000 },
+      // الصفحة اليمنى (تم الضبط بناءً على لقطة شاشة البوربوينت)
+      { text: "أَتَذَكَّرُ", top: 6.2, left: 80.5, width: 5.8, height: 7.6, time: 0 },
+      { text: "جَدِّي",    top: 6.2, left: 74.8, width: 4.8, height: 7.6, time: 1000 },
+      { text: "وَأَشْتَاقُ", top: 6.2, left: 65.5, width: 8.5, height: 7.6, time: 2000 },
+      { text: "إِلَيْهِ",   top: 6.2, left: 60.5, width: 4.5, height: 7.6, time: 3000 },
 
-      // الصفحة اليسرى (السطر: أَتَذَكَّرُ وَجْهَهُ، وَضِحْكَتَهُ وَشَارِبَيْهِ)
-      { text: "أَتَذَكَّرُ", top: 8.2, left: 39.2, width: 7.2, height: 5, time: 4500 },
-      { text: "وَجْهَهُ",   top: 8.2, left: 33.2, width: 5.4, height: 5, time: 5500 },
-      { text: "وَضِحْكَتَهُ", top: 8.2, left: 23.2, width: 9.0, height: 5, time: 6500 },
-      { text: "وَشَارِبَيْهِ", top: 8.2, left: 13.8, width: 8.8, height: 5, time: 7500 }
+      // الصفحة اليسرى (إحداثيات تقديرية متناسقة مع الصفحة اليمنى)
+      { text: "أَتَذَكَّرُ", top: 6.2, left: 39.2, width: 7.2, height: 7.6, time: 4500 },
+      { text: "وَجْهَهُ",   top: 6.2, left: 33.2, width: 5.4, height: 7.6, time: 5500 },
+      { text: "وَضِحْكَتَهُ", top: 6.2, left: 23.2, width: 9.0, height: 7.6, time: 6500 },
+      { text: "وَشَارِبَيْهِ", top: 6.2, left: 13.8, width: 8.8, height: 7.6, time: 7500 }
     ];
 
     const layer = document.getElementById("textLayer");
     let wordEls = [];
+    window.timeouts = [];
 
+    // بناء عناصر التظليل
     wordsData.forEach(w => {
       const span = document.createElement("span");
       span.className = "word";
       
-      // تطبيق الإحداثيات بالنسب المئوية لضمان التجاوب
       span.style.top = w.top + "%";
       span.style.left = w.left + "%";
       span.style.width = w.width + "%";
       span.style.height = w.height + "%";
 
       span.dataset.time = w.time;
+      
       span.onclick = () => {
         clearHighlight();
         span.classList.add("active");
@@ -95,8 +97,10 @@
 
     function clearHighlight() {
       wordEls.forEach(w => w.classList.remove("active"));
-      if(window.timeouts) window.timeouts.forEach(t => clearTimeout(t));
-      window.timeouts = [];
+      if(window.timeouts) {
+        window.timeouts.forEach(t => clearTimeout(t));
+        window.timeouts = [];
+      }
     }
 
     function playSequence() {
@@ -105,11 +109,18 @@
       wordEls.forEach(word => {
         const t = parseInt(word.dataset.time, 10);
         const timeout = setTimeout(() => {
-          wordEls.forEach(w => w.classList.remove("active")); // مسح التظليل السابق
+          // مسح تظليل الكلمة السابقة قبل تظليل الحالية
+          wordEls.forEach(w => w.classList.remove("active")); 
           word.classList.add("active");
         }, t);
         window.timeouts.push(timeout);
       });
+      
+      // مسح آخر تظليل بعد انتهاء القراءة بثانية
+      const finalTimeout = setTimeout(() => {
+        wordEls.forEach(w => w.classList.remove("active"));
+      }, wordsData[wordsData.length - 1].time + 1000);
+      window.timeouts.push(finalTimeout);
     }
   </script>
 
