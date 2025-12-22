@@ -7,38 +7,37 @@
   <style>
     .story-page {
       position: relative;
-      max-width: 900px;
+      max-width: 1000px; /* يمكن تكبيره حسب الرغبة */
       margin: 20px auto;
-      border: 1px solid #ddd;
+      border: 1px solid #ccc;
+      overflow: hidden;
     }
 
     .page-img {
       width: 100%;
       display: block;
+      height: auto;
     }
 
     .text-layer {
       position: absolute;
       inset: 0;
-      /* نستخدم direction: ltr هنا لأن الإحداثيات محسوبة من اليسار لتناسب CSS position */
-      direction: ltr; 
+      direction: ltr; /* لضمان حساب left من اليسار دائماً */
     }
 
     .word {
       position: absolute;
       cursor: pointer;
-      color: transparent; /* إخفاء النص الحقيقي لإظهار النص الذي في الصورة */
+      color: transparent;
       background: transparent;
-      transform: translate(-50%, -50%); /* لضمان دقة التمركز */
-      white-space: nowrap;
+      border-radius: 4px;
+      /* إزالة transform translate لضبط القياس بالـ left المباشر */
     }
 
-    /* شكل التظليل */
     .word.active {
-      background: rgba(255, 235, 59, 0.5); /* أصفر شفاف */
-      box-shadow: 0 0 10px rgba(255, 235, 59, 0.8);
-      border-radius: 10px;
-      transition: all 0.2s ease;
+      background: rgba(255, 235, 59, 0.45); /* أصفر شفاف جداً ليظهر النص بوضوح */
+      box-shadow: 0 0 5px rgba(255, 235, 59, 0.7);
+      border-radius: 8px;
     }
   </style>
 </head>
@@ -50,44 +49,45 @@
     <div class="text-layer" id="textLayer"></div>
   </div>
 
-  <div style="text-align:center; margin-top:20px;">
-    <button onclick="playSequence()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">▶ تشغيل القراءة</button>
-    <button onclick="clearHighlight()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">إلغاء التظليل</button>
+  <div style="text-align:center; margin-top:20px; font-family: Arial, sans-serif;">
+    <button onclick="playSequence()" style="padding: 12px 25px; font-size: 18px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px;">▶ تشغيل القراءة</button>
+    <button onclick="clearHighlight()" style="padding: 12px 25px; font-size: 18px; cursor: pointer; background: #f44336; color: white; border: none; border-radius: 5px;">إيقاف</button>
   </div>
 
   <script>
-    // الإحداثيات الدقيقة بناءً على تحليل الصورة
+    /* توضيح القياسات:
+       Top: المسافة من الأعلى (النص يقع في الجزء العلوي).
+       Left: المسافة من يسار الصورة الكلية.
+       Width: عرض منطقة التظليل لكل كلمة.
+    */
     const wordsData = [
-      // السطر الأيمن (من اليمين لليسار)
-      { text: "أَتَذَكَّرُ", top: 6.5, left: 85.5, width: 8, height: 6, time: 0 },
-      { text: "جَدِّي", top: 6.5, left: 77.5, width: 6, height: 6, time: 800 },
-      { text: "وَأَشْتَاقُ", top: 6.5, left: 69.5, width: 9, height: 6, time: 1600 },
-      { text: "إِلَيْهِ", top: 6.5, left: 62.5, width: 6, height: 6, time: 2400 },
+      // الصفحة اليمنى (السطر: أتذكر جدي وأشتاق إليه)
+      { text: "أَتَذَكَّرُ", top: 8.5, left: 87.5, width: 8.5, height: 4.5, time: 0 },
+      { text: "جَدِّي", top: 8.5, left: 81.5, width: 5.5, height: 4.5, time: 800 },
+      { text: "وَأَشْتَاقُ", top: 8.5, left: 71.5, width: 9.5, height: 4.5, time: 1600 },
+      { text: "إِلَيْهِ", top: 8.5, left: 66.5, width: 4.5, height: 4.5, time: 2400 },
 
-      // السطر الأيسر (من اليمين لليسار)
-      { text: "أَتَذَكَّرُ", top: 6.5, left: 42.5, width: 8, height: 6, time: 3400 },
-      { text: "وَجْهَهُ", top: 6.5, left: 34.5, width: 7, height: 6, time: 4200 },
-      { text: "وَضِحْكَتَهُ", top: 6.5, left: 25.5, width: 9, height: 6, time: 5000 },
-      { text: "وَشَارِبَيْهِ", top: 6.5, left: 15.5, width: 10, height: 6, time: 5800 }
+      // الصفحة اليسرى (السطر: أتذكر وجهه، وضحكته وشاربيه)
+      { text: "أَتَذَكَّرُ", top: 8.5, left: 39.5, width: 8.5, height: 4.5, time: 3500 },
+      { text: "وَجْهَهُ", top: 8.5, left: 33.5, width: 5.5, height: 4.5, time: 4300 },
+      { text: "وَضِحْكَتَهُ", top: 8.5, left: 23.5, width: 9.5, height: 4.5, time: 5100 },
+      { text: "وَشَارِبَيْهِ", top: 8.5, left: 13.5, width: 9.5, height: 4.5, time: 6000 }
     ];
 
     const layer = document.getElementById("textLayer");
     let wordEls = [];
 
-    // إنشاء عناصر التظليل
     wordsData.forEach(w => {
       const span = document.createElement("span");
-      span.textContent = w.text;
       span.className = "word";
       
-      // ضبط الموقع والأبعاد بالنسب المئوية لضمان التجاوب (Responsive)
+      // تطبيق الإحداثيات
       span.style.top = w.top + "%";
       span.style.left = w.left + "%";
       span.style.width = w.width + "%";
       span.style.height = w.height + "%";
 
       span.dataset.time = w.time;
-
       span.onclick = () => {
         clearHighlight();
         span.classList.add("active");
@@ -99,23 +99,20 @@
 
     function clearHighlight() {
       wordEls.forEach(w => w.classList.remove("active"));
+      if(window.timeouts) window.timeouts.forEach(t => clearTimeout(t));
     }
 
-    let timeouts = [];
-
     function playSequence() {
-      // إلغاء أي عمليات قراءة جارية حالياً
-      timeouts.forEach(t => clearTimeout(t));
-      timeouts = [];
       clearHighlight();
+      window.timeouts = [];
 
       wordEls.forEach(word => {
         const t = parseInt(word.dataset.time, 10);
         const timeout = setTimeout(() => {
-          clearHighlight();
+          clearHighlight(); // لإبقاء كلمة واحدة فقط مظللة
           word.classList.add("active");
         }, t);
-        timeouts.push(timeout);
+        window.timeouts.push(timeout);
       });
     }
   </script>
