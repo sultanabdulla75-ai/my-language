@@ -25,20 +25,19 @@
       direction: rtl;
     }
 
-  .word {
+ .word {
   position: absolute;
   padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
 
-  /* إخفاء النص */
-  color: transparent;
-  background: transparent;
+  /* 👇 هذا هو المفتاح */
+  color: transparent;        /* إخفاء النص */
+  background: transparent;   /* لا خلفية افتراضيًا */
 }
 
 .word.active {
-  background: rgba(255,235,59,0.85);
-  color: #000;
+  background: rgba(255, 235, 59, 0.85); /* تظليل فقط */
 }
 
   </style>
