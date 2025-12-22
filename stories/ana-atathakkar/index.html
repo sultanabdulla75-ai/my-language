@@ -25,21 +25,18 @@
       direction: rtl;
     }
 
- .word {
-  position: absolute;
-  padding: 4px 8px;
-  border-radius: 6px;
-  cursor: pointer;
+    .word {
+      position: absolute;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: transparent;
+      background: transparent;
+    }
 
-  /* 👇 هذا هو المفتاح */
-  color: transparent;        /* إخفاء النص */
-  background: transparent;   /* لا خلفية افتراضيًا */
-}
-
-.word.active {
-  background: rgba(255, 235, 59, 0.85); /* تظليل فقط */
-}
-
+    .word.active {
+      background: rgba(255, 235, 59, 0.85);
+    }
   </style>
 </head>
 
@@ -47,27 +44,27 @@
 
   <div class="story-page">
     <img src="./page-01.png" class="page-img" alt="صفحة القصة">
-
     <div class="text-layer" id="textLayer"></div>
   </div>
 
-  <div style="text-align:center">
+  <div style="text-align:center; margin-top:10px;">
+    <button onclick="playSequence()">▶ تشغيل القراءة</button>
     <button onclick="clearHighlight()">إلغاء التظليل</button>
   </div>
 
   <script>
     const words = [
       // السطر الأيمن
-      { text: "أتذكّرُ", top: "7%", left: "90%" },
-      { text: "جدّي", top: "7%", left: "85%" },
-      { text: "وأشتاقُ", top: "7%", left: "80%" },
-      { text: "إليه.", top: "7%", left: "75%" },
+      { text: "أتذكّرُ", top: "7%", left: "90%", time: 0 },
+      { text: "جدّي", top: "7%", left: "85%", time: 900 },
+      { text: "وأشتاقُ", top: "7%", left: "80%", time: 1800 },
+      { text: "إليه.", top: "7%", left: "75%", time: 2700 },
 
       // السطر الأيسر
-      { text: "أتذكّرُ", top: "7%", left: "38%" },
-      { text: "وجهَه،", top: "7%", left: "30%" },
-      { text: "وضحكتَه،", top: "7%", left: "20%" },
-      { text: "وشاربَيه.", top: "7%", left: "10%" }
+      { text: "أتذكّرُ", top: "7%", left: "38%", time: 3800 },
+      { text: "وجهَه،", top: "7%", left: "30%", time: 4700 },
+      { text: "وضحكتَه،", top: "7%", left: "20%", time: 5600 },
+      { text: "وشاربَيه.", top: "7%", left: "10%", time: 6500 }
     ];
 
     const layer = document.getElementById("textLayer");
@@ -80,6 +77,10 @@
       span.style.top = w.top;
       span.style.left = w.left;
 
+      // نحتفظ بالوقت
+      span.dataset.time = w.time;
+
+      // النقر اليدوي
       span.onclick = () => {
         clearHighlight();
         span.classList.add("active");
@@ -91,6 +92,19 @@
 
     function clearHighlight() {
       wordEls.forEach(w => w.classList.remove("active"));
+    }
+
+    function playSequence() {
+      clearHighlight();
+
+      wordEls.forEach(word => {
+        const t = parseInt(word.dataset.time, 10);
+
+        setTimeout(() => {
+          clearHighlight();
+          word.classList.add("active");
+        }, t);
+      });
     }
   </script>
 
