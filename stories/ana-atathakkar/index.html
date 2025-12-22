@@ -7,10 +7,9 @@
   <style>
     .story-page {
       position: relative;
-      max-width: 1000px; /* يمكن تكبيره حسب الرغبة */
+      max-width: 1000px;
       margin: 20px auto;
       border: 1px solid #ccc;
-      overflow: hidden;
     }
 
     .page-img {
@@ -22,7 +21,7 @@
     .text-layer {
       position: absolute;
       inset: 0;
-      direction: ltr; /* لضمان حساب left من اليسار دائماً */
+      direction: ltr; 
     }
 
     .word {
@@ -30,14 +29,14 @@
       cursor: pointer;
       color: transparent;
       background: transparent;
-      border-radius: 4px;
-      /* إزالة transform translate لضبط القياس بالـ left المباشر */
+      border-radius: 6px;
+      z-index: 10;
     }
 
+    /* تظليل ناعم وغير متداخل */
     .word.active {
-      background: rgba(255, 235, 59, 0.45); /* أصفر شفاف جداً ليظهر النص بوضوح */
-      box-shadow: 0 0 5px rgba(255, 235, 59, 0.7);
-      border-radius: 8px;
+      background: rgba(255, 235, 59, 0.5); 
+      box-shadow: 0 0 4px rgba(255, 235, 59, 0.6);
     }
   </style>
 </head>
@@ -45,74 +44,80 @@
 <body>
 
   <div class="story-page">
-    <img src="./page-01.png" class="page-img" alt="صفحة القصة">
+    <img src="./page-01.jpg" class="page-img" alt="صفحة القصة">
     <div class="text-layer" id="textLayer"></div>
   </div>
 
-  <div style="text-align:center; margin-top:20px; font-family: Arial, sans-serif;">
-    <button onclick="playSequence()" style="padding: 12px 25px; font-size: 18px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px;">▶ تشغيل القراءة</button>
-    <button onclick="clearHighlight()" style="padding: 12px 25px; font-size: 18px; cursor: pointer; background: #f44336; color: white; border: none; border-radius: 5px;">إيقاف</button>
+  <div style="text-align:center; margin-top:20px; font-family: sans-serif;">
+    <button onclick="playSequence()" style="padding: 10px 25px; font-size: 16px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 5px;">▶ تشغيل القراءة</button>
+    <button onclick="stopSequence()" style="padding: 10px 25px; font-size: 16px; cursor: pointer; background: #dc3545; color: white; border: none; border-radius: 5px;">إيقاف</button>
   </div>
 
   <script>
-    /* توضيح القياسات:
-       Top: المسافة من الأعلى (النص يقع في الجزء العلوي).
-       Left: المسافة من يسار الصورة الكلية.
-       Width: عرض منطقة التظليل لكل كلمة.
-    */
+    // الإحداثيات المصححة لضمان عدم التداخل (تم تقليل العرض width لكل كلمة)
     const wordsData = [
-      // الصفحة اليمنى (السطر: أتذكر جدي وأشتاق إليه)
-      { text: "أَتَذَكَّرُ", top: 8.5, left: 87.5, width: 8.5, height: 4.5, time: 0 },
-      { text: "جَدِّي", top: 8.5, left: 81.5, width: 5.5, height: 4.5, time: 800 },
-      { text: "وَأَشْتَاقُ", top: 8.5, left: 71.5, width: 9.5, height: 4.5, time: 1600 },
-      { text: "إِلَيْهِ", top: 8.5, left: 66.5, width: 4.5, height: 4.5, time: 2400 },
+      // الصفحة اليمنى (من اليمين لليسار)
+      { text: "أَتَذَكَّرُ", top: 8.5, left: 86.8, width: 7.0, time: 0 },
+      { text: "جَدِّي", top: 8.5, left: 80.8, width: 4.8, time: 1000 },
+      { text: "وَأَشْتَاقُ", top: 8.5, left: 70.8, width: 8.5, time: 2000 },
+      { text: "إِلَيْهِ", top: 8.5, left: 65.5, width: 4.5, time: 3000 },
 
-      // الصفحة اليسرى (السطر: أتذكر وجهه، وضحكته وشاربيه)
-      { text: "أَتَذَكَّرُ", top: 8.5, left: 39.5, width: 8.5, height: 4.5, time: 3500 },
-      { text: "وَجْهَهُ", top: 8.5, left: 33.5, width: 5.5, height: 4.5, time: 4300 },
-      { text: "وَضِحْكَتَهُ", top: 8.5, left: 23.5, width: 9.5, height: 4.5, time: 5100 },
-      { text: "وَشَارِبَيْهِ", top: 8.5, left: 13.5, width: 9.5, height: 4.5, time: 6000 }
+      // الصفحة اليسرى (من اليمين لليسار)
+      { text: "أَتَذَكَّرُ", top: 8.5, left: 38.5, width: 7.0, time: 4500 },
+      { text: "وَجْهَهُ", top: 8.5, left: 32.5, width: 5.5, time: 5500 },
+      { text: "وَضِحْكَتَهُ", top: 8.5, left: 22.8, width: 8.5, time: 6500 },
+      { text: "وَشَارِبَيْهِ", top: 8.5, left: 13.0, width: 9.0, time: 7500 }
     ];
 
     const layer = document.getElementById("textLayer");
     let wordEls = [];
+    let activeTimeouts = [];
 
-    wordsData.forEach(w => {
+    // بناء العناصر
+    wordsData.forEach((w, index) => {
       const span = document.createElement("span");
       span.className = "word";
-      
-      // تطبيق الإحداثيات
       span.style.top = w.top + "%";
       span.style.left = w.left + "%";
       span.style.width = w.width + "%";
-      span.style.height = w.height + "%";
+      span.style.height = "5%"; // ارتفاع ثابت للسطر
 
-      span.dataset.time = w.time;
       span.onclick = () => {
-        clearHighlight();
-        span.classList.add("active");
+        stopSequence();
+        highlightWord(index);
       };
 
       layer.appendChild(span);
       wordEls.push(span);
     });
 
-    function clearHighlight() {
-      wordEls.forEach(w => w.classList.remove("active"));
-      if(window.timeouts) window.timeouts.forEach(t => clearTimeout(t));
+    function highlightWord(index) {
+      wordEls.forEach(el => el.classList.remove("active"));
+      if (index !== -1) {
+        wordEls[index].classList.add("active");
+      }
+    }
+
+    function stopSequence() {
+      activeTimeouts.forEach(t => clearTimeout(t));
+      activeTimeouts = [];
+      highlightWord(-1);
     }
 
     function playSequence() {
-      clearHighlight();
-      window.timeouts = [];
+      stopSequence(); // تنظيف أي محاولة سابقة
 
-      wordEls.forEach(word => {
-        const t = parseInt(word.dataset.time, 10);
+      wordsData.forEach((w, index) => {
         const timeout = setTimeout(() => {
-          clearHighlight(); // لإبقاء كلمة واحدة فقط مظللة
-          word.classList.add("active");
-        }, t);
-        window.timeouts.push(timeout);
+          highlightWord(index);
+          
+          // إذا كانت هذه آخر كلمة، نلغي التظليل بعد ثانية
+          if (index === wordsData.length - 1) {
+            setTimeout(() => highlightWord(-1), 1000);
+          }
+        }, w.time);
+        
+        activeTimeouts.push(timeout);
       });
     }
   </script>
