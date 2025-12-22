@@ -3,121 +3,113 @@
 <head>
   <meta charset="UTF-8">
   <title>أنا أتذكّر – صفحة 1</title>
-
   <style>
     .story-page {
       position: relative;
       max-width: 1000px;
       margin: 20px auto;
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
     }
-
     .page-img {
       width: 100%;
       display: block;
-      height: auto;
     }
-
     .text-layer {
       position: absolute;
       inset: 0;
-      direction: ltr; 
+      direction: ltr; /* للحساب الدقيق من اليسار */
     }
-
     .word {
       position: absolute;
       cursor: pointer;
-      color: transparent;
       background: transparent;
-      border-radius: 6px;
+      border-radius: 8px;
       z-index: 10;
+      transition: background 0.1s ease;
     }
-
-    /* تظليل ناعم وغير متداخل */
     .word.active {
-      background: rgba(255, 235, 59, 0.5); 
-      box-shadow: 0 0 4px rgba(255, 235, 59, 0.6);
+      background: rgba(255, 235, 59, 0.45); /* أصفر شفاف لا يغطي معالم الكلمة */
+      box-shadow: 0 0 3px rgba(255, 235, 59, 0.5);
     }
   </style>
 </head>
-
 <body>
 
   <div class="story-page">
-    <img src="./page-01.jpg" class="page-img" alt="صفحة القصة">
+    <img src="./page-01.jpg" class="page-img" id="mainImg" alt="صفحة القصة">
     <div class="text-layer" id="textLayer"></div>
   </div>
 
-  <div style="text-align:center; margin-top:20px; font-family: sans-serif;">
-    <button onclick="playSequence()" style="padding: 10px 25px; font-size: 16px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 5px;">▶ تشغيل القراءة</button>
-    <button onclick="stopSequence()" style="padding: 10px 25px; font-size: 16px; cursor: pointer; background: #dc3545; color: white; border: none; border-radius: 5px;">إيقاف</button>
+  <div style="text-align:center; margin-top:20px;">
+    <button onclick="playSequence()" style="padding: 12px 30px; font-size: 18px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 5px;">▶ تشغيل القراءة</button>
+    <button onclick="stopSequence()" style="padding: 12px 30px; font-size: 18px; cursor: pointer; background: #dc3545; color: white; border: none; border-radius: 5px;">إيقاف</button>
   </div>
 
   <script>
-    // الإحداثيات المصححة لضمان عدم التداخل (تم تقليل العرض width لكل كلمة)
+    // قياسات دقيقة جداً لكل كلمة لمنع التداخل
     const wordsData = [
-      // الصفحة اليمنى (من اليمين لليسار)
-      { text: "أَتَذَكَّرُ", top: 8.5, left: 86.8, width: 7.0, time: 0 },
-      { text: "جَدِّي", top: 8.5, left: 80.8, width: 4.8, time: 1000 },
-      { text: "وَأَشْتَاقُ", top: 8.5, left: 70.8, width: 8.5, time: 2000 },
-      { text: "إِلَيْهِ", top: 8.5, left: 65.5, width: 4.5, time: 3000 },
+      // الصفحة اليمنى
+      { text: "أَتَذَكَّرُ", top: 8.5, left: 87.2, width: 8.0, time: 0 },
+      { text: "جَدِّي",    top: 8.5, left: 81.8, width: 4.8, time: 1000 },
+      { text: "وَأَشْتَاقُ", top: 8.5, left: 72.0, width: 9.0, time: 2000 },
+      { text: "إِلَيْهِ",   top: 8.5, left: 66.8, width: 4.5, time: 3000 },
 
-      // الصفحة اليسرى (من اليمين لليسار)
-      { text: "أَتَذَكَّرُ", top: 8.5, left: 38.5, width: 7.0, time: 4500 },
-      { text: "وَجْهَهُ", top: 8.5, left: 32.5, width: 5.5, time: 5500 },
-      { text: "وَضِحْكَتَهُ", top: 8.5, left: 22.8, width: 8.5, time: 6500 },
-      { text: "وَشَارِبَيْهِ", top: 8.5, left: 13.0, width: 9.0, time: 7500 }
+      // الصفحة اليسرى
+      { text: "أَتَذَكَّرُ", top: 8.5, left: 39.0, width: 8.0, time: 4500 },
+      { text: "وَجْهَهُ",   top: 8.5, left: 33.0, width: 5.5, time: 5500 },
+      { text: "وَضِحْكَتَهُ", top: 8.5, left: 23.5, width: 9.0, time: 6500 },
+      { text: "وَشَارِبَيْهِ", top: 8.5, left: 14.5, width: 8.5, time: 7500 }
     ];
 
     const layer = document.getElementById("textLayer");
     let wordEls = [];
-    let activeTimeouts = [];
+    let timers = [];
 
-    // بناء العناصر
+    // إنشاء طبقة التظليل لكل كلمة
     wordsData.forEach((w, index) => {
-      const span = document.createElement("span");
+      const span = document.createElement("div");
       span.className = "word";
       span.style.top = w.top + "%";
       span.style.left = w.left + "%";
       span.style.width = w.width + "%";
-      span.style.height = "5%"; // ارتفاع ثابت للسطر
+      span.style.height = "5%";
 
       span.onclick = () => {
         stopSequence();
-        highlightWord(index);
+        activateWord(index);
       };
 
       layer.appendChild(span);
       wordEls.push(span);
     });
 
-    function highlightWord(index) {
+    function activateWord(index) {
       wordEls.forEach(el => el.classList.remove("active"));
-      if (index !== -1) {
+      if (index !== -1 && wordEls[index]) {
         wordEls[index].classList.add("active");
       }
     }
 
     function stopSequence() {
-      activeTimeouts.forEach(t => clearTimeout(t));
-      activeTimeouts = [];
-      highlightWord(-1);
+      timers.forEach(t => clearTimeout(t));
+      timers = [];
+      activateWord(-1);
     }
 
     function playSequence() {
-      stopSequence(); // تنظيف أي محاولة سابقة
+      stopSequence(); // تصفير أي محاولة سابقة
 
       wordsData.forEach((w, index) => {
-        const timeout = setTimeout(() => {
-          highlightWord(index);
+        const t = setTimeout(() => {
+          activateWord(index);
           
-          // إذا كانت هذه آخر كلمة، نلغي التظليل بعد ثانية
+          // إخفاء التظليل بعد انتهاء آخر كلمة بمدة قصيرة
           if (index === wordsData.length - 1) {
-            setTimeout(() => highlightWord(-1), 1000);
+            const lastT = setTimeout(() => activateWord(-1), 1200);
+            timers.push(lastT);
           }
         }, w.time);
-        
-        activeTimeouts.push(timeout);
+        timers.push(t);
       });
     }
   </script>
