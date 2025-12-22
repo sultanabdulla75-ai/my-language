@@ -7,7 +7,7 @@
   <style>
     .story-page {
       position: relative;
-      max-width: 1000px; /* يمكن تكبيره حسب الرغبة */
+      max-width: 1000px; 
       margin: 20px auto;
       border: 1px solid #ccc;
       overflow: hidden;
@@ -22,7 +22,7 @@
     .text-layer {
       position: absolute;
       inset: 0;
-      direction: ltr; /* لضمان حساب left من اليسار دائماً */
+      direction: ltr; 
     }
 
     .word {
@@ -31,11 +31,11 @@
       color: transparent;
       background: transparent;
       border-radius: 4px;
-      /* إزالة transform translate لضبط القياس بالـ left المباشر */
     }
 
     .word.active {
-      background: rgba(255, 235, 59, 0.45); /* أصفر شفاف جداً ليظهر النص بوضوح */
+      /* تظليل أصفر شفاف وناعم */
+      background: rgba(255, 235, 59, 0.45); 
       box-shadow: 0 0 5px rgba(255, 235, 59, 0.7);
       border-radius: 8px;
     }
@@ -55,23 +55,19 @@
   </div>
 
   <script>
-    /* توضيح القياسات:
-       Top: المسافة من الأعلى (النص يقع في الجزء العلوي).
-       Left: المسافة من يسار الصورة الكلية.
-       Width: عرض منطقة التظليل لكل كلمة.
-    */
+    // الإحداثيات المحدثة بدقة لمنع التداخل (بناءً على فحص الصورة)
     const wordsData = [
-      // الصفحة اليمنى (السطر: أتذكر جدي وأشتاق إليه)
-      { text: "أَتَذَكَّرُ", top: 8.5, left: 87.5, width: 8.5, height: 4.5, time: 0 },
-      { text: "جَدِّي", top: 8.5, left: 81.5, width: 5.5, height: 4.5, time: 800 },
-      { text: "وَأَشْتَاقُ", top: 8.5, left: 71.5, width: 9.5, height: 4.5, time: 1600 },
-      { text: "إِلَيْهِ", top: 8.5, left: 66.5, width: 4.5, height: 4.5, time: 2400 },
+      // الصفحة اليمنى (السطر: أَتَذَكَّرُ جَدِّي وَأَشْتَاقُ إِلَيْهِ)
+      { text: "أَتَذَكَّرُ", top: 8.2, left: 86.8, width: 7.2, height: 5, time: 0 },
+      { text: "جَدِّي",    top: 8.2, left: 81.2, width: 5.0, height: 5, time: 1000 },
+      { text: "وَأَشْتَاقُ", top: 8.2, left: 71.5, width: 9.0, height: 5, time: 2000 },
+      { text: "إِلَيْهِ",   top: 8.2, left: 66.2, width: 4.8, height: 5, time: 3000 },
 
-      // الصفحة اليسرى (السطر: أتذكر وجهه، وضحكته وشاربيه)
-      { text: "أَتَذَكَّرُ", top: 8.5, left: 39.5, width: 8.5, height: 4.5, time: 3500 },
-      { text: "وَجْهَهُ", top: 8.5, left: 33.5, width: 5.5, height: 4.5, time: 4300 },
-      { text: "وَضِحْكَتَهُ", top: 8.5, left: 23.5, width: 9.5, height: 4.5, time: 5100 },
-      { text: "وَشَارِبَيْهِ", top: 8.5, left: 13.5, width: 9.5, height: 4.5, time: 6000 }
+      // الصفحة اليسرى (السطر: أَتَذَكَّرُ وَجْهَهُ، وَضِحْكَتَهُ وَشَارِبَيْهِ)
+      { text: "أَتَذَكَّرُ", top: 8.2, left: 39.2, width: 7.2, height: 5, time: 4500 },
+      { text: "وَجْهَهُ",   top: 8.2, left: 33.2, width: 5.4, height: 5, time: 5500 },
+      { text: "وَضِحْكَتَهُ", top: 8.2, left: 23.2, width: 9.0, height: 5, time: 6500 },
+      { text: "وَشَارِبَيْهِ", top: 8.2, left: 13.8, width: 8.8, height: 5, time: 7500 }
     ];
 
     const layer = document.getElementById("textLayer");
@@ -81,7 +77,7 @@
       const span = document.createElement("span");
       span.className = "word";
       
-      // تطبيق الإحداثيات
+      // تطبيق الإحداثيات بالنسب المئوية لضمان التجاوب
       span.style.top = w.top + "%";
       span.style.left = w.left + "%";
       span.style.width = w.width + "%";
@@ -100,16 +96,16 @@
     function clearHighlight() {
       wordEls.forEach(w => w.classList.remove("active"));
       if(window.timeouts) window.timeouts.forEach(t => clearTimeout(t));
+      window.timeouts = [];
     }
 
     function playSequence() {
       clearHighlight();
-      window.timeouts = [];
 
       wordEls.forEach(word => {
         const t = parseInt(word.dataset.time, 10);
         const timeout = setTimeout(() => {
-          clearHighlight(); // لإبقاء كلمة واحدة فقط مظللة
+          wordEls.forEach(w => w.classList.remove("active")); // مسح التظليل السابق
           word.classList.add("active");
         }, t);
         window.timeouts.push(timeout);
