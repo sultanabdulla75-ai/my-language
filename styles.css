@@ -283,6 +283,48 @@ body{
 .tbody .row{border-bottom:1px solid #f1f5f9}
 .actions{display:flex;gap:.4rem;flex-wrap:wrap}
 
+/* ===== Teacher Assignments – Smart Rows ===== */
+.table .tbody .row{
+  background: #fff;
+  border-radius: 14px;
+  margin: .45rem .4rem;
+  padding: .7rem .8rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.table .tbody .row:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,0,0,.12);
+}
+
+.status{
+  padding: .25rem .7rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 800;
+  text-align: center;
+  width: fit-content;
+}
+
+.status.done{
+  background:#dcfce7;
+  color:#065f46;
+}
+
+.status.required{
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+/* Assignments */
+.assign-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:.9rem
+}
+
+
 /* Reader */
 .reader{max-width:900px;margin:auto;padding:1rem}
 .reader-top{display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin:.6rem auto 1rem;max-width:900px}
