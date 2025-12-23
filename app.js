@@ -1295,9 +1295,7 @@ async function renderBooks(level = 'ALL') {
   const current = readJSON(LS.CURRENT, null);
   if (!current) return;
 
- // ✅ المصدر الوحيد للفصل
   const classId = current.classId || null;
-
   if (!classId) {
     g.innerHTML = "<p>🚫 لا يوجد فصل مرتبط بك</p>";
     return;
@@ -1321,18 +1319,59 @@ async function renderBooks(level = 'ALL') {
   filtered.forEach(b => {
     const c = document.createElement('div');
     c.className = 'book-card';
+
+    // 1️⃣ محتوى البطاقة
     c.innerHTML = `
       <img src="${b.cover}" style="width:100%;border-radius:12px;margin-bottom:.5rem">
       <h4>${b.title}</h4>
       <div class="badge ok">مستوى ${b.level}</div>
+
+      ${
+        current.role === "teacher"
+          ? `
+          <div class="book-actions">
+            <button class="btn mini ghost" data-edit>✏️ تعديل</button>
+            <button class="btn mini danger" data-del>🗑 حذف</button>
+          </div>
+          `
+          : ""
+      }
     `;
 
-    // ✅ التصحيح الحاسم هنا
+    // 2️⃣ فتح القصة (الطالب والمعلم)
     c.onclick = () => window.openReader(b);
 
+    // 3️⃣ ✏️ تعديل القصة (للمعلم فقط)
+    c.querySelector('[data-edit]')?.addEventListener('click', (e) => {
+      e.stopPropagation(); // 🔒 مهم
+      openEditBookModal(b);
+    });
+
+    // 4️⃣ 🗑 حذف القصة (للمعلم فقط)
+    c.querySelector('[data-del]')?.addEventListener('click', async (e) => {
+      e.stopPropagation(); // 🔒 مهم
+
+      if (!confirm(`هل تريد حذف القصة: ${b.title}؟`)) return;
+
+      try {
+        await deleteDoc(
+          doc(window.db, "classes", current.classId, "books", b.id)
+        );
+
+        toast("🗑 تم حذف القصة بنجاح");
+        renderBooks(level);
+
+      } catch (err) {
+        console.error(err);
+        toast("⚠ فشل حذف القصة");
+      }
+    });
+
+    // 5️⃣ إضافة البطاقة
     g.appendChild(c);
   });
 }
+
 
 
 function getStudentAssignments(uid) {
@@ -2570,6 +2609,48 @@ async function saveBook() {
   renderBooks("ALL");
   toast("✓ تمت إضافة القصة (سحابة + محلي) 🎉");
 }
+
+
+// ===============================
+// ✏️ تعديل قصة موجودة
+// ===============================
+function openEditBookModal(book) {
+  $('#bTitle').value = book.title;
+  $('#bLevel').value = book.level;
+  $('#bCover').value = book.cover || '';
+  $('#bText').value = book.text.join('\n');
+
+  $('#modalBook').classList.remove('hidden');
+
+const saveBtn = document.getElementById('saveBook');
+saveBtn.onclick = null;
+saveBtn.onclick = async () => {
+
+    book.title = $('#bTitle').value.trim();
+    book.level = $('#bLevel').value;
+    book.cover = $('#bCover').value.trim();
+    book.text  = $('#bText').value.trim().split('\n');
+
+    await setDoc(
+      doc(
+        window.db,
+        "classes",
+        readJSON(LS.CURRENT).classId,
+        "books",
+        book.id
+      ),
+      book,
+      { merge: true }
+    );
+
+    $('#modalBook').classList.add('hidden');
+    toast("✏️ تم تعديل القصة بنجاح");
+    renderBooks('ALL');
+  };
+}
+
+
+
 
 // حفظ سؤال اختبار (quiz) داخل نفس وثيقة القصة في Firestore
 async function saveQuiz() {
