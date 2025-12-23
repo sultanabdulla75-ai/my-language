@@ -1018,6 +1018,23 @@ body.is-teacher .rail .score-card {
   box-shadow: 0 8px 20px rgba(0,0,0,.15);
 }
 
+/* ✨ نبض تحفيزي للأوسمة */
+.noor-badge{
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse{
+  0%{
+    box-shadow: 0 0 0 0 rgba(250,204,21,.6);
+  }
+  70%{
+    box-shadow: 0 0 0 12px rgba(250,204,21,0);
+  }
+  100%{
+    box-shadow: 0 0 0 0 rgba(250,204,21,0);
+  }
+}
+
 
 /* =========================================
    Fix overflow in Assignments (صندوق الواجبات)
