@@ -153,6 +153,18 @@ body{
 }
 
 .card.action .icon{font-size:32px;margin-bottom:.4rem}
+
+/* ✅ هنا بالضبط */
+.kid-icon{
+  font-size:42px;
+  animation: float 2.2s ease-in-out infinite;
+}
+
+@keyframes float{
+  0%,100%{ transform:translateY(0) }
+  50%{ transform:translateY(-6px) }
+}
+
 .cards-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem}
 
 .btn{border:none;border-radius:16px;padding:.6rem .95rem;cursor:pointer;font-weight:800;color:#fff;box-shadow:0 10px 20px rgba(0,0,0,.06);transition:.25s;background:linear-gradient(90deg,#f97316,#f59e0b)}
