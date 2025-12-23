@@ -13,6 +13,8 @@ let hasInteractedWithStory = false;
 let interactionCount = 0;
 let maxScrollPercent = 0;
 
+let activeReadingStartAt = null;
+
 
 // ===== Firestore Imports =====
 import {
@@ -2286,10 +2288,16 @@ para.innerHTML = p.split(' ').map(word =>
 para.querySelectorAll('.word').forEach(span => {
   span.onclick = () => {
     span.classList.toggle('word-selected');
-interactionCount++;
-hasInteractedWithStory = interactionCount >= 3;
+    interactionCount++;
+
+    if (interactionCount === 3) {
+      activeReadingStartAt = Date.now(); // ⏱️ هنا يبدأ العد الحقيقي
+    }
+
+    hasInteractedWithStory = interactionCount >= 3;
   };
 });
+
 
 host.appendChild(para);
 
@@ -2297,14 +2305,36 @@ host.appendChild(para);
   }
 
 
- /* 🔽🔽🔽 أضف هذا هنا بالضبط 🔽🔽🔽 */
+// ===============================
+// 📜 مراقبة التمرير الحقيقي
+// ===============================
+host.onscroll = null; // منع التكرار
 host.addEventListener("scroll", () => {
   const percent =
     (host.scrollTop + host.clientHeight) / host.scrollHeight;
 
   maxScrollPercent = Math.max(maxScrollPercent, percent);
-}); 
+});
 
+  
+// ===============================
+// 🧠 حساب عدد الكلمات والزمن الأدنى
+// ===============================
+const wordCount = book.text.join(" ").split(/\s+/).length;
+window.MIN_SECONDS = Math.max(60, Math.round(wordCount * 0.3));
+
+// ===============================
+// 📜 مراقبة التمرير (scroll)
+// ===============================
+host.onscroll = null; // منع التكرار
+host.addEventListener("scroll", () => {
+  const percent =
+    (host.scrollTop + host.clientHeight) / host.scrollHeight;
+
+  maxScrollPercent = Math.max(maxScrollPercent, percent);
+});
+
+  
   // ===============================
   // تهيئة عناصر التسجيل
   // ===============================
@@ -2319,20 +2349,24 @@ window.openReader = openReader;
 function backToApp() {
   $('#readerView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
-   if (readingStartAt && currentBook) {
-    const diffMs = Date.now() - readingStartAt;
-    const secondsSpent = Math.round(diffMs / 1000);
-    const MIN_SECONDS = 30;
+  if (activeReadingStartAt && currentBook) {
+  const diffMs = Date.now() - activeReadingStartAt;
+  const secondsSpent = Math.round(diffMs / 1000);
 
-const scrollOK = maxScrollPercent >= 0.7; // 70%
-if (hasInteractedWithStory && scrollOK && secondsSpent >= MIN_SECONDS) {
-      const minutesSpent = Math.max(1, Math.round(secondsSpent / 60));
-      updateReadStats(currentBook.id, minutesSpent);
-    } else {
-      console.log("⏭️ قراءة لم تُحتسب");
-    }
+  const scrollOK = maxScrollPercent >= 0.7;
+
+  if (
+    hasInteractedWithStory &&
+    scrollOK &&
+    secondsSpent >= window.MIN_SECONDS
+  ) {
+    const minutesSpent = Math.max(1, Math.round(secondsSpent / 60));
+    updateReadStats(currentBook.id, minutesSpent);
+  } else {
+    console.log("⏭️ قراءة لم تُحتسب (شروط غير مكتملة)");
   }
-
+}
+activeReadingStartAt = null;
   readingStartAt = null;
   hasInteractedWithStory = false;
 }
