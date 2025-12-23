@@ -1445,19 +1445,54 @@ function renderStudentAssignments(filter = 'required') {
       `;
     }
 
-    el.innerHTML = `
-      <h4>${a.title}</h4>
-      <div class="meta">
-        <span>${LEVELS.find(l => l.id === a.level)?.name || '—'}</span>
-        <span>${a.due || '-'}</span>
-      </div>
-      <p class="muted" style="margin:.3rem 0">${a.desc || ''}</p>
-      <div class="meta"><span class="badge ${a.statusClass}">${a.statusLabel}</span></div>
-      <div class="progress" aria-label="progress"><i style="width:${a.progress || 0}%"></i></div>
-      <div class="row" style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
-        ${buttons}
-      </div>
-    `;
+el.innerHTML = `
+  <h4>${a.title}</h4>
+
+  <!-- 🏷️ المستوى + التاريخ -->
+  <div class="meta">
+    <span class="badge sky">
+      ${LEVELS.find(l => l.id === a.level)?.name || '—'}
+    </span>
+    <span class="badge ghost">
+      📅 ${a.due || 'بدون تاريخ'}
+    </span>
+  </div>
+
+  <!-- 📝 الوصف -->
+  <p class="muted" style="margin:.4rem 0">
+    ${a.desc || ''}
+  </p>
+
+  <!-- ✅ حالة الواجب -->
+  <div style="margin:.3rem 0">
+    <span class="status ${
+      a.ps.status === 'done'
+        ? 'done'
+        : a.ps.status === 'submitted'
+        ? 'review'
+        : 'required'
+    }">
+      ${
+        a.ps.status === 'done'
+          ? 'منجز ✅'
+          : a.ps.status === 'submitted'
+          ? 'قيد المراجعة ⏳'
+          : 'مطلوب 📘'
+      }
+    </span>
+  </div>
+
+  <!-- 📊 شريط التقدم -->
+  <div class="progress" aria-label="progress">
+    <i style="width:${a.progress || 0}%"></i>
+  </div>
+
+  <!-- 🔘 الأزرار -->
+  <div class="row" style="margin-top:.7rem;display:flex;gap:.4rem;flex-wrap:wrap">
+    ${buttons}
+  </div>
+`;
+
 
     // فتح القصة حسب مستوى الواجب
     el.querySelector('[data-open]')?.addEventListener('click', () => {
@@ -1701,7 +1736,9 @@ if (!classId && window.db) {
       r.innerHTML = `
         <div>${name}</div>
         <div>${email}</div>
-        <div>${className}</div>
+<div>
+  <span class="class-badge">${className || '—'}</span>
+</div>
         <div class="actions">
           <button class="btn mini" data-edit="${email}">تعديل</button>
           <button class="btn mini ghost" data-del="${email}">حذف</button>
@@ -2059,10 +2096,22 @@ async function renderTeacherView() {
         <div>${stu?.name || sid}</div>
         <div>${a.title}</div>
         <div>
-          <span class="badge ${
-            ps.status === 'done' ? 'ok' :
-            ps.status === 'submitted' ? 'warn' : 'err'
-          }">${ps.status}</span>
+          <span class="status ${
+  ps.status === 'done'
+    ? 'done'
+    : ps.status === 'submitted'
+    ? 'review'
+    : 'required'
+}">
+  ${
+    ps.status === 'done'
+      ? 'منجز ✅'
+      : ps.status === 'submitted'
+      ? 'قيد المراجعة ⏳'
+      : 'مطلوب 📘'
+  }
+</span>
+
         </div>
         <div><div class="progress"><i style="width:${ps.progress}%"></i></div></div>
         <div>${ps.notes || "—"}</div>
