@@ -755,6 +755,24 @@ body {
   overflow: hidden;
 }
 
+/* شريط التقدم – تحدي اليوم */
+.challenge-progress{
+  height:10px;
+  background:#e0f2fe;
+  border-radius:999px;
+  overflow:hidden;
+  margin: .4rem 0 .6rem;   /* مسافة جميلة */
+}
+
+.challenge-progress i{
+  display:block;
+  height:100%;
+  width:50%;               /* ← ستتحكم بها لاحقًا بالـ JS */
+  background:linear-gradient(90deg,#22c55e,#4ade80);
+  transition: width .4s ease;
+}
+
+
 .challenge-card::after {
   content: "⭐";
   position: absolute;
@@ -781,6 +799,7 @@ body {
 .challenge-actions {
   text-align: end;
 }
+
 
 
 
