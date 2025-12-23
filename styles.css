@@ -205,6 +205,30 @@ body{
 .grid.books{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .level-card,.book-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1rem;box-shadow:0 4px 12px rgba(0,0,0,.05);transition:.2s;cursor:pointer;text-align:center}
 .level-card:hover,.book-card:hover{transform:translateY(-2px)}
+/* حركة طفولية لبطاقة القصة */
+.book-card:hover{
+  transform: translateY(-6px) rotate(-.5deg);
+}
+
+/* =====================================
+   📚 Book Card – Kid Style
+   ===================================== */
+
+.book-card{
+  position: relative;
+  background: linear-gradient(180deg,#ffffff,#f8fafc);
+}
+
+/* أيقونة الكتاب أعلى البطاقة */
+.book-card::before{
+  content:"📘";
+  position:absolute;
+  top:-18px;
+  left:12px;
+  font-size:26px;
+}
+
+
 
 /* ===== Book Actions (Edit/Delete) ===== */
 .book-actions{
