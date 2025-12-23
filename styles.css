@@ -120,6 +120,29 @@ body{
 
 
 .section-header{display:flex;justify-content:space-between;align-items:center;margin:.4rem 0 .6rem}
+
+/* ===============================
+   👋 Welcome Title (Home)
+================================ */
+
+.welcome{
+  margin-bottom: .8rem;
+}
+
+#helloName{
+  font-size: 1.7rem;
+  font-weight: 800;
+  display: inline-block;
+  background: linear-gradient(90deg,#2563eb,#22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.welcome .muted{
+  font-size: .95rem;
+  margin-top: .25rem;
+}
+
 .search{border:1px solid var(--border);border-radius:12px;padding:.55rem .7rem;width:260px;background:#fff}
 .cards-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem}
 .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px;box-shadow:0 10px 24px rgba(0,0,0,.06)}
