@@ -2243,7 +2243,7 @@ function openReader(book) {
   interactionCount = 0;
   maxScrollPercent = 0;
   hasInteractedWithStory = false;
-
+activeReadingStartAt = null;
   // تسجيل وقت بدء القراءة
   readingStartAt = Date.now();
 
@@ -2322,18 +2322,6 @@ host.addEventListener("scroll", () => {
 // ===============================
 const wordCount = book.text.join(" ").split(/\s+/).length;
 window.MIN_SECONDS = Math.max(60, Math.round(wordCount * 0.3));
-
-// ===============================
-// 📜 مراقبة التمرير (scroll)
-// ===============================
-host.onscroll = null; // منع التكرار
-host.addEventListener("scroll", () => {
-  const percent =
-    (host.scrollTop + host.clientHeight) / host.scrollHeight;
-
-  maxScrollPercent = Math.max(maxScrollPercent, percent);
-});
-
   
   // ===============================
   // تهيئة عناصر التسجيل
