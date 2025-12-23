@@ -279,6 +279,24 @@ body{
 /* Tables */
 .table{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:.9rem}
 
+/* =====================================
+   👥 Student Management Table
+   (إدارة الطلاب)
+===================================== */
+#tab-teacher-students .table .thead,
+#tab-teacher-students .table .tbody .row{
+  display: grid;
+  grid-template-columns:
+    1.6fr   /* الاسم */
+    2.8fr   /* البريد */
+    1.4fr   /* الفصل */
+    1.4fr;  /* الإجراءات */
+  gap: .8rem;
+  align-items: center;
+  padding: .7rem 1rem;
+}
+
+
 /* تمييز صفوف المعلم */
 body.is-teacher .table .row{
   border-inline-start:4px solid #6366f1;
