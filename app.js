@@ -2321,7 +2321,10 @@ host.addEventListener("scroll", () => {
 // 🧠 حساب عدد الكلمات والزمن الأدنى
 // ===============================
 const wordCount = book.text.join(" ").split(/\s+/).length;
-window.MIN_SECONDS = Math.max(60, Math.round(wordCount * 0.3));
+window.MIN_SECONDS =
+  wordCount < 80
+    ? 20
+    : Math.max(60, Math.round(wordCount * 0.3));
   
   // ===============================
   // تهيئة عناصر التسجيل
@@ -2337,27 +2340,54 @@ window.openReader = openReader;
 function backToApp() {
   $('#readerView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
+
   if (activeReadingStartAt && currentBook) {
-  const diffMs = Date.now() - activeReadingStartAt;
-  const secondsSpent = Math.round(diffMs / 1000);
 
-  const scrollOK = maxScrollPercent >= 0.7;
+    // ✅ 1) عناصر القارئ
+    const host = document.getElementById("storyContent");
 
-  if (
-    hasInteractedWithStory &&
-    scrollOK &&
-    secondsSpent >= window.MIN_SECONDS
-  ) {
-    const minutesSpent = Math.max(1, Math.round(secondsSpent / 60));
-    updateReadStats(currentBook.id, minutesSpent);
-  } else {
-    console.log("⏭️ قراءة لم تُحتسب (شروط غير مكتملة)");
+    // ⏱️ 2) الزمن الحقيقي
+    const diffMs = Date.now() - activeReadingStartAt;
+    const secondsSpent = Math.round(diffMs / 1000);
+
+    // 📜 3) شرط التمرير (مرن للقصص القصيرة)
+    const scrollOK =
+      maxScrollPercent >= 0.7 ||
+      (host && host.scrollHeight <= host.clientHeight + 20);
+
+    // 🎯 4) هل أنجز نشاط القصة؟
+    const current = readJSON(LS.CURRENT, null);
+    const activityDone =
+      current &&
+      readJSON(LS.STATS(current.id), {}).activities > 0;
+
+    // ✅ 5) القرار النهائي
+    if (
+      hasInteractedWithStory &&
+      secondsSpent >= window.MIN_SECONDS &&
+      (scrollOK || activityDone)
+    ) {
+      const minutesSpent = Math.max(1, Math.round(secondsSpent / 60));
+      updateReadStats(currentBook.id, minutesSpent);
+    } else {
+      console.log("⏭️ قراءة لم تُحتسب", {
+        hasInteractedWithStory,
+        secondsSpent,
+        minRequired: window.MIN_SECONDS,
+        scrollOK,
+        activityDone
+      });
+    }
   }
-}
-activeReadingStartAt = null;
+
+  // 🔁 إعادة تهيئة
+  activeReadingStartAt = null;
   readingStartAt = null;
   hasInteractedWithStory = false;
+  maxScrollPercent = 0;
+  interactionCount = 0;
 }
+
 
 async function startRecording() {
   try {
