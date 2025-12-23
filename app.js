@@ -10,6 +10,10 @@ let readingStartAt = null;
 let readingStartTime = null;
 let hasInteractedWithStory = false;
 
+let interactionCount = 0;
+let maxScrollPercent = 0;
+
+
 // ===== Firestore Imports =====
 import {
   doc,
@@ -2233,9 +2237,13 @@ let mediaRecorder, chunks = [], timerInt, startTime, audioBlob = null;
 function openReader(book) {
   currentBook = book;
 
+  // 🔁 إعادة تهيئة التفاعل (مهم جدًا)
+  interactionCount = 0;
+  maxScrollPercent = 0;
+  hasInteractedWithStory = false;
+
   // تسجيل وقت بدء القراءة
   readingStartAt = Date.now();
-  hasInteractedWithStory = false;
 
 
   // ===============================
@@ -2254,7 +2262,6 @@ function openReader(book) {
   if (coverEl && book.cover) {
     coverEl.src = book.cover;
   }
-
 
 
   // إظهار القارئ
@@ -2279,7 +2286,8 @@ para.innerHTML = p.split(' ').map(word =>
 para.querySelectorAll('.word').forEach(span => {
   span.onclick = () => {
     span.classList.toggle('word-selected');
-    hasInteractedWithStory = true;
+interactionCount++;
+hasInteractedWithStory = interactionCount >= 3;
   };
 });
 
@@ -2287,6 +2295,15 @@ host.appendChild(para);
 
     });
   }
+
+
+ /* 🔽🔽🔽 أضف هذا هنا بالضبط 🔽🔽🔽 */
+host.addEventListener("scroll", () => {
+  const percent =
+    (host.scrollTop + host.clientHeight) / host.scrollHeight;
+
+  maxScrollPercent = Math.max(maxScrollPercent, percent);
+}); 
 
   // ===============================
   // تهيئة عناصر التسجيل
@@ -2307,7 +2324,8 @@ function backToApp() {
     const secondsSpent = Math.round(diffMs / 1000);
     const MIN_SECONDS = 30;
 
-    if (hasInteractedWithStory && secondsSpent >= MIN_SECONDS) {
+const scrollOK = maxScrollPercent >= 0.7; // 70%
+if (hasInteractedWithStory && scrollOK && secondsSpent >= MIN_SECONDS) {
       const minutesSpent = Math.max(1, Math.round(secondsSpent / 60));
       updateReadStats(currentBook.id, minutesSpent);
     } else {
