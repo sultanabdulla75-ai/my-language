@@ -946,17 +946,39 @@ function renderStaticNoorBadges(){
   if (!el) return;
 
   const count = parseInt(el.dataset.count || 0);
-
   el.innerHTML = '';
 
+  let badge = null;
+
   if (count >= 3) {
-    el.innerHTML = `<div class="noor-badge gold" title="إنجاز عالٍ">🏅 إنجاز ذهبي</div>`;
+    badge = {
+      icon: "🥇",
+      label: "إنجاز ذهبي"
+    };
   } else if (count >= 2) {
-    el.innerHTML = `<div class="noor-badge silver" title="إنجاز جيد">🏅 إنجاز فضي</div>`;
+    badge = {
+      icon: "🥈",
+      label: "إنجاز فضي"
+    };
   } else if (count >= 1) {
-    el.innerHTML = `<div class="noor-badge bronze" title="بداية موفقة">🏅 بداية موفقة</div>`;
+    badge = {
+      icon: "🥉",
+      label: "بداية موفقة"
+    };
   }
-  // count = 0 → لا شيء (واجهة نظيفة)
+
+  if (!badge) return;
+
+  el.innerHTML = `
+    <div class="noor-badge" title="${badge.label}">
+      <span style="font-size:34px">${badge.icon}</span>
+    </div>
+  `;
+
+  // ✨ ومضة تشجيع (أول مرة فقط)
+  if (badge.label === "بداية موفقة") {
+    showStartToast();
+  }
 }
 
 
