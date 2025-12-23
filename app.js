@@ -982,6 +982,31 @@ function renderStaticNoorBadges(){
 }
 
 
+function showStartToast(){
+  if (localStorage.getItem("startToastShown")) return;
+
+  localStorage.setItem("startToastShown", "1");
+
+  const toast = document.createElement("div");
+  toast.id = "startToast";
+  toast.className = "start-toast";
+  toast.textContent = "🌟 بداية موفقة";
+
+  const card = document.querySelector(".score-card");
+  if (!card) return;
+
+  card.appendChild(toast);
+
+  setTimeout(() => toast.classList.add("show"), 100);
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 500);
+  }, 2200);
+}
+
+
+
+
 function addActivity() {
   const current = readJSON(LS.CURRENT, null);
   if (!current) return;
