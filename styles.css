@@ -133,6 +133,41 @@ body{margin:0;background:var(--grad);color:var(--ink);direction:rtl}
 .grid.books{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .level-card,.book-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1rem;box-shadow:0 4px 12px rgba(0,0,0,.05);transition:.2s;cursor:pointer;text-align:center}
 .level-card:hover,.book-card:hover{transform:translateY(-2px)}
+
+/* ===== Book Actions (Edit/Delete) ===== */
+.book-actions{
+  display:flex;
+  gap:.4rem;
+  margin-top:.4rem;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+.book-card:hover .book-actions{
+  opacity: 1;
+}
+
+.book-actions button{
+  flex:1;
+  pointer-events:auto;
+}
+
+.book-actions .danger{
+  background:#fee2e2;
+  color:#b91c1c;
+}
+
+.book-actions .danger:hover{
+  background:#fecaca;
+}
+
+.book-actions .mini{
+  font-size:.75rem;
+  padding:.35rem .4rem;
+}
+
+
+
 .badge{display:inline-block;border-radius:8px;padding:.15rem .5rem;font-size:.82rem;font-weight:800}
 .badge.ok{background:#dcfce7;color:#065f46}
 .badge.warn{background:#fef9c3;color:#92400e}
