@@ -247,7 +247,10 @@ body{
   );
   opacity:0;
   transition:.4s;
+
+    pointer-events: none; /* ✅ الحل */
 }
+
 .card.action:hover::before{
   opacity:1;
 }
