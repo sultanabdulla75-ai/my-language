@@ -214,7 +214,10 @@ body{
 .cards-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem}
 .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px;box-shadow:0 10px 24px rgba(0,0,0,.06)}
 .card.action{text-align:center}
-/* ✅ أضف من هنا */
+/* =====================================
+🌈 Student Dashboard – Kid Cards
+===================================== */
+
 .card.action{
   position: relative;
   text-align: center;
@@ -226,45 +229,68 @@ body{
   overflow: hidden;
 }
 
+/* حركة طفولية */
 .card.action:hover{
   transform: translateY(-10px) rotate(-1deg) scale(1.04);
   box-shadow: 0 28px 60px rgba(0,0,0,.18);
 }
 
-
-.card.action::after{
+/* هالة ضوء */
+.card.action::before{
   content:"";
   position:absolute;
   inset:0;
-  background:linear-gradient(
-    120deg,
-    transparent,
-    rgba(255,255,255,.6),
-    transparent
+  background: radial-gradient(
+    circle at top right,
+    rgba(255,255,255,.8),
+    transparent 60%
   );
-  transform: translateX(-100%);
-  transition:.6s;
+  opacity:0;
+  transition:.4s;
+}
+.card.action:hover::before{
+  opacity:1;
 }
 
-.card.action:hover::after{
-  transform: translateX(100%);
-}
-/* ✅ إلى هنا */
-.card.action::after{
-  pointer-events:none;
-}
-
-.card.action .icon{font-size:32px;margin-bottom:.4rem}
-
-/* ✅ هنا بالضبط */
-.kid-icon{
-  font-size:42px;
-  animation: float 2.2s ease-in-out infinite;
+/* الأيقونة */
+.card.action .icon{
+  font-size: 56px;
+  margin-bottom: .5rem;
+  animation: floatKid 2.6s ease-in-out infinite;
 }
 
-@keyframes float{
-  0%,100%{ transform:translateY(0) }
-  50%{ transform:translateY(-6px) }
+@keyframes floatKid{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-10px)}
+}
+
+/* العنوان */
+.card.action h4{
+  font-size: 1.15rem;
+  font-weight: 900;
+  margin-bottom: .6rem;
+  color: #0f172a;
+}
+
+/* زر الفتح */
+.card.action .btn{
+  font-size: .95rem;
+  padding: .5rem 1.2rem;
+  border-radius: 999px;
+}
+
+/* 🎨 ألوان مميزة لكل بطاقة */
+.card.action:nth-child(1){
+  background: linear-gradient(135deg,#ecfeff,#cffafe);
+}
+.card.action:nth-child(2){
+  background: linear-gradient(135deg,#fdf4ff,#fae8ff);
+}
+.card.action:nth-child(3){
+  background: linear-gradient(135deg,#f0fdf4,#dcfce7);
+}
+.card.action:nth-child(4){
+  background: linear-gradient(135deg,#fff7ed,#ffedd5);
 }
 
 .cards-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem}
