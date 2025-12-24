@@ -1316,61 +1316,71 @@ body.is-teacher .rail .score-card {
 }
 
 
+
 /* =====================================
-   🏅 Badge as Top-Center Indicator (FINAL)
-   ===================================== */
+🌈 Student Status Card – Kid Friendly
+===================================== */
 
 .score-card{
   position: relative;
-  padding-top: 28px;
+  padding: 42px 16px 14px;
+  border-radius: 26px;
+  background: linear-gradient(135deg,#ecfeff,#fef3c7);
+  box-shadow: 0 18px 40px rgba(0,0,0,.12);
   overflow: visible;
 }
 
-.score-row.badges-row{
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
+/* زخرفة نجمة */
+.score-card::after{
+  content:"⭐";
+  position:absolute;
+  bottom:-12px;
+  left:-10px;
+  font-size:60px;
+  opacity:.12;
 }
 
-.score-row.badges-row > span{
-  display: none;
+/* صفوف الإحصاءات */
+.score-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:.45rem 0;
+  font-weight:700;
+  border-bottom:1px dashed rgba(0,0,0,.08);
 }
+.score-row:last-child{border-bottom:0}
+
+/* الوسام */
+.score-row.badges-row{
+  position:absolute;
+  top:-26px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:10;
+}
+.score-row.badges-row > span{display:none}
 
 .noor-badges{
-  display: flex;
-  justify-content: center;
+  display:flex;
+  justify-content:center;
 }
 
-/* =====================================
-   🏅 Badge – Icon Only (FINAL CLEAN)
-   ===================================== */
-
 .noor-badge{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 64px;
-  height: 64px;
-
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 8px 20px rgba(0,0,0,.15);
-
-  animation: pulse 2s infinite;
+  width:68px;
+  height:68px;
+  border-radius:50%;
+  background: linear-gradient(135deg,#fde047,#facc15);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 10px 26px rgba(0,0,0,.25);
+  animation:pulse 2.2s infinite;
 }
 
 @keyframes pulse{
-  0%{
-    box-shadow: 0 0 0 0 rgba(250,204,21,.6);
-  }
-  70%{
-    box-shadow: 0 0 0 12px rgba(250,204,21,0);
-  }
-  100%{
-    box-shadow: 0 0 0 0 rgba(250,204,21,0);
-  }
+  0%{box-shadow:0 0 0 0 rgba(250,204,21,.6)}
+  70%{box-shadow:0 0 0 14px rgba(250,204,21,0)}
+  100%{box-shadow:0 0 0 0 rgba(250,204,21,0)}
 }
 
