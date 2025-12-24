@@ -1027,6 +1027,52 @@ function addActivity() {
 // حساب متوسط إنجاز الفصل ومخطط الدائرة
 // ------------------------------------------------------
 
+// ------------------------------------------------------
+// حساب متوسط إنجاز الفصل ومخطط الدائرة
+// ------------------------------------------------------
+
+// 🍩 رسم مخطط متوسط الإنجاز (دائري)
+function renderAvgProgressChart(value) {
+  const canvas = document.getElementById('chartAvgProgress');
+  if (!canvas) return;
+
+  // إزالة المخطط السابق إن وجد
+  if (window.avgChart) {
+    window.avgChart.destroy();
+  }
+
+  window.avgChart = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: ['المنجز', 'المتبقي'],
+      datasets: [{
+        data: [value, 100 - value],
+        backgroundColor: [
+          '#22c55e', // أخضر مشرق
+          '#e5e7eb'  // رمادي هادئ
+        ],
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      cutout: '72%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.label}: ${ctx.raw}%`
+          }
+        }
+      }
+    }
+  });
+}
+
+
+
+
+
 function getAssignments() { return readJSON(LS.ASSIGN, []); }
 function setAssignments(x) { writeJSON(LS.ASSIGN, x); }
 function getClasses() { return readJSON(LS.CLASSES, []); }
@@ -2158,6 +2204,9 @@ async function renderTeacherDashboard() {
   elAsg.textContent  = stats.assignments;
   elDone.textContent = stats.done;
   elAvg.textContent  = stats.avg + '%';
+
+    // 🍩 رسم المخطط الدائري
+  renderAvgProgressChart(stats.avg);
 }
 
 async function openReviewModal(a, sid, ps, stu) {
