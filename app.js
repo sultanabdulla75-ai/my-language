@@ -2713,6 +2713,10 @@ async function saveBook() {
 // ✏️ تعديل قصة موجودة
 // ===============================
 function openEditBookModal(book) {
+
+  // ✅⬅️⬅️⬅️ هذا هو التعديل الوحيد (سطر واحد)
+  book = structuredClone(book);
+  
   $('#bTitle').value = book.title;
   $('#bLevel').value = book.level;
   $('#bCover').value = book.cover || '';
