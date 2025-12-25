@@ -2649,6 +2649,9 @@ if (ch && !ch.done && minutesSpent >= 1) {
 
 // حفظ قصة جديدة — Firestore + تحديث المكتبة
 async function saveBook() {
+  const modal = document.getElementById('modalBook');
+if (modal.dataset.mode === "edit") return;
+
   const title = $('#bTitle').value.trim();
   const level = $('#bLevel').value;
   let cover = $('#bCover').value.trim();
@@ -2704,6 +2707,9 @@ async function saveBook() {
 
   BOOKS.push(bookData);
   $('#modalBook').classList.add('hidden');
+delete modal.dataset.mode;
+delete modal.dataset.bookId;
+  
   renderBooks("ALL");
   toast("✓ تمت إضافة القصة (سحابة + محلي) 🎉");
 }
@@ -2713,21 +2719,21 @@ async function saveBook() {
 // ✏️ تعديل قصة موجودة
 // ===============================
 function openEditBookModal(book) {
-
-  // ✅⬅️⬅️⬅️ هذا هو التعديل الوحيد (سطر واحد)
   book = structuredClone(book);
-  
+
+  const modal = document.getElementById('modalBook');
+  modal.dataset.mode = "edit";   // ⭐ هنا التحديد
+  modal.dataset.bookId = book.id;
+
   $('#bTitle').value = book.title;
   $('#bLevel').value = book.level;
   $('#bCover').value = book.cover || '';
   $('#bText').value = book.text.join('\n');
 
-  $('#modalBook').classList.remove('hidden');
+  modal.classList.remove('hidden');
 
-const saveBtn = document.getElementById('saveBook');
-saveBtn.onclick = null;
-saveBtn.onclick = async () => {
-
+  const saveBtn = document.getElementById('saveBook');
+  saveBtn.onclick = async () => {
     book.title = $('#bTitle').value.trim();
     book.level = $('#bLevel').value;
     book.cover = $('#bCover').value.trim();
@@ -2745,13 +2751,15 @@ saveBtn.onclick = async () => {
       { merge: true }
     );
 
-    $('#modalBook').classList.add('hidden');
-    toast("✏️ تم تعديل القصة بنجاح");
+    modal.classList.add('hidden');
+
+   delete modal.dataset.mode;
+delete modal.dataset.bookId;
+    
+    toast("✏️ تم تعديل القصة بنجاح");   // ✅ الرسالة الصحيحة
     renderBooks('ALL');
   };
 }
-
-
 
 
 // حفظ سؤال اختبار (quiz) داخل نفس وثيقة القصة في Firestore
@@ -3109,6 +3117,13 @@ document.getElementById("googleLogin")
     if (e.target.id === 'saveBook') saveBook();
 
     if (e.target.id === "addBookBtn") {
+
+     const modal = document.getElementById('modalBook');
+
+  // ✅ التحديث المستحسن (1)
+  modal.dataset.mode = "add";
+  delete modal.dataset.bookId;
+ 
       $('#bTitle').value = '';
       $('#bCover').value = '';
       $('#bText').value = '';
