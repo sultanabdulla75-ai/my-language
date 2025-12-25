@@ -1425,3 +1425,9 @@ body.is-teacher .rail .score-card {
   line-height: 2.2;
 }
 
+#storyContent span {
+  font-family: "Amiri", "Traditional Arabic", serif !important;
+  font-weight: 400;
+  letter-spacing: 0.02em; /* مريح للأطفال */
+}
+
