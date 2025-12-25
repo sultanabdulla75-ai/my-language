@@ -583,10 +583,17 @@ body.is-teacher .table .row{
    ========================================= */
 
 /* ===== منطقة القصة ===== */
+/* =====================================
+   📖 Story Content – Arabic Naskh (Kids)
+   ===================================== */
+
 #storyContent {
-  line-height: 1.9;
-  font-size: 1rem;
+  font-family: "Amiri", "Traditional Arabic", serif; /* خط نسخ */
+  font-size: 1.35rem;          /* أكبر قليلاً – مناسب للحلقة الأولى */
+  line-height: 2.2;            /* مريح للعين */
+  color: #1f2937;
 }
+
 
 /* ===== الفقرات ===== */
 #storyContent p {
