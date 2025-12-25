@@ -1384,3 +1384,24 @@ body.is-teacher .rail .score-card {
   100%{box-shadow:0 0 0 0 rgba(250,204,21,0)}
 }
 
+
+/* =====================================
+🧸 Kid Friendly Icons (Images)
+===================================== */
+
+.kid-img{
+  width: 110px;
+  height: auto;
+  margin-bottom: .6rem;
+  user-select: none;
+  pointer-events: none; /* مهم حتى لا يمنع الضغط */
+  animation: floatKid 2.6s ease-in-out infinite;
+}
+
+/* نفس الحركة الطفولية */
+@keyframes floatKid{
+  0%,100%{ transform: translateY(0); }
+  50%{ transform: translateY(-10px); }
+}
+
+
