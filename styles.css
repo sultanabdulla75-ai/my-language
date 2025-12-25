@@ -1412,3 +1412,16 @@ body.is-teacher .rail .score-card {
 }
 
 
+/* =====================================
+📖 Story Content – Arabic Naskh Override
+===================================== */
+
+#storyContent,
+#storyContent p,
+.story-content,
+.story-content p {
+  font-family: "Amiri", "Traditional Arabic", serif !important;
+  font-size: 1.35rem;
+  line-height: 2.2;
+}
+
