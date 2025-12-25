@@ -1411,9 +1411,8 @@ body.is-teacher .rail .score-card {
   50%{ transform: translateY(-10px); }
 }
 
-
 /* =====================================
-📖 Story Content – Arabic Naskh Override
+📖 Story Content – Arabic Naskh (Kids Final)
 ===================================== */
 
 #storyContent,
@@ -1421,13 +1420,14 @@ body.is-teacher .rail .score-card {
 .story-content,
 .story-content p {
   font-family: "Amiri", "Traditional Arabic", serif !important;
-  font-size: 1.35rem;
-  line-height: 2.2;
+  font-size: 1.45rem;   /* ⬅️ هنا التغيير */
+  line-height: 2.3;     /* مريح جدًا للأطفال */
 }
 
 #storyContent span {
   font-family: "Amiri", "Traditional Arabic", serif !important;
   font-weight: 400;
-  letter-spacing: 0.02em; /* مريح للأطفال */
+  letter-spacing: 0.02em;
+  font-size: 1.45rem;   /* ⬅️ مهم حتى لا تصغر الكلمات */
 }
 
