@@ -1526,7 +1526,7 @@ body.is-auth .topbar {
 /* الحالة الافتراضية: مغلقة */
 .score-card.collapsible {
   max-height: 92px;            /* يظهر الوسام + الاسم فقط */
-  overflow: hidden;
+  overflow: visible;
   cursor: pointer;
   transition: max-height .45s ease, box-shadow .3s ease;
 }
