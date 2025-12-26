@@ -1288,6 +1288,9 @@ function logoutUser() {
   $('#loginForm').reset();
   $('#regForm').reset();
   $('#navLinks').innerHTML = '';
+
+   // ⭐⭐ رجوع لوضع الدخول
+  document.body.classList.add('is-auth');
 }
 
 function confirmLogout() {
@@ -2957,6 +2960,9 @@ if (!current || !current.email) {
   localStorage.removeItem("arp.current");
   $('#authView').classList.remove('hidden');
   $('#appShell').classList.add('hidden');
+
+  // ⭐⭐ هذا هو المطلوب
+  document.body.classList.add('is-auth');
   return;
 }
 
@@ -2989,6 +2995,9 @@ setUnifiedAvatar(current.role);
   $('#authView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
   $('#readerView').classList.add('hidden');
+
+  // ⭐⭐ إلغاء وضع الدخول
+document.body.classList.remove('is-auth');
 
   // 7) تحميل بيانات الواجبات من Firestore (للطلاب فقط)
   if (current.role === 'student') {
