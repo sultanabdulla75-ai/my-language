@@ -1518,3 +1518,37 @@ body.is-auth .topbar {
   min-width: 260px;        /* ⬅️ يعيد الحجم السابق */
   max-width: 280px;
 }
+
+/* ===============================
+🎯 Collapsible Score Card (Tap / Click)
+================================ */
+
+/* الحالة الافتراضية: مغلقة */
+.score-card.collapsible {
+  max-height: 92px;            /* يظهر الوسام + الاسم فقط */
+  overflow: hidden;
+  cursor: pointer;
+  transition: max-height .45s ease, box-shadow .3s ease;
+}
+
+/* عند الفتح */
+.score-card.collapsible.open {
+  max-height: 520px;           /* ارتفاع كافٍ لكل الإحصاءات */
+  box-shadow: 0 28px 60px rgba(0,0,0,.22);
+}
+
+/* تلميح بصري */
+.score-card.collapsible::before {
+  content: "اضغط لعرض الإحصاءات";
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: .75rem;
+  opacity: .5;
+}
+
+.score-card.collapsible.open::before {
+  content: "اضغط للإغلاق";
+}
+
