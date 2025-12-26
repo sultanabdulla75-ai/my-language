@@ -2946,6 +2946,28 @@ function listenToNotifications() {
   });
 }
 
+// ============================================
+// 🎯 تثبيت / إغلاق بطاقة الإحصاءات بالنقر (Safe)
+// ============================================
+
+(function initScoreCardToggle(){
+  document.addEventListener('click', (e) => {
+    const card = document.querySelector('.score-card.collapsible');
+    if (!card) return;
+
+    // إذا الضغط داخل البطاقة
+    if (card.contains(e.target)) {
+      card.classList.toggle('open');
+      e.stopPropagation(); // 🛑 مهم جدًا
+    } 
+    // إذا الضغط خارجها
+    else {
+      card.classList.remove('open');
+    }
+  });
+})();
+
+
 // ------------------------------------------------------
 // Boot
 // ------------------------------------------------------
