@@ -1365,6 +1365,12 @@ body.is-teacher .rail .score-card {
   overflow: visible;
 }
 
+/* جسم بطاقة الإحصاءات – الطي الحقيقي */
+.score-body{
+  overflow: hidden;   /* ✅ الطي يتم هنا فقط */
+}
+
+
 /* زخرفة نجمة */
 .score-card::after{
   content:"⭐";
