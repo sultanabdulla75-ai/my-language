@@ -1513,3 +1513,8 @@ body.is-auth .topbar {
   transform: scale(1.08) rotate(-2deg);
 }
 
+/* 🔧 تثبيت حجم بطاقة الإحصاءات */
+.score-card{
+  min-width: 260px;        /* ⬅️ يعيد الحجم السابق */
+  max-width: 280px;
+}
