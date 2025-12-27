@@ -1508,29 +1508,24 @@ body.is-auth .topbar {
   display: inline-block;
 }
 
-/* البطاقة مخفية افتراضيًا */
+/* ❌ احذف هذا القسم بالكامل */
+/*
 .status-wrap .score-card{
   position: absolute;
   top: 120%;
   left: 50%;
   transform: translateX(-50%) translateY(14px) scale(.94);
-
   opacity: 0;
   pointer-events: none;
-
-  transition:
-    opacity .35s ease,
-    transform .4s cubic-bezier(.34,1.56,.64,1);
-
-  z-index: 60;
 }
 
-/* عند المرور على الصورة أو الغلاف */
 .status-wrap:hover .score-card{
   opacity: 1;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0) scale(1);
 }
+*/
+
 
 /* حركة تفاعلية للصورة */
 .status-wrap .avatar-img{
