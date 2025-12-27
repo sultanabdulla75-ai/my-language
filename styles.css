@@ -148,7 +148,25 @@ body{
 
 
 .profile-card,.score-card{border:1px solid var(--border);border-radius:18px;padding:12px;box-shadow:0 10px 26px rgba(0,0,0,.06)}
-.profile-card{display:flex;align-items:center;gap:.7rem}
+
+/* 🧒 Student Profile Card – Kid Friendly */
+.profile-card{
+  display:flex;
+  align-items:center;
+  gap:.8rem;
+
+  padding: 14px 16px;
+  border-radius: 24px;
+
+  background: linear-gradient(
+    135deg,
+    #e0f2fe,   /* أزرق سماوي */
+    #fef9c3    /* أصفر لطيف */
+  );
+
+  box-shadow: 0 14px 32px rgba(0,0,0,.12);
+}
+
 .avatar{font-size:36px}
 .pname strong{font-weight:800}
 .score-row{
