@@ -1356,18 +1356,41 @@ body.is-teacher .rail .score-card {
 🌈 Student Status Card – Kid Friendly
 ===================================== */
 
+/* بطاقة الإحصاءات – الأساس */
 .score-card{
   position: relative;
   padding: 42px 16px 14px;
   border-radius: 26px;
-  background: linear-gradient(135deg,#ecfeff,#fef3c7);
-  box-shadow: 0 18px 40px rgba(0,0,0,.12);
   overflow: visible;
+  background: transparent;     /* ⬅️ لا خلفية مبدئيًا */
+  box-shadow: none;
 }
 
-/* جسم بطاقة الإحصاءات – الطي الحقيقي */
-.score-body{
-  overflow: hidden;   /* ✅ الطي يتم هنا فقط */
+
+/* ===============================
+🎯 Collapsible Score Card (FINAL)
+================================ */
+
+/* الجسم مخفي افتراضيًا */
+.score-card.collapsible .score-body{
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-height .45s ease,
+    opacity .25s ease;
+}
+
+/* عند الفتح */
+.score-card.collapsible.open{
+  background: linear-gradient(135deg,#ecfeff,#fef3c7);
+  box-shadow: 0 28px 60px rgba(0,0,0,.22);
+}
+
+/* إظهار الإحصاءات */
+.score-card.collapsible.open .score-body{
+  max-height: 520px;
+  opacity: 1;
 }
 
 
