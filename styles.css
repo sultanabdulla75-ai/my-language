@@ -1552,13 +1552,6 @@ body.is-auth .topbar {
 🎯 Collapsible Score Card (Tap / Click)
 ================================ */
 
-/* الحالة الافتراضية: مغلقة */
-.score-card.collapsible {
-  max-height: 92px;            /* يظهر الوسام + الاسم فقط */
-  overflow: visible;
-  cursor: pointer;
-  transition: max-height .45s ease, box-shadow .3s ease;
-}
 
 /* عند الفتح */
 .score-card.collapsible.open {
