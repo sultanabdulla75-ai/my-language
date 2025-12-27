@@ -168,7 +168,18 @@ body{
 }
 
 .avatar{font-size:36px}
-.pname strong{font-weight:800}
+.pname strong{
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+.pname small{
+  font-size: .85rem;
+  font-weight: 700;
+  color: #0369a1;
+}
+
 .score-row{
   display:flex;
   align-items:center;
@@ -614,15 +625,17 @@ body.is-teacher .table .row{
 }
 
 /* ===== Avatar (موحّد) ===== */
-.avatar-img {
-  width: 56px;
-  height: 56px;
+.avatar-img{
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #e5e7eb;
-  background-color: #fff;
-  flex-shrink: 0;
+
+  background: #fff;
+  border: 3px solid #38bdf8;   /* أزرق طفولي */
+  box-shadow: 0 6px 16px rgba(0,0,0,.18);
 }
+
 
 /* =========================================
    🤖 Noor AI – Smart Assistant (FULL STYLE)
@@ -1375,14 +1388,22 @@ body.is-teacher .rail .score-card {
 ===================================== */
 
 /* بطاقة الإحصاءات – الأساس */
+/* 🌈 Student Stats Card – Bright & Fun (FINAL) */
 .score-card{
   position: relative;
   padding: 42px 16px 14px;
-  border-radius: 26px;
+  border-radius: 28px;
   overflow: visible;
-  background: transparent;     /* ⬅️ لا خلفية مبدئيًا */
-  box-shadow: none;
+
+  background: linear-gradient(
+    135deg,
+    #ecfeff,   /* أزرق فاتح */
+    #fef3c7    /* أصفر مشرق */
+  );
+
+  box-shadow: 0 18px 40px rgba(0,0,0,.15);
 }
+
 
 
 /* ===============================
@@ -1431,6 +1452,15 @@ body.is-teacher .rail .score-card {
   font-weight:700;
   border-bottom:1px dashed rgba(0,0,0,.08);
 }
+
+/* 🔢 أرقام الإحصاءات – بارزة للأطفال */
+.score-row b{
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #1e3a8a;
+}
+
+
 .score-row:last-child{border-bottom:0}
 
 /* الوسام */
