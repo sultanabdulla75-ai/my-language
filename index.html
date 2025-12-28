@@ -413,6 +413,39 @@
     </div>
 
      <article id="storyContent" class="story-content"></article>
+
+<!-- 🤖 Noor AI Assistant -->
+<div class="noor-ai-box hidden">
+
+  <div class="noor-ai-header">
+    🤖 نور – المساعد الذكي
+  </div>
+
+  <div class="noor-ai-actions">
+    <button data-ai="explain">اشرح</button>
+    <button data-ai="simple">ببساطة</button>
+    <button data-ai="meaning">معنى الكلمات</button>
+  </div>
+
+  <textarea
+    id="noorAiInput"
+    placeholder="النص المختار من القصة..."
+  ></textarea>
+
+  <button id="askNoorAI" class="btn primary small">
+    اسأل نور
+  </button>
+
+  <div
+    id="noorAiAnswer"
+    class="noor-ai-answer hidden"
+  ></div>
+
+</div>
+
+
+
+    
     <div class="story-actions">
       <button id="startRec" class="btn small">🎤 ابدأ التسجيل</button>
       <button id="stopRec" class="btn small hidden">⏹️ إيقاف</button>
