@@ -291,6 +291,43 @@ function enableNoorOnParagraphs() {
 })();
 
 
+// ============================================
+// 🤖 Noor AI Modes (Explain / Simple / Meaning)
+// ============================================
+document.querySelectorAll("[data-ai]").forEach(btn => {
+  btn.onclick = () => {
+    const mode = btn.dataset.ai;
+    const input = document.getElementById("noorAiInput");
+    const answer = document.getElementById("noorAiAnswer");
+
+    if (!input || !answer) return;
+
+    const text = input.value.trim();
+    if (!text) {
+      answer.textContent = "📘 اختر كلمة أو فقرة أولًا.";
+      answer.classList.remove("hidden");
+      return;
+    }
+
+    let response = "";
+
+    if (mode === "meaning") {
+      response = `🔎 معنى الكلمة:\n\n"${text}" كلمة تدل على معنى مرتبط بالسياق في القصة.`;
+    }
+
+    if (mode === "simple") {
+      response = `🧒 ببساطة:\n\n${text} تعني شيئًا سهل الفهم ومناسب للأطفال.`;
+    }
+
+    if (mode === "explain") {
+      response = `📖 شرح:\n\nهذه العبارة توضح فكرة مهمة في القصة وتساعدنا على الفهم.`;
+    }
+
+    answer.textContent = response;
+    answer.classList.remove("hidden");
+  };
+});
+
 
 
 // ============================================
@@ -2568,19 +2605,35 @@ para.innerHTML = p.split(' ').map(word =>
   `<span class="word">${word}</span>`
 ).join(' ');
 
-// تفعيل التظليل عند الضغط
+// تفعيل التظليل عند الضغط (مع ربط نور)
 para.querySelectorAll('.word').forEach(span => {
-  span.onclick = () => {
+  span.onclick = (e) => {
+    e.stopPropagation(); // ⭐ يمنع تشغيل حدث الفقرة
+
     span.classList.toggle('word-selected');
     interactionCount++;
 
+    // ⏱️ بدء العد الحقيقي بعد تفاعل حقيقي
     if (interactionCount === 3) {
-      activeReadingStartAt = Date.now(); // ⏱️ هنا يبدأ العد الحقيقي
+      activeReadingStartAt = Date.now();
     }
 
     hasInteractedWithStory = interactionCount >= 3;
+
+    // 🤖 تمرير الكلمة فقط إلى نور
+    const aiInput = document.getElementById("noorAiInput");
+    if (aiInput) {
+      aiInput.value = span.textContent.trim();
+    }
+
+    // إظهار صندوق نور إن كان مخفيًا
+    const noorBox = document.querySelector(".noor-ai-box");
+    if (noorBox) {
+      noorBox.classList.remove("hidden");
+    }
   };
 });
+
 
 
 host.appendChild(para);
