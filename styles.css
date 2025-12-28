@@ -1657,3 +1657,72 @@ body.is-auth .topbar {
 .daily-status b{
   color: var(--blue);
 }
+
+
+
+/* =====================================
+📖 Reader Focus – SAFE ADDITION
+===================================== */
+
+.reader{
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,.95),
+    rgba(255,255,255,.88)
+  );
+  border-radius: 24px;
+  padding: 1.4rem 1.2rem 1.6rem;
+  box-shadow: 0 20px 50px rgba(0,0,0,.12);
+}
+
+/* =====================================
+🧠 Story Reading Zone – SAFE
+===================================== */
+
+#storyContent{
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 1rem .9rem;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.05);
+}
+
+
+/* =====================================
+🧸 Word Touch Feedback – SAFE
+===================================== */
+
+#storyContent span.word{
+  transition:
+    background .2s ease,
+    transform .15s ease;
+}
+
+#storyContent span.word:active{
+  transform: scale(1.12);
+  background: #fde68a;
+}
+
+
+/* =====================================
+📜 Paragraph Rhythm – SAFE
+===================================== */
+
+#storyContent p{
+  margin: .65rem 0;
+}
+
+/* =====================================
+✨ Reading Progress Hint – SAFE
+===================================== */
+
+#storyContent::after{
+  content: "⬇️ واصل القراءة";
+  display: block;
+  text-align: center;
+  margin-top: .8rem;
+  font-size: .85rem;
+  opacity: .4;
+}
+
+
+
