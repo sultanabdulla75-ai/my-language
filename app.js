@@ -252,6 +252,75 @@ renderStaticNoorBadges();
 
 
 // ============================================
+// 📌 Daily Status (Firestore Only)
+// ============================================
+
+// 1️⃣ عدد القراءات اليوم (من cache المحمّل من Firestore)
+function getTodayReadsFromFirestore() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return 0;
+
+  const stats = readJSON(LS.STATS(current.id), null);
+  if (!stats) return 0;
+
+  return stats.reads || 0;
+}
+
+
+// 2️⃣ عدد الواجبات المطلوبة
+async function getPendingAssignmentsFromFirestore() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || !current.classId || !window.db) return 0;
+
+  const snap = await getDocs(
+    collection(window.db, "classes", current.classId, "assignments")
+  );
+
+  let count = 0;
+
+  snap.forEach(d => {
+    const a = d.data();
+    const ps = a.perStudent?.[current.email];
+    if (ps && ps.status === "required") count++;
+  });
+
+  return count;
+}
+
+
+async function updateDailyStatusFromFirestore() {
+  const elReads = document.getElementById("todayReads");
+  const elAssign = document.getElementById("todayAssignments");
+  const elChallenge = document.getElementById("todayChallenge");
+
+  if (!elReads || !elAssign || !elChallenge) return;
+
+  elReads.textContent = "…";
+  elAssign.textContent = "…";
+  elChallenge.textContent = "جاري التحقق";
+
+  try {
+    const reads = await getTodayReadsFromFirestore();
+    const assigns = await getPendingAssignmentsFromFirestore();
+
+    elReads.textContent = reads;
+    elAssign.textContent = assigns;
+
+    const challengeDone = reads > 0;
+    elChallenge.textContent = challengeDone ? "مكتمل 🎉" : "غير مكتمل";
+    elChallenge.style.color = challengeDone
+      ? "var(--ok)"
+      : "var(--warn)";
+
+  } catch (e) {
+    console.error("❌ Daily Status Error:", e);
+    elChallenge.textContent = "—";
+  }
+}
+
+
+
+// ============================================
 // 🎯 Daily Challenge Logic
 // ============================================
 
@@ -2992,9 +3061,11 @@ if (!current || !current.email) {
 // ✅ هنا بالضبط
 if (current.role === 'student') {
   await loadStudentStatsFromFirestore();
+  // 📌 تحديث بطاقة حالتك اليوم
+    await updateDailyStatusFromFirestore();
 }
 
-  // 3) إصلاح الواجبات القديمة (يعمل فقط عند وجود مستخدم)
+    // 3) إصلاح الواجبات القديمة (يعمل فقط عند وجود مستخدم)
 // autoFixAssignments();
 
   // 4) التحكم في أزرار المعلم
