@@ -219,6 +219,42 @@ const uid = (p = 'U') => p + Math.random().toString(36).slice(2, 8);
 
 
 // ============================================
+// 🤖 Noor Auto-Activate on Paragraph Click
+// ============================================
+function enableNoorOnParagraphs() {
+  const story = document.getElementById("storyContent");
+  if (!story) return;
+
+  story.querySelectorAll("p").forEach(p => {
+    p.onclick = () => {
+      // إزالة التحديد السابق
+      story.querySelectorAll("p").forEach(x =>
+        x.classList.remove("para-selected")
+      );
+
+      // تمييز الفقرة
+      p.classList.add("para-selected");
+
+      const text = p.textContent.trim();
+
+      // تمرير النص إلى نور
+      const aiInput = document.getElementById("noorAiInput");
+      if (aiInput) aiInput.value = text;
+
+      // إظهار نور
+      const noorBox = document.querySelector(".noor-ai-box");
+      if (noorBox) {
+        noorBox.classList.remove("hidden");
+        noorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      console.log("🤖 Noor activated:", text);
+    };
+  });
+}
+
+
+// ============================================
 // ☁️ تحميل إحصائيات الطالب من Firestore
 // ============================================
 async function loadStudentStatsFromFirestore() {
@@ -2511,6 +2547,8 @@ para.querySelectorAll('.word').forEach(span => {
 host.appendChild(para);
 
     });
+
+      enableNoorOnParagraphs();
   }
 
 
