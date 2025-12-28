@@ -664,6 +664,17 @@ body.is-teacher .table .row{
   transition: background .25s ease, box-shadow .25s ease;
 }
 
+/* 👆 إشارة تفاعلية للفقرة */
+#storyContent p {
+  cursor: pointer;
+}
+
+/* ✨ وميض خفيف عند النقر */
+#storyContent p:active {
+  background: #e0f2fe;
+  transform: scale(0.99);
+}
+
 #storyContent p:hover {
   background: #f8fafc;
 }
