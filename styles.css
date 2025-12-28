@@ -1724,5 +1724,8 @@ body.is-auth .topbar {
   opacity: .4;
 }
 
+#storyContent:last-child::after{
+  display: none;
+}
 
 
