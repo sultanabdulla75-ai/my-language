@@ -1618,24 +1618,42 @@ body.is-auth .topbar {
 }
 
 /* ================================
-   📌 Daily Status Card
+   📌 Daily Status Card (Kids UI)
 ================================ */
-.daily-status {
+.daily-status{
   margin: 1rem 0;
-  padding: 1rem;
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg,#f8fafc,#eef2ff);
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
 }
 
-.daily-status h4 {
-  margin-bottom: .5rem;
+.daily-status h4{
+  margin: 0 0 .6rem;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
 }
 
-.daily-status ul {
+.daily-status ul{
   list-style: none;
   padding: 0;
   margin: 0;
+  display: grid;
+  gap: .4rem;
 }
 
-.daily-status li {
+.daily-status li{
   font-size: .9rem;
-  margin-bottom: .3rem;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: .45rem .6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.daily-status b{
+  color: var(--blue);
 }
