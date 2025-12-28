@@ -1617,3 +1617,25 @@ body.is-auth .topbar {
   content: "اضغط للإغلاق";
 }
 
+/* ================================
+   📌 Daily Status Card
+================================ */
+.daily-status {
+  margin: 1rem 0;
+  padding: 1rem;
+}
+
+.daily-status h4 {
+  margin-bottom: .5rem;
+}
+
+.daily-status ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.daily-status li {
+  font-size: .9rem;
+  margin-bottom: .3rem;
+}
