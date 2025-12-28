@@ -253,6 +253,45 @@ function enableNoorOnParagraphs() {
   });
 }
 
+// ============================================
+// 🤖 Noor AI – Logic (SAFE & SIMPLE)
+// ============================================
+(function initNoorAI(){
+  const askBtn = document.getElementById("askNoorAI");
+  if (!askBtn) return;
+
+  askBtn.onclick = () => {
+    const input = document.getElementById("noorAiInput");
+    const answerBox = document.getElementById("noorAiAnswer");
+
+    if (!input || !answerBox) return;
+
+    const text = input.value.trim();
+    if (!text) {
+      answerBox.textContent = "📘 اختر فقرة أولًا من القصة.";
+      answerBox.classList.remove("hidden");
+      return;
+    }
+
+    // 🧠 رد ذكي مبدئي (تعليمي)
+    answerBox.innerHTML = `
+      <div style="line-height:1.7">
+        <b>✦ شرح الفقرة:</b><br>
+        هذه الفقرة تتحدث عن:
+        <span style="color:#2563eb">
+          ${text.slice(0, 40)}...
+        </span><br><br>
+        <b>✦ فكرة رئيسية:</b><br>
+        الصداقة والتعاون من القيم المهمة في الحياة.
+      </div>
+    `;
+
+    answerBox.classList.remove("hidden");
+  };
+})();
+
+
+
 
 // ============================================
 // ☁️ تحميل إحصائيات الطالب من Firestore
