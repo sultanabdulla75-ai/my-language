@@ -3180,16 +3180,10 @@ if (!current || !current.email) {
   $('#authView').classList.remove('hidden');
   $('#appShell').classList.add('hidden');
 
- 
-  return;
-}
- // ⭐⭐ هذا هو المطلوب
+  // ⭐⭐ هذا هو المطلوب
   document.body.classList.add('is-auth');
- $('#authView').classList.add('hidden');
-  $('#appShell').classList.remove('hidden');
-
-}
-  
+  return;
+}  
 
 // ✅ هنا بالضبط
 if (current.role === 'student') {
