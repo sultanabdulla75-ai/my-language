@@ -3180,15 +3180,14 @@ if (!current || !current.email) {
   $('#authView').classList.remove('hidden');
   $('#appShell').classList.add('hidden');
 
-  // ⭐⭐ هذا هو المطلوب
-  document.body.classList.add('is-auth');
+ 
   return;
 }
-
- // 🔥 الحل
-  document.body.classList.remove('is-auth');
-  $('#authView').classList.add('hidden');
+ // ⭐⭐ هذا هو المطلوب
+  document.body.classList.add('is-auth');
+ $('#authView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
+
 }
   
 
