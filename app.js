@@ -3396,11 +3396,9 @@ document.getElementById("btnMyJourney")?.addEventListener("click", () => {
 });
 
 document.getElementById("btnMyAwards")?.addEventListener("click", () => {
-  showOnly("#tab-reports");
+  showOnly("#tab-achievements");
 });
 
-
-  
 
   // ❌ إغلاق صندوق نور (تحسين UX)
 document.getElementById("closeNoor")?.addEventListener("click", () => {
