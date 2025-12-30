@@ -131,69 +131,98 @@
     <main class="stage">
   <!-- تبويب الرئيسية -->
 <section class="view tab hidden" id="tab-home">
-  <div class="welcome">
-    <h2><span id="helloName">مرحبًا!</span></h2>
-    <p class="muted">ابدأ من هنا: تعلّم — اقرأ — أنجز.</p>
 
-<!-- ✅ بطاقة الحالة اليومية -->
-<div class="card glass daily-status">
-  <h4>📌 حالتك اليوم</h4>
-  <ul>
-    <li>📘 القصص المقروءة اليوم: <b id="todayReads">0</b></li>
-    <li>📝 واجبات مطلوبة: <b id="todayAssignments">1</b></li>
-    <li>🎯 التحدي اليومي: <b id="todayChallenge">غير مكتمل</b></li>
-  </ul>
-</div>
-    
-    <div class="cards-4">
-      <div class="card action">
-  <img src="./img/kids/lessons.png" class="kid-img" alt="الدروس">
-        <h4>الدروس</h4>
-        <button class="btn sky small go" data-go="#tab-levels">فتح</button>
-      </div>
-      <div class="card action">
-<img src="./img/kids/homework.png" class="kid-img" alt="واجباتي">
-        <h4>واجباتي</h4>
-        <button class="btn vio small go" data-go="#tab-assign">فتح</button>
-      </div>
-      <div class="card action">
-<img src="./img/kids/reading.png" class="kid-img" alt="تسجيل القراءة">
-        <h4>تسجيل القراءة</h4>
-        <button class="btn em small go" data-go="#tab-library">فتح</button>
-      </div>
-      <div class="card action">
-<img src="./img/kids/reports.png" class="kid-img" alt="تقاريري">
-        <h4>تقاريري</h4>
-        <button class="btn primary small go" data-go="#tab-reports">فتح</button>
-      </div>
-    </div>
+<!-- 🏠 Kids Home -->
+<section class="kids-home">
 
-    <!-- 🎯 تحدي اليوم (يُضاف هنا بالضبط) -->
-    <div class="card challenge-card glass" id="dailyChallengeCard">
-      <div class="challenge-header">
-        <h4>🎯 تحدي اليوم</h4>
-        <span class="badge sky" id="challengeStatus">غير منجز</span>
-      </div>
+  <h2 class="kids-welcome">
+    👋 مرحبًا يا <span id="kidName">بطل</span>!
+  </h2>
+  <p class="kids-sub">هيا نبدأ مغامرتنا اليوم 🌈</p>
 
-      <p class="challenge-text" id="challengeText">
-        اقرأ قصة واحدة من مستواك اليوم 🎉
-      </p>
- <!-- ✅ شريط التقدم هنا بالضبط -->
-  <div class="challenge-progress">
-    <i></i>
-  </div>
-      
-      <div class="challenge-actions">
-        <button class="btn small primary go" data-go="#tab-library">
-          ابدأ التحدي
-        </button>
-      </div>
-    </div>
-    <!-- نهاية تحدي اليوم -->
+  <div class="kids-actions">
+
+    <button class="kid-btn primary" id="btnStartReading">
+      📖 <span>ابدأ القراءة</span>
+    </button>
+
+    <button class="kid-btn path" id="btnMyJourney">
+      🌱 <span>رحلتي</span>
+    </button>
+
+    <button class="kid-btn trophies" id="btnMyAwards">
+      🏆 <span>إنجازاتي</span>
+    </button>
 
   </div>
+
 </section>
 
+
+<!-- ❌ تعطيل الواجهة القديمة (Home القديمة بالكامل)
+
+<div class="welcome">
+  <h2><span id="helloName">مرحبًا!</span></h2>
+  <p class="muted">ابدأ من هنا: تعلّم — اقرأ — أنجز.</p>
+
+  <div class="card glass daily-status">
+    <h4>📌 حالتك اليوم</h4>
+    <ul>
+      <li>📘 القصص المقروءة اليوم: <b id="todayReads">0</b></li>
+      <li>📝 واجبات مطلوبة: <b id="todayAssignments">1</b></li>
+      <li>🎯 التحدي اليومي: <b id="todayChallenge">غير مكتمل</b></li>
+    </ul>
+  </div>
+
+  <div class="cards-4">
+    <div class="card action">
+      <img src="./img/kids/lessons.png" class="kid-img" alt="الدروس">
+      <h4>الدروس</h4>
+      <button class="btn sky small go" data-go="#tab-levels">فتح</button>
+    </div>
+
+    <div class="card action">
+      <img src="./img/kids/homework.png" class="kid-img" alt="واجباتي">
+      <h4>واجباتي</h4>
+      <button class="btn vio small go" data-go="#tab-assign">فتح</button>
+    </div>
+
+    <div class="card action">
+      <img src="./img/kids/reading.png" class="kid-img" alt="تسجيل القراءة">
+      <h4>تسجيل القراءة</h4>
+      <button class="btn em small go" data-go="#tab-library">فتح</button>
+    </div>
+
+    <div class="card action">
+      <img src="./img/kids/reports.png" class="kid-img" alt="تقاريري">
+      <h4>تقاريري</h4>
+      <button class="btn primary small go" data-go="#tab-reports">فتح</button>
+    </div>
+  </div>
+
+  <div class="card challenge-card glass" id="dailyChallengeCard">
+    <div class="challenge-header">
+      <h4>🎯 تحدي اليوم</h4>
+      <span class="badge sky" id="challengeStatus">غير منجز</span>
+    </div>
+
+    <p class="challenge-text" id="challengeText">
+      اقرأ قصة واحدة من مستواك اليوم 🎉
+    </p>
+
+    <div class="challenge-progress">
+      <i></i>
+    </div>
+
+    <div class="challenge-actions">
+      <button class="btn small primary go" data-go="#tab-library">
+        ابدأ التحدي
+      </button>
+    </div>
+  </div>
+</div>
+
+-->
 
       <!-- تبويب المستويات -->
       <section class="view tab hidden" id="tab-levels">
