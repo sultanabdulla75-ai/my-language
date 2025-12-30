@@ -1748,3 +1748,72 @@ body.is-auth .topbar {
   }
 }
 
+
+/* =====================================
+👶 Kids Home – SAFE UI
+===================================== */
+
+.kids-home{
+  max-width:420px;
+  margin:0 auto;
+  text-align:center;
+  padding:1.2rem;
+}
+
+.kids-welcome{
+  font-size:1.4rem;
+  margin-bottom:.3rem;
+}
+
+.kids-sub{
+  font-size:.95rem;
+  color:#64748b;
+  margin-bottom:1.2rem;
+}
+
+.kids-actions{
+  display:flex;
+  flex-direction:column;
+  gap:1rem;
+}
+
+/* 🧸 Button Base */
+.kid-btn{
+  border:none;
+  border-radius:22px;
+  padding:1.2rem;
+  font-size:1.2rem;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:.5rem;
+  box-shadow:0 12px 30px rgba(0,0,0,.12);
+  transition:.2s ease;
+}
+
+.kid-btn span{
+  font-weight:700;
+}
+
+/* ✨ Hover */
+.kid-btn:hover{
+  transform:translateY(-3px) scale(1.02);
+}
+
+/* 🎯 Variants */
+.kid-btn.primary{
+  background:linear-gradient(135deg,#34d399,#10b981);
+  color:#fff;
+}
+
+.kid-btn.path{
+  background:#e0f2fe;
+  color:#0369a1;
+}
+
+.kid-btn.trophies{
+  background:#fef3c7;
+  color:#92400e;
+}
+
