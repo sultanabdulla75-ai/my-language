@@ -3206,11 +3206,25 @@ if (current.role === 'student') {
 document.body.classList.toggle('is-teacher', current.role === 'teacher');
 
   // 5) تعبئة بيانات المستخدم في الواجهة
-  $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
-  $('#userName').textContent = current.name;
-  $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
+//  $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
+//  $('#userName').textContent = current.name;
+//  $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
+// setUnifiedAvatar(current.role);
+
+
+// 5) تعبئة بيانات المستخدم في الواجهة
+
+// Kids Home
+document.getElementById("kidName")?.textContent = current.name;
+
+// Sidebar
+document.getElementById("userName").textContent = current.name;
+document.getElementById("userRoleLabel").textContent =
+  current.role === 'teacher' ? 'معلم' : 'طالب';
+
 setUnifiedAvatar(current.role);
 
+  
   // 6) إخفاء شاشة الدخول وإظهار التطبيق
   $('#authView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
