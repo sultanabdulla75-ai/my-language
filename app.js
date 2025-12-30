@@ -3380,6 +3380,22 @@ document.getElementById("googleLogin")
     }
   });
 
+  // ❌ إغلاق صندوق نور (تحسين UX)
+document.getElementById("closeNoor")?.addEventListener("click", () => {
+  const box = document.querySelector(".noor-ai-box");
+  const input = document.getElementById("noorAiInput");
+  const answer = document.getElementById("noorAiAnswer");
+
+  box?.classList.add("hidden");
+
+  if (input) input.value = "";
+  if (answer) {
+    answer.innerHTML = "";
+    answer.classList.add("hidden");
+  }
+});
+
+
   // قارئ القصص
   $('#backToApp').addEventListener('click', backToApp);
   $('#startRec').addEventListener('click', startRecording);
