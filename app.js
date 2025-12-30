@@ -3380,6 +3380,28 @@ document.getElementById("googleLogin")
     }
   });
 
+
+// 🏠 Kids Home Buttons
+document.getElementById("btnStartReading")?.addEventListener("click", () => {
+  if (!BOOKS || !BOOKS.length) {
+    alert("📚 لا توجد قصص بعد");
+    return;
+  }
+  openReader(BOOKS[0]);
+});
+
+
+document.getElementById("btnMyJourney")?.addEventListener("click", () => {
+  showOnly("#tab-levels");
+});
+
+document.getElementById("btnMyAwards")?.addEventListener("click", () => {
+  showOnly("#tab-reports");
+});
+
+
+  
+
   // ❌ إغلاق صندوق نور (تحسين UX)
 document.getElementById("closeNoor")?.addEventListener("click", () => {
   const box = document.querySelector(".noor-ai-box");
