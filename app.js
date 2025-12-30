@@ -227,28 +227,26 @@ function enableNoorOnParagraphs() {
 
   story.querySelectorAll("p").forEach(p => {
     p.onclick = () => {
-      // إزالة التحديد السابق
+
+      // إزالة أي تحديد سابق
       story.querySelectorAll("p").forEach(x =>
         x.classList.remove("para-selected")
       );
 
-      // تمييز الفقرة
       p.classList.add("para-selected");
 
       const text = p.textContent.trim();
 
-      // تمرير النص إلى نور
+      // تمرير الفقرة كاملة إلى نور
       const aiInput = document.getElementById("noorAiInput");
       if (aiInput) aiInput.value = text;
 
-      // إظهار نور
+      // إظهار الصندوق
       const noorBox = document.querySelector(".noor-ai-box");
       if (noorBox) {
         noorBox.classList.remove("hidden");
-        noorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+        noorBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
-
-      console.log("🤖 Noor activated:", text);
     };
   });
 }
