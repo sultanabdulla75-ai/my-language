@@ -1740,3 +1740,11 @@ body.is-auth .topbar {
 }
 
 
+@media (max-width: 600px) {
+  #storyContent,
+  #storyContent span {
+    font-size: 1.2rem;
+    line-height: 2.1;
+  }
+}
+
