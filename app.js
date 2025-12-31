@@ -1055,6 +1055,29 @@ if (selector === '#tab-teacher') {
    }
 
 
+// ===============================
+// 🧸 Kids Home – Progress
+// ===============================
+
+function updateKidsHomeProgress() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return;
+
+  const levelBooks = BOOKS.filter(b => b.level === current.level);
+  const stats = readJSON(LS.STATS(current.id), {});
+  const readCount = Object.keys(stats.books || {}).length;
+
+  const remaining = Math.max(0, levelBooks.length - readCount);
+
+  const el = document.getElementById("booksLeft");
+  if (el) el.textContent = remaining;
+}
+
+
+
+
+
+
 // ============================================
 // 📊 عند فتح تبويب لوحة المعلم
 // ============================================
@@ -2754,6 +2777,7 @@ function backToApp() {
 
   // 🏠 العودة المؤكدة إلى Kids Home
   showOnly('#tab-home');
+  updateKidsHomeProgress();
 
   // 🔁 إعادة تهيئة
   activeReadingStartAt = null;
