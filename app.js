@@ -3478,11 +3478,11 @@ document.getElementById("btnStartReading")?.addEventListener("click", () => {
   if (nextBook) {
     openReader(nextBook);
   } else {
-    // 🎉 انتهى المستوى
-    alert("🎉 أحسنت! أنهيت جميع قصص هذا المستوى");
+    alert("🎉 أحسنت! أنهيت هذا المستوى، استعد للانتقال إلى المستوى التالي");
     showOnly("#tab-levels");
   }
 });
+
 
 
 
