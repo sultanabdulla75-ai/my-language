@@ -2834,6 +2834,11 @@ function updateReadStats(bookId, minutesSpent = 0) {
   const key = LS.STATS(current.id);
   const s = readJSON(key, { reads: 0, minutes: 0, lastBook: '—', activities: 0 });
 
+  // 📚 تتبع القصص المقروءة
+s.books = s.books || {};
+s.books[bookId] = true;
+
+
   // 📘 تحديث الإحصاءات
   s.reads += 1;
   if (minutesSpent > 0) s.minutes += minutesSpent;
@@ -2846,6 +2851,7 @@ function updateReadStats(bookId, minutesSpent = 0) {
 
   // 🔄 تحديث الواجهة
   updateRail();
+  updateKidsHomeProgress();
   renderStaticNoorBadges(); // ⭐ تحديث الوسام فور القراءة
   updateReports();
 
