@@ -3217,6 +3217,15 @@ setUnifiedAvatar(current.role);
   // 6) إخفاء شاشة الدخول وإظهار التطبيق
   $('#authView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
+
+// 🧸 تفعيل Kids Home (للطلاب فقط)
+if (current.role === 'student') {
+  document.getElementById("kidsHome")?.classList.remove("hidden");
+}
+
+  // ❌ إخفاء الواجهة القديمة
+document.querySelector(".legacy-home")?.classList.add("hidden");
+
   $('#readerView').classList.add('hidden');
 
   // ⭐⭐ إلغاء وضع الدخول
