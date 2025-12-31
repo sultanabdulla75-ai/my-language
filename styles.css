@@ -1817,3 +1817,46 @@ body.is-auth .topbar {
   color:#92400e;
 }
 
+
+/* =========================
+   🧸 Kids Home UI
+========================= */
+
+.kids-home {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.kids-welcome {
+  font-size: 1.8rem;
+  margin-bottom: .5rem;
+}
+
+.kids-sub {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.kids-actions {
+  display: grid;
+  gap: 1rem;
+  max-width: 360px;
+  margin: auto;
+}
+
+.kid-btn {
+  font-size: 1.1rem;
+  padding: 1rem;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+.kid-btn.primary { background: #2563eb; color: #fff; }
+.kid-btn.path { background: #10b981; color: #fff; }
+.kid-btn.trophies { background: #f59e0b; color: #fff; }
+
+/* ❌ إخفاء Home القديمة بدون حذف */
+.legacy-home {
+  display: none;
+}
