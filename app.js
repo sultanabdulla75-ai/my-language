@@ -2685,30 +2685,32 @@ window.MIN_SECONDS =
 window.openReader = openReader;
 
 function backToApp() {
-  $('#readerView').classList.add('hidden');
-  $('#appShell').classList.remove('hidden');
 
+  // 📌 حفظ آخر قصة قرأها الطالب
+  const current = readJSON(LS.CURRENT, null);
+  if (currentBook && current?.role === "student") {
+    current.lastReadBookId = currentBook.id;
+    writeJSON(LS.CURRENT, current);
+  }
+
+  // =====================================
+  // 🧠 احتساب القراءة (قبل إخفاء القارئ)
+  // =====================================
   if (activeReadingStartAt && currentBook) {
 
-    // ✅ 1) عناصر القارئ
     const host = document.getElementById("storyContent");
 
-    // ⏱️ 2) الزمن الحقيقي
     const diffMs = Date.now() - activeReadingStartAt;
     const secondsSpent = Math.round(diffMs / 1000);
 
-    // 📜 3) شرط التمرير (مرن للقصص القصيرة)
     const scrollOK =
       maxScrollPercent >= 0.7 ||
       (host && host.scrollHeight <= host.clientHeight + 20);
 
-    // 🎯 4) هل أنجز نشاط القصة؟
-    const current = readJSON(LS.CURRENT, null);
     const activityDone =
       current &&
       readJSON(LS.STATS(current.id), {}).activities > 0;
 
-    // ✅ 5) القرار النهائي
     if (
       hasInteractedWithStory &&
       secondsSpent >= window.MIN_SECONDS &&
@@ -2727,6 +2729,15 @@ function backToApp() {
     }
   }
 
+  // =====================================
+  // 🧹 إخفاء القارئ والعودة للتطبيق
+  // =====================================
+  $('#readerView').classList.add('hidden');
+  $('#appShell').classList.remove('hidden');
+
+  // 🏠 العودة المؤكدة إلى Kids Home
+  showOnly('#tab-home');
+
   // 🔁 إعادة تهيئة
   activeReadingStartAt = null;
   readingStartAt = null;
@@ -2734,6 +2745,7 @@ function backToApp() {
   maxScrollPercent = 0;
   interactionCount = 0;
 }
+
 
 
 async function startRecording() {
