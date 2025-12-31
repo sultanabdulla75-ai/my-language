@@ -631,12 +631,20 @@ function openPlacementModal(classId, studentEmail) {
       { merge: true }
     );
 
+// ✅ حفظ المستوى داخل الجلسة الحالية
+const cur = readJSON(LS.CURRENT, null);
+if (cur) {
+  cur.level = level;
+  writeJSON(LS.CURRENT, cur);
+}
+
     toast(`🎉 تم تحديد مستواك: ${LEVELS.find(l => l.id === level)?.name}`);
     modal.remove();
 
     // تحديث الواجهة فورًا
     renderLevels();
-    renderBooks(level);
+renderBooks(level);
+showOnly("#tab-library"); // اختياري: ينقله للمكتبة فورًا
   };
 }
 
@@ -3246,24 +3254,35 @@ document.body.classList.remove('is-auth');
       await loadStudentAnswersFromFirestore(classId, current.id);
       await syncBooksWithFirestore(classId);
 
-    // ============================================
-    // 🎯 تشغيل اختبار تحديد المستوى (مرة واحدة فقط)
-    // ============================================
-    if (window.db) {
-      const profRef = doc(
-        window.db,
-        "classes", classId,
-        "profiles", current.email
-      );
-      const profSnap = await getDoc(profRef);
+// ============================================
+// 🎯 تشغيل اختبار تحديد المستوى (مرة واحدة فقط)
+// ============================================
+if (window.db) {
+  const profRef = doc(
+    window.db,
+    "classes", classId,
+    "profiles", current.email
+  );
+  const profSnap = await getDoc(profRef);
 
-      if (!profSnap.exists() || !profSnap.data()?.placementDone) {
-        // نؤخر الفتح قليلًا حتى تجهز الواجهة
-        setTimeout(() => {
-          openPlacementModal(classId, current.email);
-        }, 600);
-      }
-    }
+  // ✅✅✅ (1) استخراج المستوى الحالي
+  let level = "L1";
+
+  if (profSnap.exists()) {
+    level = profSnap.data()?.level || "L1";
+  }
+
+  // ✅✅✅ (2) حفظ المستوى داخل الجلسة
+  current.level = level;
+  writeJSON(LS.CURRENT, current);
+
+  // ✅ (3) فتح اختبار تحديد المستوى إن لم يُنجز
+  if (!profSnap.exists() || !profSnap.data()?.placementDone) {
+    setTimeout(() => {
+      openPlacementModal(classId, current.email);
+    }, 600);
+  }
+}
 
   } else {
     console.warn("⚠️ لم يتم العثور على فصل مرتبط بهذا الطالب.");
@@ -3424,9 +3443,28 @@ document.getElementById("closeNoor")?.addEventListener("click", () => {
 // ===============================
 
 // ابدأ القراءة
-document.getElementById("btnStartReading")?.addEventListener("click", () => {
-  showOnly("#tab-library");
+document.getElementById("btnStartReading")?.addEventListener("click", async () => {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return;
+
+  // تأكد القصص محمّلة
+  if (current.classId) await syncBooksWithFirestore(current.classId);
+
+  // اقرأ المستوى
+  const level = current.level || "L1";
+
+  // اختر قصة من نفس المستوى
+  const book = BOOKS.find(b => b.level === level) || BOOKS[0];
+
+  if (!book) {
+    toast("🚫 لا توجد قصص متاحة الآن");
+    return;
+  }
+
+  // افتح القصة مباشرة
+  openReader(book);
 });
+
 
 // رحلتي
 document.getElementById("btnMyJourney")?.addEventListener("click", () => {
@@ -3436,9 +3474,7 @@ document.getElementById("btnMyJourney")?.addEventListener("click", () => {
 // إنجازاتي
 document.getElementById("btnMyAwards")?.addEventListener("click", () => {
   showOnly("#tab-achievements");
-});
-
-  
+}); 
 
   // زر إنهاء اختبار القصة
   $('#submitQuiz')?.addEventListener('click', () => {
