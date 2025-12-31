@@ -1444,7 +1444,7 @@ async function loginWithGoogle() {
     });
 
     toast("✔ تم تسجيل الدخول بنجاح");
-    startApp();
+await startApp();
 
   } catch (e) {
     console.error("Google Login Error:", e);
@@ -3224,8 +3224,7 @@ document.getElementById("userRoleLabel")?.textContent =
 
 setUnifiedAvatar(current.role);
 
-
-  
+ 
   // 6) إخفاء شاشة الدخول وإظهار التطبيق
   $('#authView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
