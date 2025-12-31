@@ -2643,14 +2643,12 @@ para.querySelectorAll('.word').forEach(span => {
 });
 
 
-
 host.appendChild(para);
 
     });
 
       enableNoorOnParagraphs();
   }
-
 
 // ===============================
 // 📜 مراقبة التمرير الحقيقي
@@ -2683,6 +2681,25 @@ window.MIN_SECONDS =
 }
 
 window.openReader = openReader;
+
+
+function getNextBookForStudent() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || !current.level) return null;
+
+  const levelBooks = BOOKS.filter(b => b.level === current.level);
+  if (!levelBooks.length) return null;
+
+  const stats = readJSON(LS.STATS(current.id), {});
+  const readBooks = Object.keys(stats.books || {});
+
+  // أول قصة غير مقروءة
+  const next = levelBooks.find(b => !readBooks.includes(b.id));
+
+  return next || null; // null = أنهى المستوى
+}
+
+
 
 function backToApp() {
 
@@ -3455,26 +3472,15 @@ document.getElementById("closeNoor")?.addEventListener("click", () => {
 // ===============================
 
 // ابدأ القراءة
-document.getElementById("btnStartReading")?.addEventListener("click", async () => {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current) return;
+document.getElementById("btnStartReading")?.addEventListener("click", () => {
+  const nextBook = getNextBookForStudent();
 
-  // تأكد القصص محمّلة
-  if (current.classId) await syncBooksWithFirestore(current.classId);
-
-  // اقرأ المستوى
-  const level = current.level || "L1";
-
-  // اختر قصة من نفس المستوى
-  const book = BOOKS.find(b => b.level === level) || BOOKS[0];
-
-  if (!book) {
-    toast("🚫 لا توجد قصص متاحة الآن");
-    return;
+  if (nextBook) {
+    openReader(nextBook);
+  } else {
+    alert("🎉 أحسنت! أنهيت هذا المستوى، استعد للانتقال إلى المستوى التالي");
+    showOnly("#tab-levels");
   }
-
-  // افتح القصة مباشرة
-  openReader(book);
 });
 
 
