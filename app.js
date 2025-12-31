@@ -1069,6 +1069,26 @@ function updateKidsHomeProgress() {
   if (el) el.textContent = remaining;
 }
 
+// ===============================
+// 📖 اختيار القصة التالية للطالب
+// ===============================
+function getNextBookForStudent() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return null;
+
+  const stats = readJSON(LS.STATS(current.id), {});
+  const readBooks = Object.keys(stats.books || {});
+
+  // قصص نفس المستوى
+  const levelBooks = BOOKS.filter(b => b.level === current.level);
+
+  // أول قصة غير مقروءة
+  const nextBook = levelBooks.find(
+    b => !readBooks.includes(b.id)
+  );
+
+  return nextBook || null;
+}
 
 
 // ============================================
@@ -3495,10 +3515,12 @@ document.getElementById("btnStartReading")?.addEventListener("click", () => {
   if (nextBook) {
     openReader(nextBook);
   } else {
-    alert("🎉 أحسنت! أنهيت هذا المستوى، استعد للانتقال إلى المستوى التالي");
+    // 🎉 انتهى المستوى
+    alert("🎉 أحسنت! أنهيت جميع قصص هذا المستوى");
     showOnly("#tab-levels");
   }
 });
+
 
 
 // رحلتي
