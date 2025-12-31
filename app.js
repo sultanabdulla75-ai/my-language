@@ -227,26 +227,28 @@ function enableNoorOnParagraphs() {
 
   story.querySelectorAll("p").forEach(p => {
     p.onclick = () => {
-
-      // إزالة أي تحديد سابق
+      // إزالة التحديد السابق
       story.querySelectorAll("p").forEach(x =>
         x.classList.remove("para-selected")
       );
 
+      // تمييز الفقرة
       p.classList.add("para-selected");
 
       const text = p.textContent.trim();
 
-      // تمرير الفقرة كاملة إلى نور
+      // تمرير النص إلى نور
       const aiInput = document.getElementById("noorAiInput");
       if (aiInput) aiInput.value = text;
 
-      // إظهار الصندوق
+      // إظهار نور
       const noorBox = document.querySelector(".noor-ai-box");
       if (noorBox) {
         noorBox.classList.remove("hidden");
-        noorBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        noorBox.scrollIntoView({ behavior: "smooth", block: "center" });
       }
+
+      console.log("🤖 Noor activated:", text);
     };
   });
 }
@@ -1444,7 +1446,7 @@ async function loginWithGoogle() {
     });
 
     toast("✔ تم تسجيل الدخول بنجاح");
-await startApp();
+    startApp();
 
   } catch (e) {
     console.error("Google Login Error:", e);
@@ -3183,7 +3185,8 @@ if (!current || !current.email) {
   // ⭐⭐ هذا هو المطلوب
   document.body.classList.add('is-auth');
   return;
-}  
+}
+
 
 // ✅ هنا بالضبط
 if (current.role === 'student') {
@@ -3206,25 +3209,11 @@ if (current.role === 'student') {
 document.body.classList.toggle('is-teacher', current.role === 'teacher');
 
   // 5) تعبئة بيانات المستخدم في الواجهة
-//  $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
-//  $('#userName').textContent = current.name;
-//  $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
-// setUnifiedAvatar(current.role);
-
-
-// 5) تعبئة بيانات المستخدم في الواجهة
-
-// Kids Home
-document.getElementById("kidName")?.textContent = current.name;
-
-// Sidebar (مهم)
-document.getElementById("userName")?.textContent = current.name;
-document.getElementById("userRoleLabel")?.textContent =
-  current.role === 'teacher' ? 'معلم' : 'طالب';
-
+  $('#helloName').textContent = 'مرحبًا ' + current.name + '!';
+  $('#userName').textContent = current.name;
+  $('#userRoleLabel').textContent = current.role === 'teacher' ? 'معلم' : 'طالب';
 setUnifiedAvatar(current.role);
 
- 
   // 6) إخفاء شاشة الدخول وإظهار التطبيق
   $('#authView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
@@ -3392,42 +3381,6 @@ document.getElementById("googleLogin")
       saveQuiz();
     }
   });
-
-
-// 🏠 Kids Home Buttons
-document.getElementById("btnStartReading")?.addEventListener("click", () => {
-  if (!BOOKS || !BOOKS.length) {
-    alert("📚 لا توجد قصص بعد");
-    return;
-  }
-  openReader(BOOKS[0]);
-});
-
-
-document.getElementById("btnMyJourney")?.addEventListener("click", () => {
-  showOnly("#tab-levels");
-});
-
-document.getElementById("btnMyAwards")?.addEventListener("click", () => {
-  showOnly("#tab-achievements");
-});
-
-
-  // ❌ إغلاق صندوق نور (تحسين UX)
-document.getElementById("closeNoor")?.addEventListener("click", () => {
-  const box = document.querySelector(".noor-ai-box");
-  const input = document.getElementById("noorAiInput");
-  const answer = document.getElementById("noorAiAnswer");
-
-  box?.classList.add("hidden");
-
-  if (input) input.value = "";
-  if (answer) {
-    answer.innerHTML = "";
-    answer.classList.add("hidden");
-  }
-});
-
 
   // قارئ القصص
   $('#backToApp').addEventListener('click', backToApp);
