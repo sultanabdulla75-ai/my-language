@@ -3418,6 +3418,28 @@ document.getElementById("closeNoor")?.addEventListener("click", () => {
     $('#modalQuiz').classList.add('hidden');
   });
 
+
+// ===============================
+// 🧸 Kids Home – Buttons Logic
+// ===============================
+
+// ابدأ القراءة
+document.getElementById("btnStartReading")?.addEventListener("click", () => {
+  showOnly("#tab-library");
+});
+
+// رحلتي
+document.getElementById("btnMyJourney")?.addEventListener("click", () => {
+  showOnly("#tab-levels");
+});
+
+// إنجازاتي
+document.getElementById("btnMyAwards")?.addEventListener("click", () => {
+  showOnly("#tab-achievements");
+});
+
+  
+
   // زر إنهاء اختبار القصة
   $('#submitQuiz')?.addEventListener('click', () => {
 
