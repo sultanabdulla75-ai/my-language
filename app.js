@@ -118,18 +118,16 @@ function getNextLevel(currentLevel) {
 }
 
 // 🔁 المتابعة التلقائية بعد إنهاء القراءة
-function autoContinueReading() {
+async function autoContinueReading() {
   const current = readJSON(LS.CURRENT, null);
   if (!current || current.role !== "student") return;
 
-  // 1) هل توجد قصة غير مقروءة في نفس المستوى؟
-  const nextBook = getNextBookForStudent();
+  const nextBook = await getNextBookForStudent(); // (سأصلّحها تحت)
   if (nextBook) {
     openReader(nextBook);
     return;
   }
 
-  // 2) انتهى المستوى → انتقل للمستوى التالي
   const nextLevel = getNextLevel(current.level);
 
   if (!nextLevel) {
@@ -142,8 +140,7 @@ function autoContinueReading() {
     return;
   }
 
- await updateStudentLevel(nextLevel);
-
+  await updateStudentLevel(nextLevel);
 
   showCongratsModal({
     title: "🌟 مستوى جديد!",
@@ -382,31 +379,32 @@ document.querySelectorAll("[data-ai]").forEach(btn => {
 // ============================================
 async function loadStudentStatsFromFirestore() {
   const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== "student" || !window.db) return;
+  if (!current || current.role !== "student" || !window.db) return {
+    reads: 0, minutes: 0, books: {}, lastBook: "—", activities: 0
+  };
 
   try {
     const ref = doc(window.db, "readingStats", current.email);
     const snap = await getDoc(ref);
 
-    if (!snap.exists()) {
-      console.log("ℹ️ لا توجد إحصائيات سحابية بعد");
-      return;
-    }
+    const stats = snap.exists()
+      ? snap.data()
+      : { reads: 0, minutes: 0, books: {}, lastBook: "—", activities: 0 };
 
-    const stats = snap.data();
-
-    // ✅ تحديث الواجهة مباشرة من السحابة
+    // تحديث الواجهة من السحابة
     updateRailFromCloud(stats);
     updateKidsHomeProgressFromCloud(stats);
     updateReportsFromCloud(stats);
-    renderStaticNoorBadgesFromCloud(stats);
+    renderStaticNoorBadgesFromCloud?.(stats); // إن كانت عندك
 
-    console.log("☁️ تم تحميل إحصائيات الطالب من Firestore");
+    return stats;
 
   } catch (e) {
     console.error("⚠ فشل تحميل إحصائيات الطالب:", e);
+    return { reads: 0, minutes: 0, books: {}, lastBook: "—", activities: 0 };
   }
 }
+
 
 
 // ============================================
@@ -3575,12 +3573,12 @@ document.getElementById("closeNoor")?.addEventListener("click", () => {
 
 // ===============================
 // 🧸 Kids Home – Start Reading
-// ===============================
-document.getElementById("btnStartReading")?.addEventListener("click", () => {
-const nextBook = await getNextBookForStudent();
-  if (nextBook) openReader(nextBook);
-  else autoContinueReading(); // ⭐ المرجع الوحيد
-});
+document.getElementById("btnStartReading")
+  ?.addEventListener("click", async () => {
+    const nextBook = await getNextBookForStudent();
+    if (nextBook) openReader(nextBook);
+    else await autoContinueReading(); // أو autoContinueReading() فقط
+  });
 
 
 // رحلتي
