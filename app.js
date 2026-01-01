@@ -2931,64 +2931,53 @@ function playRecording() {
   new Audio(URL.createObjectURL(audioBlob)).play();
 }
 
-function updateReadStats(bookId, minutesSpent = 0) {
+async function updateReadStats(bookId, minutesSpent = 0) {
   const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== 'student') return;
+  if (!current || current.role !== "student" || !window.db) return;
 
-  const key = LS.STATS(current.id);
-  const s = readJSON(key, { reads: 0, minutes: 0, lastBook: '—', activities: 0 });
+  const ref = doc(window.db, "readingStats", current.email);
+  const snap = await getDoc(ref);
 
-  // 📚 تتبع القصص المقروءة
-s.books = s.books || {};
-s.books[bookId] = true;
+  const prev = snap.exists() ? snap.data() : {
+    reads: 0,
+    minutes: 0,
+    books: {},
+    lastBook: "—",
+    activities: 0
+  };
 
+  // 🧠 تحديث سحابي (المصدر الأساسي)
+  const updated = {
+    reads: prev.reads + 1,
+    minutes: prev.minutes + (minutesSpent || 0),
+    books: {
+      ...(prev.books || {}),
+      [bookId]: true
+    },
+    lastBook: BOOKS.find(b => b.id === bookId)?.title || prev.lastBook,
+    activities: prev.activities || 0,
+    updatedAt: Date.now()
+  };
 
-  // 📘 تحديث الإحصاءات
-  s.reads += 1;
-  if (minutesSpent > 0) s.minutes += minutesSpent;
+  await setDoc(ref, updated, { merge: true });
 
-  const bookTitle = BOOKS.find(b => b.id === bookId)?.title;
-  if (bookTitle) s.lastBook = bookTitle;
+  // ============================
+  // 🔄 تحديث الواجهة (بدون LocalStorage)
+  // ============================
+  updateRailFromCloud(updated);
+  updateKidsHomeProgressFromCloud(updated);
+  updateReportsFromCloud(updated);
 
-  // 💾 حفظ محلي
-  writeJSON(key, s);
+  // ⭐ تحديث الأوسمة
+  renderStaticNoorBadges(updated);
 
-  // 🔄 تحديث الواجهة
-  updateRail();
-  updateKidsHomeProgress();
-  renderStaticNoorBadges(); // ⭐ تحديث الوسام فور القراءة
-  updateReports();
-
-  // ☁️ حفظ في Firestore (مرة واحدة فقط)
-  if (window.db && current.email) {
-    (async () => {
-      try {
-        await setDoc(
-          doc(window.db, "readingStats", current.email),
-          {
-            reads: s.reads,
-            minutes: s.minutes,
-            lastBook: s.lastBook,
-            activities: s.activities || 0,
-            updatedAt: Date.now()
-          },
-          { merge: true }
-        );
-      } catch (err) {
-        console.error("⚠ خطأ في حفظ إحصاءات القراءة:", err);
-      }
-    })();
+  // 🎯 التحدي اليومي (ما زال يعمل)
+  if (minutesSpent >= 1) {
+    completeDailyChallenge();
   }
 
-
-  // 🎯 التحدي اليومي
-  const ch = readJSON(LS_CHALLENGE(current.id), null);
-if (ch && !ch.done && minutesSpent >= 1) {
-  completeDailyChallenge();
-}
-
-  // 🏆 تحديث الإنجازات
-  updateAchievements(s);
+  // 🏆 الإنجازات (نعطيها البيانات السحابية)
+  updateAchievements(updated);
 }
 
 
