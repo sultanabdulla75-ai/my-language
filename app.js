@@ -2831,40 +2831,44 @@ function backToApp() {
   }
 
   // =====================================
-  // 🧠 احتساب القراءة (قبل إخفاء القارئ)
-  // =====================================
-  if (activeReadingStartAt && currentBook) {
+// 🧠 احتساب القراءة (قبل إخفاء القارئ)
+// =====================================
+let counted = false;
 
-    const host = document.getElementById("storyContent");
+if (activeReadingStartAt && currentBook) {
 
-    const diffMs = Date.now() - activeReadingStartAt;
-    const secondsSpent = Math.round(diffMs / 1000);
+  const host = document.getElementById("storyContent");
 
-    const scrollOK =
-      maxScrollPercent >= 0.7 ||
-      (host && host.scrollHeight <= host.clientHeight + 20);
+  const diffMs = Date.now() - activeReadingStartAt;
+  const secondsSpent = Math.round(diffMs / 1000);
 
-    const activityDone =
-      current &&
-      readJSON(LS.STATS(current.id), {}).activities > 0;
+  const scrollOK =
+    maxScrollPercent >= 0.7 ||
+    (host && host.scrollHeight <= host.clientHeight + 20);
 
-    if (
-      hasInteractedWithStory &&
-      secondsSpent >= window.MIN_SECONDS &&
-      (scrollOK || activityDone)
-    ) {
-      const minutesSpent = Math.max(1, Math.round(secondsSpent / 60));
-      updateReadStats(currentBook.id, minutesSpent);
-    } else {
-      console.log("⏭️ قراءة لم تُحتسب", {
-        hasInteractedWithStory,
-        secondsSpent,
-        minRequired: window.MIN_SECONDS,
-        scrollOK,
-        activityDone
-      });
-    }
+  const activityDone =
+    current &&
+    readJSON(LS.STATS(current.id), {}).activities > 0;
+
+  if (
+    hasInteractedWithStory &&
+    secondsSpent >= window.MIN_SECONDS &&
+    (scrollOK || activityDone)
+  ) {
+    const minutesSpent = Math.max(1, Math.round(secondsSpent / 60));
+    updateReadStats(currentBook.id, minutesSpent);
+    counted = true; // ✅ القراءة احتُسبت
+  } else {
+    console.log("⏭️ قراءة لم تُحتسب", {
+      hasInteractedWithStory,
+      secondsSpent,
+      minRequired: window.MIN_SECONDS,
+      scrollOK,
+      activityDone
+    });
   }
+}
+
 
   // =====================================
   // 🧹 إخفاء القارئ والعودة للتطبيق
@@ -2872,9 +2876,15 @@ function backToApp() {
   $('#readerView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
 
-  // 🏠 العودة المؤكدة إلى Kids Home
-  showOnly('#tab-home');
-  updateKidsHomeProgress();
+  if (counted) {
+  // ✅ بدلاً من الرجوع للرئيسية: أكمل تلقائيًا
+  autoContinueReading();
+  return;
+}
+
+// إذا لم تُحتسب القراءة → رجوع عادي
+showOnly('#tab-home');
+updateKidsHomeProgress();
 
   // 🔁 إعادة تهيئة
   activeReadingStartAt = null;
