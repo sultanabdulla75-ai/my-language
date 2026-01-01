@@ -1183,26 +1183,6 @@ if (selector === '#tab-teacher') {
    }
 
 
-// ===============================
-// 🧸 Kids Home – Progress
-// ===============================
-
-async function updateKidsHomeProgressFromCloud(stats) {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current) return;
-
-  const levelBooks = BOOKS.filter(b => b.level === current.level);
-  const readCount = Object.keys(stats.books || {}).length;
-
-  const remaining = Math.max(0, levelBooks.length - readCount);
-
-  document.getElementById("booksLeft").textContent = remaining;
-}
-
-
-
-
-
 // ============================================
 // 📊 عند فتح تبويب لوحة المعلم
 // ============================================
