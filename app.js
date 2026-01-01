@@ -1122,6 +1122,26 @@ async function updateKidsHomeProgressFromCloud(stats) {
   updateKidsHomeProgress();
 }
 
+// ===============================
+// 🧸 Kids Home – Progress (UI)
+// ===============================
+function updateKidsHomeProgress() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || current.role !== "student") return;
+
+  const stats = readJSON(LS.STATS(current.id), null);
+  if (!stats) return;
+
+  const levelBooks = BOOKS.filter(b => b.level === current.level);
+  const readCount = Object.keys(stats.books || {}).length;
+  const remaining = Math.max(0, levelBooks.length - readCount);
+
+  const el = document.getElementById("booksLeft");
+  if (el) el.textContent = remaining;
+}
+
+
+
 // ============================================
 // 📊 Rail (Sidebar)
 // ============================================
