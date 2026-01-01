@@ -110,6 +110,13 @@ const LEVELS = [
   { id: 'L4', name: 'المستوى 4 (متقدم)' }
 ];
 
+// 🔼 تحديد المستوى التالي تلقائيًا
+function getNextLevel(currentLevel) {
+  const idx = LEVELS.findIndex(l => l.id === currentLevel);
+  if (idx === -1 || idx === LEVELS.length - 1) return null;
+  return LEVELS[idx + 1].id;
+}
+
 
 // ============================================
 // 🏆 Achievements Definitions
@@ -857,6 +864,25 @@ export async function syncBooks(classId) {
   console.log("🔄 تمت المزامنة بنجاح");
 }
 
+// ☁️ مزامنة مستوى الطالب فورًا
+async function syncStudentLevelToFirestore(level) {
+  const current = readJSON(LS.CURRENT, null);
+  if (!window.db || !current?.classId || !current?.email) return;
+
+  try {
+    const ref = doc(
+      window.db,
+      "classes",
+      current.classId,
+      "profiles",
+      current.email
+    );
+    await setDoc(ref, { level, updatedAt: Date.now() }, { merge: true });
+  } catch (e) {
+    console.error("❌ فشل مزامنة المستوى:", e);
+  }
+}
+
 // 🔹 حفظ حل الطالب في Firestore (answers + perStudent في assignment)
 async function saveAssignmentAnswerToFirestore(classId, assignId, studentId, answerData) {
   if (!window.db) return;
@@ -1222,6 +1248,26 @@ function showStartToast(){
   }, 2200);
 }
 
+function showCongratsModal({ title, message, btnText = "متابعة", onOk }) {
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.innerHTML = `
+    <div class="modal-card" style="max-width:520px;text-align:center">
+      <div style="font-size:42px;margin-bottom:.3rem">🎉</div>
+      <h3 style="margin:.2rem 0">${title}</h3>
+      <p class="muted" style="line-height:1.7;margin:.6rem 0">${message}</p>
+      <div style="display:flex;justify-content:center;gap:.5rem;margin-top:1rem">
+        <button id="cmOk" class="btn primary">${btnText}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelector("#cmOk").onclick = () => {
+    modal.remove();
+    onOk?.();
+  };
+}
 
 
 
@@ -2722,6 +2768,57 @@ function getNextBookForStudent() {
   return next || null; // null = أنهى المستوى
 }
 
+function getNextLevel(currentLevel) {
+  const idx = LEVELS.findIndex(l => l.id === currentLevel);
+  if (idx === -1 || idx === LEVELS.length - 1) return null;
+  return LEVELS[idx + 1].id;
+}
+
+function autoContinueReading() {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || current.role !== "student") return;
+
+  // 1) هل توجد قصة غير مقروءة في نفس المستوى؟
+  const nextBook = getNextBookForStudent();
+  if (nextBook) {
+    openReader(nextBook);
+    return;
+  }
+
+  // 2) انتهى المستوى → انتقل للمستوى التالي
+  const nextLevel = getNextLevel(current.level);
+
+  if (!nextLevel) {
+    showCongratsModal({
+      title: "🏆 مبروك!",
+      message: "أنهيت جميع المستويات 🎉",
+      btnText: "العودة للرئيسية",
+      onOk: () => {
+        showOnly("#tab-home");
+      }
+    });
+    return;
+  }
+
+  // تحديث المستوى محليًا
+  current.level = nextLevel;
+  writeJSON(LS.CURRENT, current);
+
+  // ☁️ مزامنة Firestore
+syncStudentLevelToFirestore(nextLevel);
+
+  showCongratsModal({
+    title: "🌟 مستوى جديد!",
+    message: `انتقلت إلى ${LEVELS.find(l => l.id === nextLevel)?.name}`,
+    btnText: "ابدأ أول قصة",
+    onOk: () => {
+      const firstBook = BOOKS.find(b => b.level === nextLevel);
+      if (firstBook) openReader(firstBook);
+      else showOnly("#tab-levels");
+    }
+  });
+}
+
 
 
 function backToApp() {
@@ -3498,18 +3595,41 @@ document.getElementById("closeNoor")?.addEventListener("click", () => {
 
 
 // ===============================
-// 🧸 Kids Home – Buttons Logic
+// 🧸 Kids Home – Start Reading
 // ===============================
-
-// ابدأ القراءة
 document.getElementById("btnStartReading")?.addEventListener("click", () => {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return;
+
   const nextBook = getNextBookForStudent();
 
   if (nextBook) {
+    // 📖 فتح القصة التالية في نفس المستوى
     openReader(nextBook);
+
   } else {
-    alert("🎉 أحسنت! أنهيت هذا المستوى، استعد للانتقال إلى المستوى التالي");
-    showOnly("#tab-levels");
+    // 🧠 انتهى المستوى الحالي
+    const nextLevel = getNextLevel(current.level);
+
+    if (!nextLevel) {
+      alert("🏆 مبروك! أنهيت جميع المستويات 🎉");
+      showOnly("#tab-home");
+      return;
+    }
+
+    // 🔼 تحديث المستوى في الجلسة
+    current.level = nextLevel;
+    writeJSON(LS.CURRENT, current);
+
+    toast(`🌟 انتقلت إلى ${LEVELS.find(l => l.id === nextLevel)?.name}`);
+
+    // 📖 فتح أول قصة من المستوى الجديد تلقائيًا
+    const firstBook = BOOKS.find(b => b.level === nextLevel);
+    if (firstBook) {
+      openReader(firstBook);
+    } else {
+      showOnly("#tab-levels");
+    }
   }
 });
 
