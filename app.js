@@ -386,31 +386,30 @@ document.querySelectorAll("[data-ai]").forEach(btn => {
 // ============================================
 async function loadStudentStatsFromFirestore() {
   const current = readJSON(LS.CURRENT, null);
-  if (!current || current.role !== 'student' || !window.db) return;
+  if (!current || current.role !== "student" || !window.db) return;
 
   try {
     const ref = doc(window.db, "readingStats", current.email);
     const snap = await getDoc(ref);
-    if (!snap.exists()) return;
 
-    const s = snap.data();
+    if (!snap.exists()) {
+      console.log("ℹ️ لا توجد إحصائيات سحابية بعد");
+      return;
+    }
 
-    writeJSON(LS.STATS(current.id), {
-      reads: s.reads || 0,
-      minutes: s.minutes || 0,
-      lastBook: s.lastBook || '—',
-      activities: s.activities || 0
-    });
+    const stats = snap.data();
 
-    console.log("☁️ تم تحميل إحصائيات الطالب من السحابة");
+    // ✅ تحديث الواجهة مباشرة من السحابة
+    updateRailFromCloud(stats);
+    updateKidsHomeProgressFromCloud(stats);
+    updateReportsFromCloud(stats);
+    renderStaticNoorBadgesFromCloud(stats);
+
+    console.log("☁️ تم تحميل إحصائيات الطالب من Firestore");
 
   } catch (e) {
     console.error("⚠ فشل تحميل إحصائيات الطالب:", e);
   }
-
-  // 🔄 تحديث السكة والأوسمة بعد التحميل من Firestore
-updateRail();
-renderStaticNoorBadges();
 }
 
 
