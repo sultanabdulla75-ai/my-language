@@ -142,12 +142,8 @@ function autoContinueReading() {
     return;
   }
 
-  // 🔼 تحديث المستوى محليًا
-  current.level = nextLevel;
-  writeJSON(LS.CURRENT, current);
+ await updateStudentLevel(nextLevel);
 
-  // ☁️ مزامنة Firestore
-  syncStudentLevelToFirestore(nextLevel);
 
   showCongratsModal({
     title: "🌟 مستوى جديد!",
@@ -926,6 +922,24 @@ async function syncStudentLevelToFirestore(level) {
   }
 }
 
+
+// ☁️ تحديث مستوى الطالب (سحابي + جلسة)
+async function updateStudentLevel(nextLevel) {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current || !window.db) return;
+
+  await setDoc(
+    doc(window.db, "classes", current.classId, "profiles", current.email),
+    { level: nextLevel, updatedAt: Date.now() },
+    { merge: true }
+  );
+
+  // تحديث الجلسة فقط (ليس اعتمادًا دائمًا)
+  current.level = nextLevel;
+  writeJSON(LS.CURRENT, current);
+}
+
+
 // 🔹 حفظ حل الطالب في Firestore (answers + perStudent في assignment)
 async function saveAssignmentAnswerToFirestore(classId, assignId, studentId, answerData) {
   if (!window.db) return;
@@ -1128,20 +1142,17 @@ if (selector === '#tab-teacher') {
 // 🧸 Kids Home – Progress
 // ===============================
 
-function updateKidsHomeProgress() {
+async function updateKidsHomeProgressFromCloud(stats) {
   const current = readJSON(LS.CURRENT, null);
   if (!current) return;
 
   const levelBooks = BOOKS.filter(b => b.level === current.level);
-  const stats = readJSON(LS.STATS(current.id), {});
   const readCount = Object.keys(stats.books || {}).length;
 
   const remaining = Math.max(0, levelBooks.length - readCount);
 
-  const el = document.getElementById("booksLeft");
-  if (el) el.textContent = remaining;
+  document.getElementById("booksLeft").textContent = remaining;
 }
-
 
 
 
@@ -2795,21 +2806,19 @@ window.MIN_SECONDS =
 window.openReader = openReader;
 
 
-function getNextBookForStudent() {
+async function getNextBookForStudent() {
   const current = readJSON(LS.CURRENT, null);
-  if (!current || !current.level) return null;
+  if (!current || !current.level || !window.db) return null;
+
+  const stats = await loadStudentStatsFromFirestore();
+  const readBooks = Object.keys(stats.books || {});
 
   const levelBooks = BOOKS.filter(b => b.level === current.level);
   if (!levelBooks.length) return null;
 
-  const stats = readJSON(LS.STATS(current.id), {});
-  const readBooks = Object.keys(stats.books || {});
-
-  // أول قصة غير مقروءة
-  const next = levelBooks.find(b => !readBooks.includes(b.id));
-
-  return next || null; // null = أنهى المستوى
+  return levelBooks.find(b => !readBooks.includes(b.id)) || null;
 }
+
 
 
 
@@ -3568,7 +3577,7 @@ document.getElementById("closeNoor")?.addEventListener("click", () => {
 // 🧸 Kids Home – Start Reading
 // ===============================
 document.getElementById("btnStartReading")?.addEventListener("click", () => {
-  const nextBook = getNextBookForStudent();
+const nextBook = await getNextBookForStudent();
   if (nextBook) openReader(nextBook);
   else autoContinueReading(); // ⭐ المرجع الوحيد
 });
