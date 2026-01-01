@@ -2876,7 +2876,15 @@ if (activeReadingStartAt && currentBook) {
   $('#readerView').classList.add('hidden');
   $('#appShell').classList.remove('hidden');
 
+   // 🔁 إعادة تهيئة
+  activeReadingStartAt = null;
+  readingStartAt = null;
+  hasInteractedWithStory = false;
+  maxScrollPercent = 0;
+  interactionCount = 0;  
+
   if (counted) {
+  
   // ✅ بدلاً من الرجوع للرئيسية: أكمل تلقائيًا
   autoContinueReading();
   return;
@@ -2886,12 +2894,7 @@ if (activeReadingStartAt && currentBook) {
 showOnly('#tab-home');
 updateKidsHomeProgress();
 
-  // 🔁 إعادة تهيئة
-  activeReadingStartAt = null;
-  readingStartAt = null;
-  hasInteractedWithStory = false;
-  maxScrollPercent = 0;
-  interactionCount = 0;
+ 
 }
 
 
@@ -2983,31 +2986,6 @@ s.books[bookId] = true;
     })();
   }
 
-  // ⬆️ ترقية المستوى تلقائيًا
-  (async () => {
-    if (!window.db || !current.classId) return;
-
-    const ref = doc(
-      window.db,
-      "classes", current.classId,
-      "profiles", current.email
-    );
-
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return;
-
-    const p = snap.data();
-    let newLevel = p.level || "L1";
-
-    if (s.reads >= 10) newLevel = "L2";
-    if (s.reads >= 20) newLevel = "L3";
-    if (s.reads >= 35) newLevel = "L4";
-
-    if (newLevel !== p.level) {
-      await setDoc(ref, { level: newLevel }, { merge: true });
-      toast(`🌟 ممتاز! انتقلت إلى ${LEVELS.find(l => l.id === newLevel)?.name}`);
-    }
-  })();
 
   // 🎯 التحدي اليومي
   const ch = readJSON(LS_CHALLENGE(current.id), null);
@@ -3608,42 +3586,10 @@ document.getElementById("closeNoor")?.addEventListener("click", () => {
 // 🧸 Kids Home – Start Reading
 // ===============================
 document.getElementById("btnStartReading")?.addEventListener("click", () => {
-  const current = readJSON(LS.CURRENT, null);
-  if (!current) return;
-
   const nextBook = getNextBookForStudent();
-
-  if (nextBook) {
-    // 📖 فتح القصة التالية في نفس المستوى
-    openReader(nextBook);
-
-  } else {
-    // 🧠 انتهى المستوى الحالي
-    const nextLevel = getNextLevel(current.level);
-
-    if (!nextLevel) {
-      alert("🏆 مبروك! أنهيت جميع المستويات 🎉");
-      showOnly("#tab-home");
-      return;
-    }
-
-    // 🔼 تحديث المستوى في الجلسة
-    current.level = nextLevel;
-    writeJSON(LS.CURRENT, current);
-
-    toast(`🌟 انتقلت إلى ${LEVELS.find(l => l.id === nextLevel)?.name}`);
-
-    // 📖 فتح أول قصة من المستوى الجديد تلقائيًا
-    const firstBook = BOOKS.find(b => b.level === nextLevel);
-    if (firstBook) {
-      openReader(firstBook);
-    } else {
-      showOnly("#tab-levels");
-    }
-  }
+  if (nextBook) openReader(nextBook);
+  else autoContinueReading(); // ⭐ المرجع الوحيد
 });
-
-
 
 
 // رحلتي
