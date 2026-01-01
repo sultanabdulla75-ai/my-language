@@ -1110,6 +1110,53 @@ async function findClassIdForTeacher(teacherId) {
 }
 
 
+// ============================================
+// 🧸 Kids Home – Progress
+// ============================================
+
+async function updateKidsHomeProgressFromCloud(stats) {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return;
+
+  writeJSON(LS.STATS(current.id), stats);
+  updateKidsHomeProgress();
+}
+
+// ============================================
+// 📊 Rail (Sidebar)
+// ============================================
+
+function updateRailFromCloud(stats) {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return;
+
+  writeJSON(LS.STATS(current.id), stats);
+  updateRail();
+}
+
+// ============================================
+// 📈 Reports
+// ============================================
+
+function updateReportsFromCloud(stats) {
+  const current = readJSON(LS.CURRENT, null);
+  if (!current) return;
+
+  writeJSON(LS.STATS(current.id), stats);
+  updateReports();
+}
+
+// ============================================
+// 🏅 Noor Badges
+// ============================================
+
+function renderStaticNoorBadgesFromCloud(stats) {
+  const el = document.getElementById("railBadges");
+  if (!el) return;
+
+  el.dataset.count = Math.floor((stats.reads || 0) / 5);
+  renderStaticNoorBadges();
+}
 
 
 // ------------------------------------------------------
