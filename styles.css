@@ -610,6 +610,21 @@ body.is-teacher .table .row{
 }
 
 
+.modal-card{
+  animation: pop .18s ease-out;
+}
+
+@keyframes pop{
+  from{
+    transform: scale(.96);
+    opacity: .6;
+  }
+  to{
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 
 
 /* Responsive */
